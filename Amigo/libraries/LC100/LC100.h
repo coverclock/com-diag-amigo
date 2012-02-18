@@ -1,5 +1,5 @@
-#ifndef _COM_DIAG_AMIGO_H_
-#define _COM_DIAG_AMIGO_H_
+#ifndef _COM_DIAG_AMIGO_LC100_H_
+#define _COM_DIAG_AMIGO_LC100_H_
 
 /**
  * Copyright 2012 Digital Aggregates Corporation, Colorado, USA.
@@ -202,5 +202,5 @@ public:
 }
 }
 
-#endif /* _COM_DIAG_AMIGO_H_ */
+#endif /* _COM_DIAG_AMIGO_LC100_H_ */
 
