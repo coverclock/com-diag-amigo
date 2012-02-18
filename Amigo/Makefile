@@ -27,10 +27,10 @@ default:	all
 PHONY+=dist
 ARTIFACTS+=$(PROJECT)-$(MAJOR).$(MINOR).$(BUILD).tgz
 
-dist $(ARCHIVE)-$(MAJOR).$(MINOR).$(BUILD).tgz:
-	TARDIR=$(shell mktemp -d /tmp/$(ARCHIVE).XXXXXXXXXX); \
-	svn export $(SVN_URL) $$TARDIR/$(ARCHIVE)-$(MAJOR).$(MINOR).$(BUILD); \
-	tar -C $$TARDIR -cvzf - $(ARCHIVE)-$(MAJOR).$(MINOR).$(BUILD) > $(ARCHIVE)-$(MAJOR).$(MINOR).$(BUILD).tgz; \
+dist $(PROJECT)-$(MAJOR).$(MINOR).$(BUILD).tgz:
+	TARDIR=$(shell mktemp -d /tmp/$(PROJECT).XXXXXXXXXX); \
+	svn export $(SVN_URL) $$TARDIR/$(PROJECT)-$(MAJOR).$(MINOR).$(BUILD); \
+	tar -C $$TARDIR -cvzf - $(PROJECT)-$(MAJOR).$(MINOR).$(BUILD) > $(PROJECT)-$(MAJOR).$(MINOR).$(BUILD).tgz; \
 	rm -rf $$TARDIR
 
 ################################################################################
