@@ -1,8 +1,9 @@
 /**
- * Copyright 2012 Digital Aggregates Corporation, Colorado, USA.
- * Licensed under the terms in README.h.
- * Chip Overclock mailto:coverclock@diag.com
- * http://www.diag.com/navigation/downloads/Amigo.html
+ * @file
+ * Copyright 2012 Digital Aggregates Corporation, Colorado, USA\n
+ * Licensed under the terms in README.h\n
+ * Chip Overclock mailto:coverclock@diag.com\n
+ * http://www.diag.com/navigation/downloads/Amigo.html\n
  */
 
 #include "LC100.h"
@@ -41,10 +42,6 @@ byte LC100Base::index(byte col, byte row) {
 
 byte LC100Base::one(byte value) {
   return (value > 0) ? (value - 1) : 0; // If 0 or missing, default is 1, and (1 - 1) is 0.
-}
-
-void LC100Base::roll(byte row) {
-  rowHome = row % ROWS;
 }
   
 /*******************************************************************************
