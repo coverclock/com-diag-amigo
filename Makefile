@@ -9,7 +9,7 @@ PROJECT=amigo
 DIRECTORY=Amigo
 
 MAJOR=0
-MINOR=1
+MINOR=2
 BUILD=0
 
 SVN_URL=svn://graphite/$(PROJECT)/trunk/$(DIRECTORY)
