@@ -9,23 +9,37 @@ PROJECT=amigo
 DIRECTORY=Amigo
 
 MAJOR=0
-MINOR=2
+MINOR=3
 BUILD=0
 
 SVN_URL=svn://graphite/$(PROJECT)/trunk/$(DIRECTORY)
 HTTP_URL=http://www.diag.com/navigation/downloads/$(DIRECTORY).html
 FTP_URL=http://www.diag.com/ftp/$(PROJECT)-$(MAJOR).$(MINOR).$(BUILD).tgz
 
-APPLICATION_DIR=/Applications/Arduino.app
-
-TMP=/tmp
-
 COMPILEFOR=uno
 #COMPILEFOR=mega2560
+
+COMPILEON=$(shell uname -s)
 
 ################################################################################
 # CONFIGURATION
 ################################################################################
+
+TMP_DIR=/tmp
+PROJECT_DIR=$(HOME)/projects/$(PROJECT)
+FREERTOS_DIR=$(PROJECT_DIR)/FreeRTOSV7.1.0
+APPLICATION_DIR=/Applications/Arduino.app
+PROCESSING_DIR=$(APPLICATION_DIR)/Contents/Resources/Java
+LIBRARIES_DIR=$(PROCESSING_DIR)/Libraries
+HARDWARE_DIR=$(PROCESSING_DIR)/hardware
+
+ifeq ($(COMPILEON), Darwin)
+TOOLCHAIN_DIR=$(HARDWARE_DIR)/tools/$(ARCH)/bin
+endif
+
+ifeq ($(COMPILEON), Linux)
+TOOLCHAIN_DIR=/usr/bin
+endif
 
 ifeq ($(COMPILEFOR),uno)
 ARCH=avr
@@ -35,6 +49,10 @@ FREQUENCY=16000000L
 ARDUINO=100
 CORE=arduino
 VARIANT=standard
+TARGET=__AVR_ATmega328P__
+PORTABLE=ATmega328P
+TOOLCHAIN=GCC
+DEMO=Arduino_GCC
 endif
 
 ifeq ($(COMPILEFOR),mega2560)
@@ -45,34 +63,21 @@ FREQUENCY=16000000L
 ARDUINO=100
 CORE=arduino
 VARIANT=mega
+TARGET=__AVR_ATmega2560__
+PORTABLE=ATmega2560
+TOOLCHAIN=GCC
+DEMO=Arduino_GCC
 endif
 
-PROCESSING_DIR=$(APPLICATION_DIR)/Contents/Resources/Java
-LIBRARIES_DIR=$(PROCESSING_DIR)/Libraries
-HARDWARE_DIR=$(PROCESSING_DIR)/hardware
-TOOLCHAIN_DIR=$(HARDWARE_DIR)/tools/$(ARCH)/bin
+CROSS_COMPILE=$(ARCH)-
 
 CC=gcc
 CXX=g++
 LD=gcc
 OBJCOPY=objcopy
 
-CROSS_COMPILE=$(ARCH)-
-
-INCLUDES+=-I$(HARDWARE_DIR)/arduino/cores/$(CORE)
-INCLUDES+=-I$(HARDWARE_DIR)/arduino/variants/$(VARIANT)
-
-OBJECTS=
-
-ARCHIVES=
-
-LIBRARIES+=-lm
-
-CPPFLAGS=-DF_CPU=$(FREQUENCY) -DARDUINO=$(ARDUINO) $(INCLUDES)
-CFLAGS=-g -Os -Wall -fno-exceptions -ffunction-sections -fdata-sections -mmcu=$(CONTROLLER)
-LDFLAGS=-Os -Wl,--gc-sections -mmcu=$(CONTROLLER)
-OBJCOPYHEXFLAGS=-O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 
-OBJCOPYEEPFLAGS=-O ihex -R .eeprom
+#INCLUDES+=-I$(HARDWARE_DIR)/arduino/cores/$(CORE)
+#INCLUDES+=-I$(HARDWARE_DIR)/arduino/variants/$(VARIANT)
 
 ################################################################################
 # DEFAULT
@@ -83,18 +88,53 @@ PHONY+=default
 default:	all
 
 ################################################################################
+# BUILD
+################################################################################
+
+HDIRECTORIES+=$(FREERTOS_DIR)/Source/include
+HDIRECTORIES+=$(FREERTOS_DIR)/Source/portable/$(TOOLCHAIN)/$(PORTABLE)
+HDIRECTORIES+=$(FREERTOS_DIR)/Demo/$(DEMO)/include
+
+CDIRECTORIES+=$(FREERTOS_DIR)/Source
+CDIRECTORIES+=$(FREERTOS_DIR)/Source/portable/MemMang
+CDIRECTORIES+=$(FREERTOS_DIR)/Source/portable/$(TOOLCHAIN)/$(PORTABLE)
+CDIRECTORIES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_crc
+CDIRECTORIES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_digitalAnalog
+CDIRECTORIES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_fatf
+CDIRECTORIES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_i2c
+CDIRECTORIES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_serial
+CDIRECTORIES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_spi
+
+INCLUDES=$(addprefix -I,$(HDIRECTORIES))
+
+FILTER+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_fatf/cc932.c
+
+CFILES=$(filter-out $(FILTER),$(wildcard $(addsuffix /*.c,$(CDIRECTORIES))))
+
+OFILES=$(addsuffix .o,$(basename $(CFILES)))
+
+LIBRARIES+=-lm
+
+#CPPFLAGS=-DF_CPU=$(FREQUENCY) -DARDUINO=$(ARDUINO) $(INCLUDES)
+CPPFLAGS=-DF_CPU=$(FREQUENCY) -D$(TARGET)=1 $(INCLUDES)
+CFLAGS=-g -Os -Wall -fno-exceptions -ffunction-sections -fdata-sections -mmcu=$(CONTROLLER) -std=c99
+LDFLAGS=-Os -Wl,--gc-sections -mmcu=$(CONTROLLER)
+OBJCOPYHEXFLAGS=-O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 
+OBJCOPYEEPFLAGS=-O ihex -R .eeprom
+
+foo:	$(OFILES)
+
+################################################################################
 # DEPENCENDIES
 ################################################################################
 
 PHONY+=depend
 ARTIFACTS+=dependencies.mk
 
-DEPENDS:=${shell find . -type f \( -name '*.c' -o -name '*.cpp' \) -print}
-
 depend:
 	cp /dev/null dependencies.mk
-	for F in $(DEPENDS); do \
-		D=`dirname $$F | sed "s/^\.\///"`; \
+	for F in $(CFILES); do \
+		D=`dirname $$F`; \
 		echo -n "$$D/" >> dependencies.mk; \
 		$(CXX) $(CPPFLAGS) -MM -MG $$F >> dependencies.mk; \
 	done
@@ -109,7 +149,7 @@ PHONY+=dist
 ARTIFACTS+=$(PROJECT)-$(MAJOR).$(MINOR).$(BUILD).tgz
 
 dist $(PROJECT)-$(MAJOR).$(MINOR).$(BUILD).tgz:
-	TARDIR=$(shell mktemp -d /tmp/$(PROJECT).XXXXXXXXXX); \
+	TARDIR=$(shell mktemp -d $(TMP_DIR)/$(PROJECT).XXXXXXXXXX); \
 	svn export $(SVN_URL) $$TARDIR/$(PROJECT)-$(MAJOR).$(MINOR).$(BUILD); \
 	tar -C $$TARDIR -cvzf - $(PROJECT)-$(MAJOR).$(MINOR).$(BUILD) > $(PROJECT)-$(MAJOR).$(MINOR).$(BUILD).tgz; \
 	rm -rf $$TARDIR

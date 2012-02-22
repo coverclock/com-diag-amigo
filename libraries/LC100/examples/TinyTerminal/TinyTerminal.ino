@@ -7,7 +7,7 @@
  */
 
 #include <LiquidCrystal.h>
-#include "LC100.h"
+#include <LC100.h>
 
 /**
  * @def DEBUG
