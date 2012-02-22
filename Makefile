@@ -21,6 +21,9 @@ COMPILEFOR=uno
 
 COMPILEON=$(shell uname -s)
 
+# avrdude -C/Applications/Arduino.app/Contents/Resources/Java/hardware/tools/avr/etc/avrdude.conf -v -v -v -v -patmega328p -carduino -P/dev/tty.usbmodem26421 -b115200 -D -Uflash:w:/var/folders/4n/4nwDBN2OE-qiSpU6HPd8R++++TI/-Tmp-/build6163720206204340468.tmp/TinyTerminal.cpp.hex:i 
+
+
 ################################################################################
 # CONFIGURATION
 ################################################################################

@@ -174,7 +174,7 @@ public:
    * @param cols is the number of columns in this display.
    * @param rows is the number of rows in this display.
    */
-  virtual void begin(byte cols, byte rows) { lcd.begin(cols, rows); }
+  virtual void begin(byte cols, byte rows) { lcd.begin(cols, rows); lcd.cursor(); }
 
   /**
    * Place the cursor at the home position.
