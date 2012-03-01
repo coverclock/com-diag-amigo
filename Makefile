@@ -23,11 +23,26 @@ BUILD_PLATFORM=MegaBlink
 
 WORKING_DIR:=$(shell pwd)
 
-SERIAL=/dev/null
+SERIAL=/dev/tty.usbmodem26421
 BAUD=115200
 
 DATESTAMP=$(shell date +'%Y%m%d')
 TIMESTAMP=$(shell date -u +'%Y%m%d%H%M%S%N%Z')
+
+# Cribbed from verbose output of Arduino build for the Uno to use as a working reference design.
+# avr-g++ -c -g -Os -Wall -fno-exceptions -ffunction-sections -fdata-sections -mmcu=atmega328p -DF_CPU=16000000L -DARDUINO=100 -Iarduino -Istandard PWM.cpp -oPWM.cpp.o 
+# avr-gcc -Os -Wl,--gc-sections -mmcu=atmega328p -o PWM.cpp.elf PWM.cpp.o core.a -Lbuild373539219298904089.tmp -lm 
+# avr-objcopy -O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 PWM.cpp.elf PWM.cpp.eep 
+# avr-objcopy -O ihex -R .eeprom PWM.cpp.elf PWM.cpp.hex 
+# avrdude -Cavrdude.conf -v -v -v -v -patmega328p -carduino -P/dev/tty.usbmodem26431 -b115200 -D -Uflash:w:PWM.cpp.hex:i 
+
+# Cribbed from verbose output of Arduino build for the Mega 2560 to use as a working reference design.
+# avr-g++ -c -g -Os -Wall -fno-exceptions -ffunction-sections -fdata-sections -mmcu=atmega2560 -DF_CPU=16000000L -DARDUINO=100 -Iarduino -Imega Empty.cpp -oEmpty.cpp.o 
+# avr-gcc -Os -Wl,--gc-sections -mmcu=atmega2560 -o Empty.cpp.elf Empty.cpp.o core.a -Lbuild7537680787165628439.tmp -lm 
+# avr-objcopy -O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 Empty.cpp.elf Empty.cpp.eep 
+# avr-objcopy -O ihex -R .eeprom Empty.cpp.elf Empty.cpp.hex 
+# avrdude -Cavrdude.conf -v -v -v -v -patmega2560 -cstk500v2 -P/dev/tty.usbmodem26421 -b115200 -D -Uflash:w:Empty.cpp.hex:i 
+
 
 ################################################################################
 # CONFIGURATION
@@ -86,7 +101,7 @@ TARGET=__AVR_ATmega2560__
 PORTABLE=ATmega2560
 TOOLCHAIN=GCC
 DEMO=EtherMega2560_$(TOOLCHAIN)
-CONFIG=arduino
+CONFIG=stk500v2
 PROGRAMMER=avrispmkII
 PART=m2560
 endif
@@ -134,6 +149,7 @@ LIBRARIES+=-lm
 CC=gcc
 CXX=g++
 LD=gcc
+NM=nm
 OBJCOPY=objcopy
 AVRDUDE=avrdude
 
@@ -143,8 +159,8 @@ CPPFLAGS=-DF_CPU=$(FREQUENCY) $(INCLUDES)
 #CFLAGS=-g -Os -Wall -fno-exceptions -ffunction-sections -fdata-sections -std=c99
 CFLAGS=-g -Os -Wall -fno-exceptions -ffunction-sections -fdata-sections
 LDFLAGS=-Os -Wl,--gc-sections -T $(FAMILY).x
-OBJCOPYHEXFLAGS=-O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 
-OBJCOPYEEPFLAGS=-O ihex -R .eeprom
+OBJCOPYEEPFLAGS=-O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 
+OBJCOPYHEXFLAGS=-O ihex -R .eeprom
 
 ################################################################################
 # DEFAULT
@@ -159,24 +175,15 @@ default:	all
 ################################################################################
 
 ARTIFACTS+=$(OFILES)
-ARTIFACTS+=MegaBlink.elf
-ARTIFACTS+=MegaBlink.eep
-ARTIFACTS+=MegaBlink.hex
+ARTIFACTS+=$(BUILD_PLATFORM).elf
+ARTIFACTS+=$(BUILD_PLATFORM).map
+ARTIFACTS+=$(BUILD_PLATFORM).eep
+ARTIFACTS+=$(BUILD_PLATFORM).hex
 
-DELIVERABLES+=MegaBlink.hex
+DELIVERABLES+=$(BUILD_PLATFORM).hex
 
-MegaBlink.elf:	$(OFILES)
+$(BUILD_PLATFORM).elf:	$(OFILES)
 	$(CROSS_COMPILE)$(CC) $(ARCHFLAGS) $(LDFLAGS) -o $@ $(OFILES) $(OBJECTS) $(ARCHIVES) $(LIBRARIES)
-
-MegaBlink.eep:	MegaBlink.elf
-
-MegaBlink.hex:	MegaBlink.elf
-
-#avr-g++ -c -g -Os -Wall -fno-exceptions -ffunction-sections -fdata-sections -mmcu=atmega328p -DF_CPU=16000000L -DARDUINO=100 -Iarduino -Istandard PWM.cpp -oPWM.cpp.o 
-#avr-gcc -Os -Wl,--gc-sections -mmcu=atmega328p -o PWM.cpp.elf PWM.cpp.o core.a -Lbuild373539219298904089.tmp -lm 
-#avr-objcopy -O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 PWM.cpp.elf PWM.cpp.eep 
-#avr-objcopy -O ihex -R .eeprom PWM.cpp.elf PWM.cpp.hex 
-#avrdude -Cavrdude.conf -v -v -v -v -patmega328p -carduino -P/dev/tty.usbmodem26431 -b115200 -D -Uflash:w:PWM.cpp.hex:i 
 
 ################################################################################
 # DEPENCENDIES
@@ -250,9 +257,9 @@ implicit:
 interrogate:
 	$(AVRDUDE) -v -C$(AVRDUDE_CONF) -p$(PART) -c$(PROGRAMMER) -Pusb -b$(BAUD) -t
 	
-upload:	$(PLATFORM).hex
+upload:	$(BUILD_PLATFORM).hex
 	stty -f $(SERIAL) hupcl
-	$(AVRDUDE) -C$(AVRDUDE_CONF) -v -p$(CONTROLLER) -c$(CONFIG) -P$(SERIAL) -b$(BAUD) -D -Uflash:w:$<:i
+	$(AVRDUDE) -C$(AVRDUDE_CONF) -v -v -v -v -p$(CONTROLLER) -c$(CONFIG) -P$(SERIAL) -b$(BAUD) -D -Uflash:w:$<:i
 
 backup:
 	( cd $(FREERTOS_DIR)/..; DIRNAME="`basename $(FREERTOS_DIR)`"; echo $$DIRNAME; tar cvzf - $$DIRNAME > $$DIRNAME-$(TIMESTAMP).tgz )
@@ -278,6 +285,9 @@ backup:
 
 %.hex:	%.elf
 	$(CROSS_COMPILE)$(OBJCOPY) $(OBJCOPYHEXFLAGS) $< $@
+
+%.map:	%.elf
+	$(CROSS_COMPILE)$(NM) -n -o -a $< > $@
 
 %:	%_unstripped
 	$(CROSS_COMPILE)$(STRIP) -o $@ $<
