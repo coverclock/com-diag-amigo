@@ -142,7 +142,7 @@ ARCHFLAGS=-mmcu=$(CONTROLLER) -mrelax
 CPPFLAGS=-DF_CPU=$(FREQUENCY) $(INCLUDES)
 #CFLAGS=-g -Os -Wall -fno-exceptions -ffunction-sections -fdata-sections -std=c99
 CFLAGS=-g -Os -Wall -fno-exceptions -ffunction-sections -fdata-sections
-LDFLAGS=-Os -Wl,--gc-sections
+LDFLAGS=-Os -Wl,--gc-sections -T $(FAMILY).x
 OBJCOPYHEXFLAGS=-O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 
 OBJCOPYEEPFLAGS=-O ihex -R .eeprom
 
