@@ -1,4 +1,7 @@
 /* Default linker script, for normal executables */
+/* From AVR GCC toolchain in AVR Studio 5.1 with AVR Freaks stu_san mods. */
+/* For AVR6 architecture like the ATmega2560 used on Freetronics EtherMega2560. */
+/* coverclock@diag.com 2012-03-01 */
 OUTPUT_FORMAT("elf32-avr","elf32-avr","elf32-avr")
 OUTPUT_ARCH(avr:6)
 MEMORY
@@ -120,6 +123,10 @@ SECTIONS
     KEEP (*(.init8))
     *(.init9)  /* Call main().  */
     KEEP (*(.init9))
+    *(.function)  /* Functions to which pointers point go in low memory. */
+    KEEP (*(.function))
+    *(.task)  /* Tasks go in low memory. */
+    KEEP (*(.task))
     *(.text)
     . = ALIGN(2);
     *(.text.*)
