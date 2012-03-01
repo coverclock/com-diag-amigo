@@ -16,36 +16,48 @@ SVN_URL=svn://graphite/$(PROJECT)/trunk/$(DIRECTORY)
 HTTP_URL=http://www.diag.com/navigation/downloads/$(DIRECTORY).html
 FTP_URL=http://www.diag.com/ftp/$(PROJECT)-$(MAJOR).$(MINOR).$(BUILD).tgz
 
-COMPILEFOR=uno
-#COMPILEFOR=mega2560
+#BUILD_TARGET=Uno
+BUILD_TARGET=EtherMega2560
+BUILD_HOST=$(shell uname -s)
+BUILD_PLATFORM=MegaBlink
 
-COMPILEON=$(shell uname -s)
+WORKING_DIR:=$(shell pwd)
 
-# avrdude -C/Applications/Arduino.app/Contents/Resources/Java/hardware/tools/avr/etc/avrdude.conf -v -v -v -v -patmega328p -carduino -P/dev/tty.usbmodem26421 -b115200 -D -Uflash:w:/var/folders/4n/4nwDBN2OE-qiSpU6HPd8R++++TI/-Tmp-/build6163720206204340468.tmp/TinyTerminal.cpp.hex:i 
+SERIAL=/dev/null
+BAUD=115200
 
+DATESTAMP=$(shell date +'%Y%m%d')
+TIMESTAMP=$(shell date -u +'%Y%m%d%H%M%S%N%Z')
 
 ################################################################################
 # CONFIGURATION
 ################################################################################
 
+
+# Darwin identifies my desktop where I run graphical tools and interactive jobs.
+# Linux identifies my multicore server where I run builds and background jobs.
+
+ifeq ($(BUILD_HOST), Darwin)
 TMP_DIR=/tmp
-PROJECT_DIR=$(HOME)/projects/$(PROJECT)
+ROOT_DIR=$(HOME)/Desktop/Silver
+PROJECT_DIR=$(ROOT_DIR)/projects/$(PROJECT)
 FREERTOS_DIR=$(PROJECT_DIR)/FreeRTOSV7.1.0
-APPLICATION_DIR=/Applications/Arduino.app
-PROCESSING_DIR=$(APPLICATION_DIR)/Contents/Resources/Java
-LIBRARIES_DIR=$(PROCESSING_DIR)/Libraries
-HARDWARE_DIR=$(PROCESSING_DIR)/hardware
-
-ifeq ($(COMPILEON), Darwin)
-TOOLCHAIN_DIR=$(HARDWARE_DIR)/tools/$(ARCH)/bin
+TOOLCHAIN_BIN=/Applications/Arduino.app/Contents/Resources/Java/hardware/tools/$(ARCH)/bin
+AVRDUDE_CONF=/Applications/Arduino.app/Contents/Resources/Java/hardware/tools/$(ARCH)/etc/avrdude.conf
 endif
 
-ifeq ($(COMPILEON), Linux)
-TOOLCHAIN_DIR=/usr/bin
+ifeq ($(BUILD_HOST), Linux)
+TMP_DIR=/tmp
+ROOT_DIR=$(HOME)
+PROJECT_DIR=$(ROOT_DIR)/projects/$(PROJECT)
+FREERTOS_DIR=$(PROJECT_DIR)/FreeRTOSV7.1.0
+TOOLCHAIN_BIN=/usr/bin
+AVRDUDE_CONF=$(WORKING_DIR)/avrdude.conf
 endif
 
-ifeq ($(COMPILEFOR),uno)
+ifeq ($(BUILD_TARGET),Uno)
 ARCH=avr
+CROSS_COMPILE=$(ARCH)-
 FAMILY=avr5
 CONTROLLER=atmega328p
 FREQUENCY=16000000L
@@ -55,11 +67,15 @@ VARIANT=standard
 TARGET=__AVR_ATmega328P__
 PORTABLE=ATmega328P
 TOOLCHAIN=GCC
-DEMO=Arduino_GCC
+DEMO=Uno_$(TOOLCHAIN)
+CONFIG=arduino
+PROGRAMMER=avrispmkII
+PART=m328p
 endif
 
-ifeq ($(COMPILEFOR),mega2560)
+ifeq ($(BUILD_TARGET),EtherMega2560)
 ARCH=avr
+CROSS_COMPILE=$(ARCH)-
 FAMILY=avr6
 CONTROLLER=atmega2560
 FREQUENCY=16000000L
@@ -69,18 +85,66 @@ VARIANT=mega
 TARGET=__AVR_ATmega2560__
 PORTABLE=ATmega2560
 TOOLCHAIN=GCC
-DEMO=Arduino_GCC
+DEMO=EtherMega2560_$(TOOLCHAIN)
+CONFIG=arduino
+PROGRAMMER=avrispmkII
+PART=m2560
 endif
 
-CROSS_COMPILE=$(ARCH)-
+ifeq ($(BUILD_PLATFORM), MegaBlink)
+CFILES+=$(FREERTOS_DIR)/Source/portable/MemMang/heap_2.c
+CFILES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_digitalAnalog/digitalAnalog.c
+CFILES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_serial/lib_serial.c
+CFILES+=$(FREERTOS_DIR)/Demo/$(DEMO)/MegaBlink/main.c
+endif
+
+CFILES+=$(FREERTOS_DIR)/Source/croutine.c
+CFILES+=$(FREERTOS_DIR)/Source/list.c
+CFILES+=$(FREERTOS_DIR)/Source/queue.c
+CFILES+=$(FREERTOS_DIR)/Source/tasks.c
+CFILES+=$(FREERTOS_DIR)/Source/timers.c
+CFILES+=$(FREERTOS_DIR)/Source/portable/$(TOOLCHAIN)/$(PORTABLE)/port.c
+
+#INCLUDES+=-I$(HARDWARE_DIR)/arduino/cores/$(CORE)
+#INCLUDES+=-I$(HARDWARE_DIR)/arduino/variants/$(VARIANT)
+
+HDIRECTORIES+=$(FREERTOS_DIR)/Source/include
+HDIRECTORIES+=$(FREERTOS_DIR)/Source/portable/$(TOOLCHAIN)/$(PORTABLE)
+HDIRECTORIES+=$(FREERTOS_DIR)/Demo/$(DEMO)/include
+
+INCLUDES+=$(addprefix -I,$(HDIRECTORIES))
+
+#CFILES+=$(FREERTOS_DIR)/Source/portable/MemMang/heap_1.c
+#CFILES+=$(FREERTOS_DIR)/Source/portable/MemMang/heap_3.c
+#CFILES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_crc/crc8.c
+#CFILES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_ext_ram/ext_ram.c
+#CFILES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_fatf/cc932.c
+#CFILES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_fatf/ccsbcs.c
+#CFILES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_fatf/diskio.c
+#CFILES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_fatf/ff.c
+#CFILES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_i2c/i2cMultiMaster.c
+#CFILES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_rtc/rtc.c
+#CFILES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_servo/servoPWM.c
+#CFILES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_spi/spi.c
+
+OFILES+=$(addsuffix .o,$(basename $(CFILES)))
+
+LIBRARIES+=-lm
 
 CC=gcc
 CXX=g++
 LD=gcc
 OBJCOPY=objcopy
+AVRDUDE=avrdude
 
-#INCLUDES+=-I$(HARDWARE_DIR)/arduino/cores/$(CORE)
-#INCLUDES+=-I$(HARDWARE_DIR)/arduino/variants/$(VARIANT)
+ARCHFLAGS=-mmcu=$(CONTROLLER) -mrelax
+#CPPFLAGS=-DF_CPU=$(FREQUENCY) -DARDUINO=$(ARDUINO) $(INCLUDES)
+CPPFLAGS=-DF_CPU=$(FREQUENCY) $(INCLUDES)
+#CFLAGS=-g -Os -Wall -fno-exceptions -ffunction-sections -fdata-sections -std=c99
+CFLAGS=-g -Os -Wall -fno-exceptions -ffunction-sections -fdata-sections
+LDFLAGS=-Os -Wl,--gc-sections
+OBJCOPYHEXFLAGS=-O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 
+OBJCOPYEEPFLAGS=-O ihex -R .eeprom
 
 ################################################################################
 # DEFAULT
@@ -94,38 +158,25 @@ default:	all
 # BUILD
 ################################################################################
 
-HDIRECTORIES+=$(FREERTOS_DIR)/Source/include
-HDIRECTORIES+=$(FREERTOS_DIR)/Source/portable/$(TOOLCHAIN)/$(PORTABLE)
-HDIRECTORIES+=$(FREERTOS_DIR)/Demo/$(DEMO)/include
+ARTIFACTS+=$(OFILES)
+ARTIFACTS+=MegaBlink.elf
+ARTIFACTS+=MegaBlink.eep
+ARTIFACTS+=MegaBlink.hex
 
-CDIRECTORIES+=$(FREERTOS_DIR)/Source
-CDIRECTORIES+=$(FREERTOS_DIR)/Source/portable/MemMang
-CDIRECTORIES+=$(FREERTOS_DIR)/Source/portable/$(TOOLCHAIN)/$(PORTABLE)
-CDIRECTORIES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_crc
-CDIRECTORIES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_digitalAnalog
-CDIRECTORIES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_fatf
-CDIRECTORIES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_i2c
-CDIRECTORIES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_serial
-CDIRECTORIES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_spi
+DELIVERABLES+=MegaBlink.hex
 
-INCLUDES=$(addprefix -I,$(HDIRECTORIES))
+MegaBlink.elf:	$(OFILES)
+	$(CROSS_COMPILE)$(CC) $(ARCHFLAGS) $(LDFLAGS) -o $@ $(OFILES) $(OBJECTS) $(ARCHIVES) $(LIBRARIES)
 
-FILTER+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_fatf/cc932.c
+MegaBlink.eep:	MegaBlink.elf
 
-CFILES=$(filter-out $(FILTER),$(wildcard $(addsuffix /*.c,$(CDIRECTORIES))))
+MegaBlink.hex:	MegaBlink.elf
 
-OFILES=$(addsuffix .o,$(basename $(CFILES)))
-
-LIBRARIES+=-lm
-
-#CPPFLAGS=-DF_CPU=$(FREQUENCY) -DARDUINO=$(ARDUINO) $(INCLUDES)
-CPPFLAGS=-DF_CPU=$(FREQUENCY) -D$(TARGET)=1 $(INCLUDES)
-CFLAGS=-g -Os -Wall -fno-exceptions -ffunction-sections -fdata-sections -mmcu=$(CONTROLLER) -std=c99
-LDFLAGS=-Os -Wl,--gc-sections -mmcu=$(CONTROLLER)
-OBJCOPYHEXFLAGS=-O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 
-OBJCOPYEEPFLAGS=-O ihex -R .eeprom
-
-foo:	$(OFILES)
+#avr-g++ -c -g -Os -Wall -fno-exceptions -ffunction-sections -fdata-sections -mmcu=atmega328p -DF_CPU=16000000L -DARDUINO=100 -Iarduino -Istandard PWM.cpp -oPWM.cpp.o 
+#avr-gcc -Os -Wl,--gc-sections -mmcu=atmega328p -o PWM.cpp.elf PWM.cpp.o core.a -Lbuild373539219298904089.tmp -lm 
+#avr-objcopy -O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 PWM.cpp.elf PWM.cpp.eep 
+#avr-objcopy -O ihex -R .eeprom PWM.cpp.elf PWM.cpp.hex 
+#avrdude -Cavrdude.conf -v -v -v -v -patmega328p -carduino -P/dev/tty.usbmodem26431 -b115200 -D -Uflash:w:PWM.cpp.hex:i 
 
 ################################################################################
 # DEPENCENDIES
@@ -185,23 +236,42 @@ manpages:
 	$(BROWSER) file:doc/pdf/manpages.pdf
 
 ################################################################################
+# UTILITIES
+################################################################################
+	
+PHONY+=path implicit interrogate upload backup
+
+path:
+	@echo export PATH=$(PATH):$(TOOLCHAIN_BIN)
+
+implicit:
+	$(CROSS_COMPILE)$(CXX) -dM -E -mmcu=$(CONTROLLER) - < /dev/null
+
+interrogate:
+	$(AVRDUDE) -v -C$(AVRDUDE_CONF) -p$(PART) -c$(PROGRAMMER) -Pusb -b$(BAUD) -t
+	
+upload:	$(PLATFORM).hex
+	stty -f $(SERIAL) hupcl
+	$(AVRDUDE) -C$(AVRDUDE_CONF) -v -p$(CONTROLLER) -c$(CONFIG) -P$(SERIAL) -b$(BAUD) -D -Uflash:w:$<:i
+
+backup:
+	( cd $(FREERTOS_DIR)/..; DIRNAME="`basename $(FREERTOS_DIR)`"; echo $$DIRNAME; tar cvzf - $$DIRNAME > $$DIRNAME-$(TIMESTAMP).tgz )
+
+################################################################################
 # PATTERNS
 ################################################################################
 
 %.txt:	%.cpp
-	$(CROSS_COMPILE)$(CXX) -E $(CPPFLAGS) -c $< > $*.txt
+	$(CROSS_COMPILE)$(CXX) $(ARCHFLAGS) -E $(CPPFLAGS) -c $< > $*.txt
 
 %.o:	%.cpp
-	$(CROSS_COMPILE)$(CXX) $(CPPFLAGS) $(CXXFLAGS) -o $@ -c $<
+	$(CROSS_COMPILE)$(CXX) $(ARCHFLAGS) $(CPPFLAGS) $(CXXFLAGS) -o $@ -c $<
 
 %.txt:	%.c
-	$(CROSS_COMPILE)$(CC) -E $(CPPFLAGS) -c $< > $*.txt
+	$(CROSS_COMPILE)$(CC) $(ARCHFLAGS) -E $(CPPFLAGS) -c $< > $*.txt
 
 %.o:	%.c
-	$(CROSS_COMPILE)$(CC) $(CPPFLAGS) $(CFLAGS) -o $@ -c $<
-
-%.elf:	%.o
-	$(CROSS_COMPILE)$(CC) $(LDFLAGS) -o $@ $< $(OBJECTS) $(ARCHIVES) $(LIBRARIES)
+	$(CROSS_COMPILE)$(CC) $(ARCHFLAGS) $(CPPFLAGS) $(CFLAGS) -o $@ -c $<
 
 %.eep:	%.elf
 	$(CROSS_COMPILE)$(OBJCOPY) $(OBJCOPYEEPFLAGS) $< $@
@@ -213,7 +283,7 @@ manpages:
 	$(CROSS_COMPILE)$(STRIP) -o $@ $<
 
 ################################################################################
-# BUILD
+# TARGETS
 ################################################################################
 
 PHONY+=all
