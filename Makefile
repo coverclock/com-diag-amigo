@@ -12,19 +12,47 @@ MAJOR=0
 MINOR=3
 BUILD=0
 
-SVN_URL=svn://graphite/$(PROJECT)/trunk/$(DIRECTORY)
-HTTP_URL=http://www.diag.com/navigation/downloads/$(DIRECTORY).html
-FTP_URL=http://www.diag.com/ftp/$(PROJECT)-$(MAJOR).$(MINOR).$(BUILD).tgz
-
 #BUILD_TARGET=Uno
 BUILD_TARGET=EtherMega2560
 BUILD_HOST=$(shell uname -s)
 BUILD_PLATFORM=MegaBlink
 
-WORKING_DIR:=$(shell pwd)
-
 SERIAL=/dev/tty.usbmodem26421
 BAUD=115200
+
+# Darwin identifies my desktop where I run graphical tools and interactive jobs.
+# Linux identifies my multicore server where I run big background jobs.
+
+ifeq ($(BUILD_HOST), Darwin)
+TMP_DIR=/tmp
+ROOT_DIR=$(HOME)/Desktop/Silver
+PROJECT_DIR=$(ROOT_DIR)/projects/$(PROJECT)
+FREERTOS_DIR=$(PROJECT_DIR)/FreeRTOSV7.1.0
+APPLICATION_DIR=/Applications
+ARDUINO_DIR=$(APPLICATION_DIR)/Arduino.app
+TOOLS_DIR=$(ARDUINO_DIR)/Contents/Resources/Java/hardware/tools
+TOOLCHAIN_BIN=$(TOOLS_DIR)/$(ARCH)/bin
+AVRDUDE_CONF=$(TOOLS_DIR)/$(ARCH)/etc/avrdude.conf
+endif
+
+ifeq ($(BUILD_HOST), Linux)
+TMP_DIR=/tmp
+ROOT_DIR=$(HOME)
+PROJECT_DIR=$(ROOT_DIR)/projects/$(PROJECT)
+FREERTOS_DIR=$(PROJECT_DIR)/FreeRTOSV7.1.0
+TOOLCHAIN_BIN=/usr/bin
+AVRDUDE_CONF=$(WORKING_DIR)/avrdude.conf
+endif
+
+################################################################################
+# CONFIGURATION
+################################################################################
+
+HTTP_URL=http://www.diag.com/navigation/downloads/$(DIRECTORY).html
+FTP_URL=http://www.diag.com/ftp/$(PROJECT)-$(MAJOR).$(MINOR).$(BUILD).tgz
+SVN_URL=svn://graphite/$(PROJECT)/trunk/$(DIRECTORY)
+
+WORKING_DIR:=$(shell pwd)
 
 DATESTAMP=$(shell date +'%Y%m%d')
 TIMESTAMP=$(shell date -u +'%Y%m%d%H%M%S%N%Z')
@@ -42,33 +70,6 @@ TIMESTAMP=$(shell date -u +'%Y%m%d%H%M%S%N%Z')
 # avr-objcopy -O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 Empty.cpp.elf Empty.cpp.eep 
 # avr-objcopy -O ihex -R .eeprom Empty.cpp.elf Empty.cpp.hex 
 # avrdude -Cavrdude.conf -v -v -v -v -patmega2560 -cstk500v2 -P/dev/tty.usbmodem26421 -b115200 -D -Uflash:w:Empty.cpp.hex:i 
-
-
-################################################################################
-# CONFIGURATION
-################################################################################
-
-
-# Darwin identifies my desktop where I run graphical tools and interactive jobs.
-# Linux identifies my multicore server where I run builds and background jobs.
-
-ifeq ($(BUILD_HOST), Darwin)
-TMP_DIR=/tmp
-ROOT_DIR=$(HOME)/Desktop/Silver
-PROJECT_DIR=$(ROOT_DIR)/projects/$(PROJECT)
-FREERTOS_DIR=$(PROJECT_DIR)/FreeRTOSV7.1.0
-TOOLCHAIN_BIN=/Applications/Arduino.app/Contents/Resources/Java/hardware/tools/$(ARCH)/bin
-AVRDUDE_CONF=/Applications/Arduino.app/Contents/Resources/Java/hardware/tools/$(ARCH)/etc/avrdude.conf
-endif
-
-ifeq ($(BUILD_HOST), Linux)
-TMP_DIR=/tmp
-ROOT_DIR=$(HOME)
-PROJECT_DIR=$(ROOT_DIR)/projects/$(PROJECT)
-FREERTOS_DIR=$(PROJECT_DIR)/FreeRTOSV7.1.0
-TOOLCHAIN_BIN=/usr/bin
-AVRDUDE_CONF=$(WORKING_DIR)/avrdude.conf
-endif
 
 ifeq ($(BUILD_TARGET),Uno)
 ARCH=avr
@@ -106,11 +107,30 @@ PROGRAMMER=avrispmkII
 PART=m2560
 endif
 
+CC=gcc
+CXX=g++
+LD=gcc
+NM=nm
+OBJCOPY=objcopy
+AVRDUDE=avrdude
+
+################################################################################
+# DEFAULT
+################################################################################
+
+PHONY+=default
+
+default:	all
+
+################################################################################
+# BUILD
+################################################################################
+
 ifeq ($(BUILD_PLATFORM), MegaBlink)
+CFILES+=$(FREERTOS_DIR)/Demo/$(DEMO)/MegaBlink/main.c
 CFILES+=$(FREERTOS_DIR)/Source/portable/MemMang/heap_2.c
 CFILES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_digitalAnalog/digitalAnalog.c
 CFILES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_serial/lib_serial.c
-CFILES+=$(FREERTOS_DIR)/Demo/$(DEMO)/MegaBlink/main.c
 endif
 
 CFILES+=$(FREERTOS_DIR)/Source/croutine.c
@@ -146,33 +166,14 @@ OFILES+=$(addsuffix .o,$(basename $(CFILES)))
 
 LIBRARIES+=-lm
 
-CC=gcc
-CXX=g++
-LD=gcc
-NM=nm
-OBJCOPY=objcopy
-AVRDUDE=avrdude
-
 ARCHFLAGS=-mmcu=$(CONTROLLER) -mrelax
 #CPPFLAGS=-DF_CPU=$(FREQUENCY) -DARDUINO=$(ARDUINO) $(INCLUDES)
 CPPFLAGS=-DF_CPU=$(FREQUENCY) $(INCLUDES)
 #CFLAGS=-g -Os -Wall -fno-exceptions -ffunction-sections -fdata-sections -std=c99
 CFLAGS=-g -Os -Wall -fno-exceptions -ffunction-sections -fdata-sections
-LDFLAGS=-Os -Wl,--gc-sections -T $(FAMILY).x
+LDFLAGS=-Os -Wl,--gc-sections
 OBJCOPYEEPFLAGS=-O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 
 OBJCOPYHEXFLAGS=-O ihex -R .eeprom
-
-################################################################################
-# DEFAULT
-################################################################################
-
-PHONY+=default
-
-default:	all
-
-################################################################################
-# BUILD
-################################################################################
 
 ARTIFACTS+=$(OFILES)
 ARTIFACTS+=$(BUILD_PLATFORM).elf
@@ -190,17 +191,32 @@ $(BUILD_PLATFORM).elf:	$(OFILES)
 ################################################################################
 
 PHONY+=depend
-ARTIFACTS+=dependencies.mk
+ARTIFACTS+=$(BUILD_HOST).mk
+
+# For some reason echo in make on the Mac (Darwin) doesn't understand the -n
+# option even though its man page documents it. And echo in make on the server
+# (Linux) doesn't understand \c. The paths in the dependencies file are
+# different too, so we can't use the Mac dependencies file on Linux and vice
+# versa. Nothing is ever simple.
 
 depend:
-	cp /dev/null dependencies.mk
+	cp /dev/null $(BUILD_HOST).mk
+ifeq ($(BUILD_HOST), Darwin)
+	for F in $(CFILES); do \
+		D=`dirname $$F`; \
+		echo "$$D/\c" >> dependencies.mk; \
+		$(CXX) $(CPPFLAGS) -MM -MG $$F >> $(BUILD_HOST).mk; \
+	done
+endif
+ifeq ($(BUILD_HOST), Linux)
 	for F in $(CFILES); do \
 		D=`dirname $$F`; \
 		echo -n "$$D/" >> dependencies.mk; \
-		$(CXX) $(CPPFLAGS) -MM -MG $$F >> dependencies.mk; \
+		$(CXX) $(CPPFLAGS) -MM -MG $$F >> $(BUILD_HOST).mk; \
 	done
+endif
 
--include dependencies.mk
+-include $(BUILD_HOST).mk
 
 ################################################################################
 # DISTRIBUTION
@@ -246,7 +262,7 @@ manpages:
 # UTILITIES
 ################################################################################
 	
-PHONY+=path implicit interrogate upload backup
+PHONY+=path implicit interrogate upload backup terminal
 
 path:
 	@echo export PATH=$(PATH):$(TOOLCHAIN_BIN)
@@ -254,15 +270,26 @@ path:
 implicit:
 	$(CROSS_COMPILE)$(CXX) -dM -E -mmcu=$(CONTROLLER) - < /dev/null
 
+backup:
+	( cd $(FREERTOS_DIR)/..; DIRNAME="`basename $(FREERTOS_DIR)`"; echo $$DIRNAME; tar cvzf - $$DIRNAME > $$DIRNAME-$(TIMESTAMP).tgz )
+
+# These targets only exist when running on my Mac because that's to what the
+# Arduino board connects via USB.
+
+ifeq ($(BUILD_HOST), Darwin)
+
 interrogate:
 	$(AVRDUDE) -v -C$(AVRDUDE_CONF) -p$(PART) -c$(PROGRAMMER) -Pusb -b$(BAUD) -t
 	
 upload:	$(BUILD_PLATFORM).hex
 	stty -f $(SERIAL) hupcl
-	$(AVRDUDE) -C$(AVRDUDE_CONF) -v -v -v -v -p$(CONTROLLER) -c$(CONFIG) -P$(SERIAL) -b$(BAUD) -D -Uflash:w:$<:i
+	$(AVRDUDE) -C$(AVRDUDE_CONF) -v -p$(CONTROLLER) -c$(CONFIG) -P$(SERIAL) -b$(BAUD) -D -Uflash:w:$<:i
 
-backup:
-	( cd $(FREERTOS_DIR)/..; DIRNAME="`basename $(FREERTOS_DIR)`"; echo $$DIRNAME; tar cvzf - $$DIRNAME > $$DIRNAME-$(TIMESTAMP).tgz )
+terminal:
+	stty -f $(SERIAL) hupcl
+	screen -L $(SERIAL) $(BAUD)
+
+endif
 
 ################################################################################
 # PATTERNS
