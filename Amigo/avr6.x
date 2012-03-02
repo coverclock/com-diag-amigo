@@ -1,6 +1,6 @@
 /* Default linker script, for normal executables */
-/* From AVR GCC toolchain in AVR Studio 5.1 with AVR Freaks stu_san mods. */
-/* For AVR6 architecture like the ATmega2560 used on Freetronics EtherMega2560. */
+/* From AVR GCC toolchain with AVR Freaks stu_san mods. */
+/* For AVR6 architecture like the ATmega2560 on the Freetronics EtherMega2560. */
 /* coverclock@diag.com 2012-03-01 */
 OUTPUT_FORMAT("elf32-avr","elf32-avr","elf32-avr")
 OUTPUT_ARCH(avr:6)
