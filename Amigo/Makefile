@@ -8,45 +8,38 @@
 PROJECT=amigo
 DIRECTORY=Amigo
 
-MAJOR=0
-MINOR=3
-BUILD=0
-
 #BUILD_TARGET=Uno
 BUILD_TARGET=EtherMega2560
 BUILD_HOST=$(shell uname -s)
 BUILD_PLATFORM=MegaBlink
 
-SERIAL=/dev/tty.usbmodem26421
+#SERIAL=/dev/tty.usbmodem26421
+SERIAL=/dev/tty.usbmodem411
 BAUD=115200
 
-# Darwin identifies my desktop where I run graphical tools and interactive jobs.
-# Linux identifies my multicore server where I run big background jobs.
+# Darwin identifies my Mac Mini desktop.
+# Linux identifies my Dell quadcore server.
 
 ifeq ($(BUILD_HOST), Darwin)
 TMP_DIR=/tmp
+APPLICATION_DIR=/Applications
 ROOT_DIR=$(HOME)/Desktop/Silver
 PROJECT_DIR=$(ROOT_DIR)/projects/$(PROJECT)
-FREERTOS_DIR=$(PROJECT_DIR)/FreeRTOSV7.1.0
-APPLICATION_DIR=/Applications
-ARDUINO_DIR=$(APPLICATION_DIR)/Arduino.app
-TOOLS_DIR=$(ARDUINO_DIR)/Contents/Resources/Java/hardware/tools
-TOOLCHAIN_BIN=$(TOOLS_DIR)/$(ARCH)/bin
-AVRDUDE_CONF=$(TOOLS_DIR)/$(ARCH)/etc/avrdude.conf
 endif
 
 ifeq ($(BUILD_HOST), Linux)
 TMP_DIR=/tmp
 ROOT_DIR=$(HOME)
 PROJECT_DIR=$(ROOT_DIR)/projects/$(PROJECT)
-FREERTOS_DIR=$(PROJECT_DIR)/FreeRTOSV7.1.0
-TOOLCHAIN_BIN=/usr/bin
-AVRDUDE_CONF=$(WORKING_DIR)/avrdude.conf
 endif
 
 ################################################################################
 # CONFIGURATION
 ################################################################################
+
+MAJOR=0
+MINOR=3
+BUILD=0
 
 HTTP_URL=http://www.diag.com/navigation/downloads/$(DIRECTORY).html
 FTP_URL=http://www.diag.com/ftp/$(PROJECT)-$(MAJOR).$(MINOR).$(BUILD).tgz
@@ -56,20 +49,6 @@ WORKING_DIR:=$(shell pwd)
 
 DATESTAMP=$(shell date +'%Y%m%d')
 TIMESTAMP=$(shell date -u +'%Y%m%d%H%M%S%N%Z')
-
-# Cribbed from verbose output of Arduino build for the Uno to use as a working reference design.
-# avr-g++ -c -g -Os -Wall -fno-exceptions -ffunction-sections -fdata-sections -mmcu=atmega328p -DF_CPU=16000000L -DARDUINO=100 -Iarduino -Istandard PWM.cpp -oPWM.cpp.o 
-# avr-gcc -Os -Wl,--gc-sections -mmcu=atmega328p -o PWM.cpp.elf PWM.cpp.o core.a -Lbuild373539219298904089.tmp -lm 
-# avr-objcopy -O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 PWM.cpp.elf PWM.cpp.eep 
-# avr-objcopy -O ihex -R .eeprom PWM.cpp.elf PWM.cpp.hex 
-# avrdude -Cavrdude.conf -v -v -v -v -patmega328p -carduino -P/dev/tty.usbmodem26431 -b115200 -D -Uflash:w:PWM.cpp.hex:i 
-
-# Cribbed from verbose output of Arduino build for the Mega 2560 to use as a working reference design.
-# avr-g++ -c -g -Os -Wall -fno-exceptions -ffunction-sections -fdata-sections -mmcu=atmega2560 -DF_CPU=16000000L -DARDUINO=100 -Iarduino -Imega Empty.cpp -oEmpty.cpp.o 
-# avr-gcc -Os -Wl,--gc-sections -mmcu=atmega2560 -o Empty.cpp.elf Empty.cpp.o core.a -Lbuild7537680787165628439.tmp -lm 
-# avr-objcopy -O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 Empty.cpp.elf Empty.cpp.eep 
-# avr-objcopy -O ihex -R .eeprom Empty.cpp.elf Empty.cpp.hex 
-# avrdude -Cavrdude.conf -v -v -v -v -patmega2560 -cstk500v2 -P/dev/tty.usbmodem26421 -b115200 -D -Uflash:w:Empty.cpp.hex:i 
 
 ifeq ($(BUILD_TARGET),Uno)
 ARCH=avr
@@ -105,6 +84,19 @@ DEMO=EtherMega2560_$(TOOLCHAIN)
 CONFIG=stk500v2
 PROGRAMMER=avrispmkII
 PART=m2560
+endif
+
+ifeq ($(BUILD_HOST), Darwin)
+FREERTOS_DIR=$(PROJECT_DIR)/FreeRTOSV7.1.0
+TOOLS_DIR=$(APPLICATION_DIR)/Arduino.app/Contents/Resources/Java/hardware/tools
+TOOLCHAIN_BIN=$(TOOLS_DIR)/$(ARCH)/bin
+AVRDUDE_CONF=$(TOOLS_DIR)/$(ARCH)/etc/avrdude.conf
+endif
+
+ifeq ($(BUILD_HOST), Linux)
+FREERTOS_DIR=$(PROJECT_DIR)/FreeRTOSV7.1.0
+TOOLCHAIN_BIN=/usr/bin
+AVRDUDE_CONF=$(WORKING_DIR)/avrdude.conf
 endif
 
 CC=gcc
@@ -187,16 +179,16 @@ $(BUILD_PLATFORM).elf:	$(OFILES)
 	$(CROSS_COMPILE)$(CC) $(ARCHFLAGS) $(LDFLAGS) -o $@ $(OFILES) $(OBJECTS) $(ARCHIVES) $(LIBRARIES)
 
 ################################################################################
-# DEPENCENDIES
+# DEPENDENCIES
 ################################################################################
 
 PHONY+=depend
 ARTIFACTS+=$(BUILD_HOST).mk
 
 # For some reason echo in make on the Mac (Darwin) doesn't understand the -n
-# option even though its man page documents it. And echo in make on the server
+# option even though its man page documents it. And echo in make on the Dell
 # (Linux) doesn't understand \c. The paths in the dependencies file are
-# different too, so we can't use the Mac dependencies file on Linux and vice
+# different too, so we can't use the Mac dependencies file on the Dell and vice
 # versa. Nothing is ever simple.
 
 depend:
@@ -262,7 +254,10 @@ manpages:
 # UTILITIES
 ################################################################################
 	
-PHONY+=path implicit interrogate upload backup terminal
+PHONY+=interrogate upload terminal
+
+# Using back quotes like `make path` on the command line sets the PATH variable
+# in your interactive shell.
 
 path:
 	@echo export PATH=$(PATH):$(TOOLCHAIN_BIN)
@@ -273,17 +268,31 @@ implicit:
 backup:
 	( cd $(FREERTOS_DIR)/..; DIRNAME="`basename $(FREERTOS_DIR)`"; echo $$DIRNAME; tar cvzf - $$DIRNAME > $$DIRNAME-$(TIMESTAMP).tgz )
 
-# These targets only exist when running on my Mac because that's to what the
-# Arduino board connects via USB.
+# These targets only exist when running on my Mac desktop because that's to what
+# the Arduino boards connects via USB. The Dell server is two floors down!
 
 ifeq ($(BUILD_HOST), Darwin)
+	
+PHONY+=interrogate upload terminal
 
+# As far as I can tell, the Arduino bootloaders on both the Uno and the Mega
+# only pretend to implement the avrdude commands to query the signature bytes
+# from the EEPROM. But in fact the bootloaders return hardcoded values, not the
+# actual values from the EEPROM. If queried for other EEPROM values like the
+# fuses, they return zeros. I think dealing with the EEPROM requires support for
+# the Serial Peripheral Bus (SPI) used to talk to the device, and the Arduino
+# bootloaders don't do SPI. So if you want to play with the EEPROM, you have to
+# get an In-System Programmer (ISP) or what is sometimes labelled an In-Circuit
+# Serial Programmer (ICSP) like the Atmel AVRISP mkII I use.
+
+# This uses the AVRISP mkII.
 interrogate:
 	$(AVRDUDE) -v -C$(AVRDUDE_CONF) -p$(PART) -c$(PROGRAMMER) -Pusb -b$(BAUD) -t
-	
+
+# This uses the bootloader.
 upload:	$(BUILD_PLATFORM).hex
 	stty -f $(SERIAL) hupcl
-	$(AVRDUDE) -C$(AVRDUDE_CONF) -v -p$(CONTROLLER) -c$(CONFIG) -P$(SERIAL) -b$(BAUD) -D -Uflash:w:$<:i
+	$(AVRDUDE) -v -C$(AVRDUDE_CONF) -p$(PART) -c$(CONFIG) -P$(SERIAL) -b$(BAUD) -D -Uflash:w:$<:i
 
 terminal:
 	stty -f $(SERIAL) hupcl
@@ -337,3 +346,24 @@ clean:
 ################################################################################
 
 .PHONY:	$(PHONY)
+
+# Cribbed from verbose output of Arduino build for the Uno to use as a working reference design.
+# avr-g++ -c -g -Os -Wall -fno-exceptions -ffunction-sections -fdata-sections -mmcu=atmega328p -DF_CPU=16000000L -DARDUINO=100 -Iarduino -Istandard PWM.cpp -oPWM.cpp.o 
+# avr-gcc -Os -Wl,--gc-sections -mmcu=atmega328p -o PWM.cpp.elf PWM.cpp.o core.a -Lbuild373539219298904089.tmp -lm 
+# avr-objcopy -O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 PWM.cpp.elf PWM.cpp.eep 
+# avr-objcopy -O ihex -R .eeprom PWM.cpp.elf PWM.cpp.hex 
+# avrdude -Cavrdude.conf -v -v -v -v -patmega328p -carduino -P/dev/tty.usbmodem26431 -b115200 -D -Uflash:w:PWM.cpp.hex:i 
+
+# Cribbed from verbose output of Arduino build for the Mega 2560 to use as a working reference design.
+# avr-g++ -c -g -Os -Wall -fno-exceptions -ffunction-sections -fdata-sections -mmcu=atmega2560 -DF_CPU=16000000L -DARDUINO=100 -Iarduino -Imega Empty.cpp -oEmpty.cpp.o 
+# avr-gcc -Os -Wl,--gc-sections -mmcu=atmega2560 -o Empty.cpp.elf Empty.cpp.o core.a -Lbuild7537680787165628439.tmp -lm 
+# avr-objcopy -O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 Empty.cpp.elf Empty.cpp.eep 
+# avr-objcopy -O ihex -R .eeprom Empty.cpp.elf Empty.cpp.hex 
+# avrdude -Cavrdude.conf -v -v -v -v -patmega2560 -cstk500v2 -P/dev/tty.usbmodem26421 -b115200 -D -Uflash:w:Empty.cpp.hex:i
+
+# These directories were of interest when using the GNU GCC AVR tool chain.
+# /usr/lib/avr/include
+# /usr/lib/gcc/avr/4.3.4/include
+# /usr/lib/gcc/avr/4.3.4/include-fixed
+# /usr/lib/gcc/avr/4.3.4/install-tools/include
+# /usr/lib/ldscripts
