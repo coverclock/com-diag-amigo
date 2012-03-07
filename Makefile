@@ -38,7 +38,7 @@ endif
 ################################################################################
 
 MAJOR=0
-MINOR=3
+MINOR=4
 BUILD=0
 
 HTTP_URL=http://www.diag.com/navigation/downloads/$(DIRECTORY).html
@@ -154,8 +154,6 @@ INCLUDES+=$(addprefix -I,$(HDIRECTORIES))
 #CFILES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_servo/servoPWM.c
 #CFILES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_spi/spi.c
 
-OFILES+=$(addsuffix .o,$(basename $(CFILES)))
-
 LIBRARIES+=-lm
 
 ARCHFLAGS=-mmcu=$(CONTROLLER) -mrelax
@@ -167,13 +165,30 @@ LDFLAGS=-Os -Wl,--gc-sections
 OBJCOPYEEPFLAGS=-O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 
 OBJCOPYHEXFLAGS=-O ihex -R .eeprom
 
+OFILES+=$(addsuffix .o,$(basename $(CFILES) $(CXXFILES)))
+
+EFILES+=$(addsuffix .e,$(basename $(CFILES) $(CXXFILES)))
+
+SFILES+=$(addsuffix .s,$(basename $(CFILES) $(CXXFILES)))
+
 ARTIFACTS+=$(OFILES)
+ARTIFACTS+=$(SFILES)
+ARTIFACTS+=$(EFILES)
 ARTIFACTS+=$(BUILD_PLATFORM).elf
 ARTIFACTS+=$(BUILD_PLATFORM).map
 ARTIFACTS+=$(BUILD_PLATFORM).eep
 ARTIFACTS+=$(BUILD_PLATFORM).hex
 
 DELIVERABLES+=$(BUILD_PLATFORM).hex
+DELIVERABLES+=$(BUILD_PLATFORM).map
+	
+PHONY+=preprocess
+
+preprocess:	$(EFILES)
+
+PHONY+=preassemble
+
+preassemble:	$(SFILES)
 
 $(BUILD_PLATFORM).elf:	$(OFILES)
 	$(CROSS_COMPILE)$(CC) $(ARCHFLAGS) $(LDFLAGS) -o $@ $(OFILES) $(OBJECTS) $(ARCHIVES) $(LIBRARIES)
@@ -279,11 +294,9 @@ PHONY+=interrogate upload terminal
 # only pretend to implement the avrdude commands to query the signature bytes
 # from the EEPROM. But in fact the bootloaders return hardcoded values, not the
 # actual values from the EEPROM. If queried for other EEPROM values like the
-# fuses, they return zeros. I think dealing with the EEPROM requires support for
-# the Serial Peripheral Bus (SPI) used to talk to the device, and the Arduino
-# bootloaders don't do SPI. So if you want to play with the EEPROM, you have to
-# get an In-System Programmer (ISP) or what is sometimes labelled an In-Circuit
-# Serial Programmer (ICSP) like the Atmel AVRISP mkII I use.
+# fuses, they return hardcoded zeros. If you want to play with the EEPROM,
+# you'll need an In-System Programmer (ISP) device like the Atmel AVRISP mkII,
+# which is what I use.
 
 # This uses the AVRISP mkII.
 interrogate:
@@ -295,8 +308,11 @@ upload:	$(BUILD_PLATFORM).hex
 	$(AVRDUDE) -v -C$(AVRDUDE_CONF) -p$(PART) -c$(CONFIG) -P$(SERIAL) -b$(BAUD) -D -Uflash:w:$<:i
 
 terminal:
+	stty -f $(SERIAL) sane
 	stty -f $(SERIAL) hupcl
+	# control-A control-\ y to exit.
 	screen -L $(SERIAL) $(BAUD)
+	stty -f $(SERIAL) sane
 
 endif
 
@@ -304,14 +320,20 @@ endif
 # PATTERNS
 ################################################################################
 
-%.txt:	%.cpp
-	$(CROSS_COMPILE)$(CXX) $(ARCHFLAGS) -E $(CPPFLAGS) -c $< > $*.txt
+%.e:	%.cpp
+	$(CROSS_COMPILE)$(CXX) $(ARCHFLAGS) -E $(CPPFLAGS) -c $< > $*.e
+
+%.s:	%.cpp
+	$(CROSS_COMPILE)$(CXX) $(ARCHFLAGS) -S $(CPPFLAGS) $(CXXFLAGS) -o $@ -c $<
 
 %.o:	%.cpp
 	$(CROSS_COMPILE)$(CXX) $(ARCHFLAGS) $(CPPFLAGS) $(CXXFLAGS) -o $@ -c $<
 
-%.txt:	%.c
-	$(CROSS_COMPILE)$(CC) $(ARCHFLAGS) -E $(CPPFLAGS) -c $< > $*.txt
+%.e:	%.c
+	$(CROSS_COMPILE)$(CC) $(ARCHFLAGS) -E $(CPPFLAGS) -c $< > $*.e
+
+%.s:	%.c
+	$(CROSS_COMPILE)$(CC) $(ARCHFLAGS) -S $(CPPFLAGS) $(CFLAGS) -o $@ -c $<
 
 %.o:	%.c
 	$(CROSS_COMPILE)$(CC) $(ARCHFLAGS) $(CPPFLAGS) $(CFLAGS) -o $@ -c $<
@@ -323,7 +345,7 @@ endif
 	$(CROSS_COMPILE)$(OBJCOPY) $(OBJCOPYHEXFLAGS) $< $@
 
 %.map:	%.elf
-	$(CROSS_COMPILE)$(NM) -n -o -a $< > $@
+	$(CROSS_COMPILE)$(NM) -n -o -a -A $< > $@
 
 %:	%_unstripped
 	$(CROSS_COMPILE)$(STRIP) -o $@ $<
