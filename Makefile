@@ -13,8 +13,22 @@ BUILD_TARGET=EtherMega2560
 BUILD_HOST=$(shell uname -s)
 BUILD_PLATFORM=MegaBlink
 
-# BUILD_HOST==Darwin identifies my Mac Mini desktop.
-# BUILD_HOST==Linux identifies my Dell quadcore server.
+# Darwin identifies my desktop.
+# Linux identifies my server.
+
+ifeq ($(BUILD_HOST), Darwin)
+TMP_DIR=/tmp
+ARDUINO_DIR=/Applications/Arduino.app/Contents/Resources/Java
+TOOLCHAIN_BIN=$(ARDUINO_DIR)/hardware/tools/avr/bin
+AVRDUDE_CONF=$(ARDUINO_DIR)/hardware/tools/avr/etc/avrdude.conf
+endif
+
+ifeq ($(BUILD_HOST), Linux)
+TMP_DIR=/tmp
+ARDUINO_DIR=$(HOME)/src/arduino-1.0-linux
+TOOLCHAIN_BIN=/usr/bin
+AVRDUDE_CONF=$(ARDUINO_DIR)/hardware/tools/avrdude.conf
+endif
 
 SERIAL=/dev/tty.usbmodem26421
 #SERIAL=/dev/tty.usbmodem411
@@ -31,11 +45,6 @@ BUILD=0
 HTTP_URL=http://www.diag.com/navigation/downloads/$(DIRECTORY).html
 FTP_URL=http://www.diag.com/ftp/$(PROJECT)-$(MAJOR).$(MINOR).$(BUILD).tgz
 SVN_URL=svn://graphite/$(PROJECT)/trunk/$(DIRECTORY)
-
-WORKING_DIR=$(shell pwd)
-
-DATESTAMP=$(shell date +'%Y%m%d')
-TIMESTAMP=$(shell date -u +'%Y%m%d%H%M%S%N%Z')
 
 ifeq ($(BUILD_TARGET),Uno)
 ARCH=avr
@@ -71,19 +80,6 @@ DEMO=EtherMega2560_$(TOOLCHAIN)
 CONFIG=stk500v2
 PROGRAMMER=avrispmkII
 PART=m2560
-endif
-
-ifeq ($(BUILD_HOST), Darwin)
-TMP_DIR=/tmp
-TOOLS_DIR=$(APPLICATION_DIR)/Arduino.app/Contents/Resources/Java/hardware/tools
-TOOLCHAIN_BIN=$(TOOLS_DIR)/$(ARCH)/bin
-AVRDUDE_CONF=$(TOOLS_DIR)/$(ARCH)/etc/avrdude.conf
-endif
-
-ifeq ($(BUILD_HOST), Linux)
-TMP_DIR=/tmp
-TOOLCHAIN_BIN=/usr/bin
-AVRDUDE_CONF=$(WORKING_DIR)/avrdude.conf
 endif
 
 CC=gcc
@@ -237,7 +233,7 @@ manpages:
 # UTILITIES
 ################################################################################
 
-PHONY+=parameters verify
+PHONY+=parameters verify backup
 
 parameters:
 	@echo BUILD_TARGET=$(BUILD_TARGET)
@@ -245,6 +241,10 @@ parameters:
 	@echo BUILD_PLATFORM=$(BUILD_PLATFORM)
 
 verify:	$(CFILES) $(CXXFILES) $(HDIRECTORIES)
+
+backup:
+	DIRNAME="$(shell basename $(shell pwd))"; \
+	tar -C .. -cvzf - $$DIRNAME > ../$$DIRNAME-$(shell date -u +'%Y%m%d%H%M%S%N%Z').tgz
 
 PHONY+=preprocess preassemble
 
