@@ -1,0 +1,437 @@
+\hypertarget{classcom_1_1diag_1_1amigo_1_1LC100Base}{
+\section{com::diag::amigo::LC100Base Class Reference}
+\label{classcom_1_1diag_1_1amigo_1_1LC100Base}\index{com::diag::amigo::LC100Base@{com::diag::amigo::LC100Base}}
+}
+
+
+This is the common base (super) class for the \hyperlink{classcom_1_1diag_1_1amigo_1_1LC100}{LC100} software that does all of the heavy lifting for any \hyperlink{classcom_1_1diag_1_1amigo_1_1LC100}{LC100} template instantiation regardless of the display dimensions.  
+
+
+
+
+{\ttfamily \#include $<$LC100.h$>$}
+
+Inheritance diagram for com::diag::amigo::LC100Base:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2cm]{classcom_1_1diag_1_1amigo_1_1LC100Base}
+\end{center}
+\end{figure}
+\subsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+enum \hyperlink{classcom_1_1diag_1_1amigo_1_1LC100Base_af03411f6b7c62f305335952ea45b3d51}{Ascii} 
+\end{DoxyCompactItemize}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{classcom_1_1diag_1_1amigo_1_1LC100Base_a0ae2e5e38c16b74237104acc7a75003c}{LC100Base} (\hyperlink{structcom_1_1diag_1_1amigo_1_1Display}{Display} \&\hyperlink{TinyTerminal_8ino_aa69ecd18e38aaa6c48d94adc9f91f0ef}{display}, byte cols, byte rows, byte $\ast$lineLengthArray, uint8\_\-t $\ast$frameBufferArray, boolean $\ast$tabSettingsArray, boolean sample=false, boolean debug=false, int ms=0)
+\item 
+\hypertarget{classcom_1_1diag_1_1amigo_1_1LC100Base_ae52a40ef99cf562e26b1f3e2ac072fe5}{
+virtual \hyperlink{classcom_1_1diag_1_1amigo_1_1LC100Base_ae52a40ef99cf562e26b1f3e2ac072fe5}{$\sim$LC100Base} ()}
+\label{classcom_1_1diag_1_1amigo_1_1LC100Base_ae52a40ef99cf562e26b1f3e2ac072fe5}
+
+\item 
+void \hyperlink{classcom_1_1diag_1_1amigo_1_1LC100Base_a3cf988ae645ac743c6b5cafa2748e30b}{begin} ()
+\item 
+void \hyperlink{classcom_1_1diag_1_1amigo_1_1LC100Base_aadfb19a306738b52afb990734a412b94}{setCursor} (byte col, byte row)
+\item 
+\hypertarget{classcom_1_1diag_1_1amigo_1_1LC100Base_aaa8a0afa8ba3d93bc7230f42d794c620}{
+void \hyperlink{classcom_1_1diag_1_1amigo_1_1LC100Base_aaa8a0afa8ba3d93bc7230f42d794c620}{home} ()}
+\label{classcom_1_1diag_1_1amigo_1_1LC100Base_aaa8a0afa8ba3d93bc7230f42d794c620}
+
+\item 
+void \hyperlink{classcom_1_1diag_1_1amigo_1_1LC100Base_af532b82f424d25c8a7b014f16a463abb}{down} ()
+\item 
+void \hyperlink{classcom_1_1diag_1_1amigo_1_1LC100Base_a836be0f28470396a23a3c28ef835c33d}{up} ()
+\item 
+void \hyperlink{classcom_1_1diag_1_1amigo_1_1LC100Base_a4a92d06a7c79b66d6fa47581c727f688}{erase} (byte colFrom, byte rowFrom, byte colTo, byte rowTo)
+\item 
+\hypertarget{classcom_1_1diag_1_1amigo_1_1LC100Base_a91d4bc06663d0d6d9c0e550e3175a55b}{
+void \hyperlink{classcom_1_1diag_1_1amigo_1_1LC100Base_a91d4bc06663d0d6d9c0e550e3175a55b}{clear} ()}
+\label{classcom_1_1diag_1_1amigo_1_1LC100Base_a91d4bc06663d0d6d9c0e550e3175a55b}
+
+\item 
+int \hyperlink{classcom_1_1diag_1_1amigo_1_1LC100Base_a2bbb2cc266ee6a1b9194f12c1ce9c1bf}{read} (char $\ast$buffer)
+\item 
+size\_\-t \hyperlink{classcom_1_1diag_1_1amigo_1_1LC100Base_aa65643803194c15f83e0204d3523ec7e}{write} (uint8\_\-t ch)
+\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classcom_1_1diag_1_1amigo_1_1LC100Base_ae6afb224738640f518910b18b3da5d53}{
+const byte \hyperlink{classcom_1_1diag_1_1amigo_1_1LC100Base_ae6afb224738640f518910b18b3da5d53}{COLS}}
+\label{classcom_1_1diag_1_1amigo_1_1LC100Base_ae6afb224738640f518910b18b3da5d53}
+
+\item 
+\hypertarget{classcom_1_1diag_1_1amigo_1_1LC100Base_a863016b41914b002bd3d4e38486bdf0d}{
+const byte \hyperlink{classcom_1_1diag_1_1amigo_1_1LC100Base_a863016b41914b002bd3d4e38486bdf0d}{ROWS}}
+\label{classcom_1_1diag_1_1amigo_1_1LC100Base_a863016b41914b002bd3d4e38486bdf0d}
+
+\end{DoxyCompactItemize}
+\subsection*{Protected Types}
+\begin{DoxyCompactItemize}
+\item 
+enum \hyperlink{classcom_1_1diag_1_1amigo_1_1LC100Base_a3a022c506359c0a939ed14e4fab577b8}{Constant} 
+\item 
+enum \hyperlink{classcom_1_1diag_1_1amigo_1_1LC100Base_a13ddf5295a1d05a7d2d939941ba7266e}{State} 
+\item 
+enum \hyperlink{classcom_1_1diag_1_1amigo_1_1LC100Base_afa1217f48472f7f6758733208ad14125}{Action} 
+\end{DoxyCompactItemize}
+\subsection*{Protected Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+byte \hyperlink{classcom_1_1diag_1_1amigo_1_1LC100Base_a01be594835cd4bef65fd611bb3e995be}{index} (byte col, byte row)
+\item 
+byte \hyperlink{classcom_1_1diag_1_1amigo_1_1LC100Base_a2fea6d0b46f653633fdf7677b6ce1f67}{index} (byte row)
+\item 
+size\_\-t \hyperlink{classcom_1_1diag_1_1amigo_1_1LC100Base_adad20089d65b5744e062a7b02fc14ef6}{emit} (uint8\_\-t ch)
+\item 
+size\_\-t \hyperlink{classcom_1_1diag_1_1amigo_1_1LC100Base_ae97773781b9decc7a4f6f08eb6ec5162}{frame} (uint8\_\-t ch)
+\item 
+byte \hyperlink{classcom_1_1diag_1_1amigo_1_1LC100Base_a8e2489e4637dd50cd06e6432c9b50fac}{one} (byte value)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+This is the common base (super) class for the \hyperlink{classcom_1_1diag_1_1amigo_1_1LC100}{LC100} software that does all of the heavy lifting for any \hyperlink{classcom_1_1diag_1_1amigo_1_1LC100}{LC100} template instantiation regardless of the display dimensions. It derives from (extends) the Arduino Print class so that any of the usual Print methods can be used by an application. This class is not intended to be used by itself, although there is no reason why you couldn't do so. 
+
+Definition at line 91 of file LC100.h.
+
+
+
+\subsection{Member Enumeration Documentation}
+\hypertarget{classcom_1_1diag_1_1amigo_1_1LC100Base_afa1217f48472f7f6758733208ad14125}{
+\index{com::diag::amigo::LC100Base@{com::diag::amigo::LC100Base}!Action@{Action}}
+\index{Action@{Action}!com::diag::amigo::LC100Base@{com::diag::amigo::LC100Base}}
+\subsubsection[{Action}]{\setlength{\rightskip}{0pt plus 5cm}enum {\bf com::diag::amigo::LC100Base::Action}\hspace{0.3cm}{\ttfamily  \mbox{[}protected\mbox{]}}}}
+\label{classcom_1_1diag_1_1amigo_1_1LC100Base_afa1217f48472f7f6758733208ad14125}
+
+
+Actions which the push down automaton may execute. 
+
+CONSUMED is the default action. All of the enumerated values are printable, making it easy to trace the PDA as it executes. 
+
+Definition at line 124 of file LC100.h.
+
+\hypertarget{classcom_1_1diag_1_1amigo_1_1LC100Base_a13ddf5295a1d05a7d2d939941ba7266e}{
+\index{com::diag::amigo::LC100Base@{com::diag::amigo::LC100Base}!State@{State}}
+\index{State@{State}!com::diag::amigo::LC100Base@{com::diag::amigo::LC100Base}}
+\subsubsection[{State}]{\setlength{\rightskip}{0pt plus 5cm}enum {\bf com::diag::amigo::LC100Base::State}\hspace{0.3cm}{\ttfamily  \mbox{[}protected\mbox{]}}}}
+\label{classcom_1_1diag_1_1amigo_1_1LC100Base_a13ddf5295a1d05a7d2d939941ba7266e}
+
+
+States in which the push down automaton may be. 
+
+DATA is the start state. There is no end state. All of the enumerated values are printable, making it easy to trace the PDA as it executes. 
+
+Definition at line 109 of file LC100.h.
+
+
+
+\subsection{Constructor \& Destructor Documentation}
+\hypertarget{classcom_1_1diag_1_1amigo_1_1LC100Base_a0ae2e5e38c16b74237104acc7a75003c}{
+\index{com::diag::amigo::LC100Base@{com::diag::amigo::LC100Base}!LC100Base@{LC100Base}}
+\index{LC100Base@{LC100Base}!com::diag::amigo::LC100Base@{com::diag::amigo::LC100Base}}
+\subsubsection[{LC100Base}]{\setlength{\rightskip}{0pt plus 5cm}com::diag::amigo::LC100Base::LC100Base ({\bf Display} \& {\em display}, \/  byte {\em cols}, \/  byte {\em rows}, \/  byte $\ast$ {\em lineLengthArray}, \/  uint8\_\-t $\ast$ {\em frameBufferArray}, \/  boolean $\ast$ {\em tabSettingsArray}, \/  boolean {\em sample} = {\ttfamily false}, \/  boolean {\em debug} = {\ttfamily false}, \/  int {\em ms} = {\ttfamily 0})\hspace{0.3cm}{\ttfamily  \mbox{[}inline\mbox{]}}}}
+\label{classcom_1_1diag_1_1amigo_1_1LC100Base_a0ae2e5e38c16b74237104acc7a75003c}
+
+
+Ctor. 
+
+
+\begin{DoxyParams}{Parameters}
+\item[{\em display}]refers to the object that implements the \hyperlink{structcom_1_1diag_1_1amigo_1_1Display}{Display} interface. \item[{\em cols}]is the number of columns in the display. \item[{\em rows}]is the number of rows in the display. \item[{\em lineLengthArray}]points to an array of dimension \mbox{[}rows\mbox{]} which will be used to store the length in bytes of the displayed line in each row of the display. \item[{\em frameBufferArray}]points to an array of dimensions \mbox{[}rows\mbox{]}\mbox{[}cols\mbox{]} that is used as a frame buffer to support scrolling. \item[{\em tabSettingsArray}]points to an array of dimension \mbox{[}cols\mbox{]} that is used to keep track of the tab settings for the display. \item[{\em sample}]if true causes the joystick value to be returned continuously as long as a button is pressed; if false, the joystick value is returned intermittently when the button is released. \item[{\em debug}]enables debug output if debugging was compiled in. \item[{\em ms}]is the number of milliseconds to delay between each individual update of the display, which can make debugging a lot easier. \end{DoxyParams}
+
+
+Definition at line 162 of file LC100.h.
+
+
+
+\subsection{Member Function Documentation}
+\hypertarget{classcom_1_1diag_1_1amigo_1_1LC100Base_a3cf988ae645ac743c6b5cafa2748e30b}{
+\index{com::diag::amigo::LC100Base@{com::diag::amigo::LC100Base}!begin@{begin}}
+\index{begin@{begin}!com::diag::amigo::LC100Base@{com::diag::amigo::LC100Base}}
+\subsubsection[{begin}]{\setlength{\rightskip}{0pt plus 5cm}void com::diag::amigo::LC100Base::begin ()}}
+\label{classcom_1_1diag_1_1amigo_1_1LC100Base_a3cf988ae645ac743c6b5cafa2748e30b}
+
+
+Initialize this object. 
+
+This only needs to be called once. 
+
+Definition at line 724 of file LC100.cpp.
+
+
+
+References com::diag::amigo::Display::begin(), clear(), COLS, and ROWS.
+
+\hypertarget{classcom_1_1diag_1_1amigo_1_1LC100Base_af532b82f424d25c8a7b014f16a463abb}{
+\index{com::diag::amigo::LC100Base@{com::diag::amigo::LC100Base}!down@{down}}
+\index{down@{down}!com::diag::amigo::LC100Base@{com::diag::amigo::LC100Base}}
+\subsubsection[{down}]{\setlength{\rightskip}{0pt plus 5cm}void com::diag::amigo::LC100Base::down ()}}
+\label{classcom_1_1diag_1_1amigo_1_1LC100Base_af532b82f424d25c8a7b014f16a463abb}
+
+
+Scroll the scroll area down, leaving the cursor placed at a blank line at the top of the scroll area. 
+
+By default, the scroll area is the entire display. 
+
+Definition at line 176 of file LC100.cpp.
+
+
+
+References com::diag::amigo::Display::clear(), index(), ROWS, setCursor(), com::diag::amigo::Display::setCursor(), and com::diag::amigo::Display::write().
+
+
+
+Referenced by write().
+
+\hypertarget{classcom_1_1diag_1_1amigo_1_1LC100Base_adad20089d65b5744e062a7b02fc14ef6}{
+\index{com::diag::amigo::LC100Base@{com::diag::amigo::LC100Base}!emit@{emit}}
+\index{emit@{emit}!com::diag::amigo::LC100Base@{com::diag::amigo::LC100Base}}
+\subsubsection[{emit}]{\setlength{\rightskip}{0pt plus 5cm}size\_\-t com::diag::amigo::LC100Base::emit (uint8\_\-t {\em ch})\hspace{0.3cm}{\ttfamily  \mbox{[}protected\mbox{]}}}}
+\label{classcom_1_1diag_1_1amigo_1_1LC100Base_adad20089d65b5744e062a7b02fc14ef6}
+
+
+Emit a character, which both displays it on the actual display and stores it appropriately in the frame buffer. 
+
+The returned value is the number of characters processed, which is nominally one but may be zero if the character is somehow invalid or negative if an error occurred. 
+\begin{DoxyParams}{Parameters}
+\item[{\em ch}]is the character to be emitted. \end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+the number of characters emitted. 
+\end{DoxyReturn}
+
+
+Definition at line 69 of file LC100.cpp.
+
+
+
+References COLS, index(), ROWS, and com::diag::amigo::Display::write().
+
+
+
+Referenced by erase(), frame(), and write().
+
+\hypertarget{classcom_1_1diag_1_1amigo_1_1LC100Base_a4a92d06a7c79b66d6fa47581c727f688}{
+\index{com::diag::amigo::LC100Base@{com::diag::amigo::LC100Base}!erase@{erase}}
+\index{erase@{erase}!com::diag::amigo::LC100Base@{com::diag::amigo::LC100Base}}
+\subsubsection[{erase}]{\setlength{\rightskip}{0pt plus 5cm}void com::diag::amigo::LC100Base::erase (byte {\em colFrom}, \/  byte {\em rowFrom}, \/  byte {\em colTo}, \/  byte {\em rowTo})}}
+\label{classcom_1_1diag_1_1amigo_1_1LC100Base_a4a92d06a7c79b66d6fa47581c727f688}
+
+
+Erase a square bordered by the specified upper left and lower right corners inclusive. 
+
+Erasing is done by writing blanks into the display left to right, top to bottom. The cursor is placed back in its original position. 
+\begin{DoxyParams}{Parameters}
+\item[{\em colFrom}]is the zero-\/based column of the upper left corner of the erased square. \item[{\em rowFrom}]is the zero-\/based row of the upper left corner of the erased square. \item[{\em colTo}]is the zero-\/based column of the lower right corner of the erased square. \item[{\em rowTo}]is the zero-\/based row of the lower right corner of the erased square. \end{DoxyParams}
+
+
+Definition at line 109 of file LC100.cpp.
+
+
+
+References COLS, emit(), index(), ROWS, and setCursor().
+
+
+
+Referenced by frame(), and write().
+
+\hypertarget{classcom_1_1diag_1_1amigo_1_1LC100Base_ae97773781b9decc7a4f6f08eb6ec5162}{
+\index{com::diag::amigo::LC100Base@{com::diag::amigo::LC100Base}!frame@{frame}}
+\index{frame@{frame}!com::diag::amigo::LC100Base@{com::diag::amigo::LC100Base}}
+\subsubsection[{frame}]{\setlength{\rightskip}{0pt plus 5cm}size\_\-t com::diag::amigo::LC100Base::frame (uint8\_\-t {\em ch})\hspace{0.3cm}{\ttfamily  \mbox{[}protected\mbox{]}}}}
+\label{classcom_1_1diag_1_1amigo_1_1LC100Base_ae97773781b9decc7a4f6f08eb6ec5162}
+
+
+Frame a character appropriately by dealing with line wrapping (if enabled) and screen scrolling (ditto). 
+
+
+\begin{DoxyParams}{Parameters}
+\item[{\em ch}]is the character to be framed. \end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+the number of characters framed. 
+\end{DoxyReturn}
+
+
+Definition at line 144 of file LC100.cpp.
+
+
+
+References COLS, emit(), erase(), index(), ROWS, setCursor(), and up().
+
+
+
+Referenced by write().
+
+\hypertarget{classcom_1_1diag_1_1amigo_1_1LC100Base_a2fea6d0b46f653633fdf7677b6ce1f67}{
+\index{com::diag::amigo::LC100Base@{com::diag::amigo::LC100Base}!index@{index}}
+\index{index@{index}!com::diag::amigo::LC100Base@{com::diag::amigo::LC100Base}}
+\subsubsection[{index}]{\setlength{\rightskip}{0pt plus 5cm}byte com::diag::amigo::LC100Base::index (byte {\em row})\hspace{0.3cm}{\ttfamily  \mbox{[}protected\mbox{]}}}}
+\label{classcom_1_1diag_1_1amigo_1_1LC100Base_a2fea6d0b46f653633fdf7677b6ce1f67}
+
+
+Concert a zero-\/based row value into an array index. 
+
+
+\begin{DoxyParams}{Parameters}
+\item[{\em row}]is the zero-\/based row value. \end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+an array index. 
+\end{DoxyReturn}
+
+
+Definition at line 35 of file LC100.cpp.
+
+
+
+References ROWS.
+
+\hypertarget{classcom_1_1diag_1_1amigo_1_1LC100Base_a01be594835cd4bef65fd611bb3e995be}{
+\index{com::diag::amigo::LC100Base@{com::diag::amigo::LC100Base}!index@{index}}
+\index{index@{index}!com::diag::amigo::LC100Base@{com::diag::amigo::LC100Base}}
+\subsubsection[{index}]{\setlength{\rightskip}{0pt plus 5cm}byte com::diag::amigo::LC100Base::index (byte {\em col}, \/  byte {\em row})\hspace{0.3cm}{\ttfamily  \mbox{[}protected\mbox{]}}}}
+\label{classcom_1_1diag_1_1amigo_1_1LC100Base_a01be594835cd4bef65fd611bb3e995be}
+
+
+Convert a zero-\/based column and row coordinate into a frame buffer index. 
+
+
+\begin{DoxyParams}{Parameters}
+\item[{\em col}]is the zero-\/based column value. \item[{\em row}]is the zero-\/based row value. \end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+a frame buffer index. 
+\end{DoxyReturn}
+
+
+Definition at line 39 of file LC100.cpp.
+
+
+
+References COLS.
+
+
+
+Referenced by down(), emit(), erase(), frame(), up(), and write().
+
+\hypertarget{classcom_1_1diag_1_1amigo_1_1LC100Base_a8e2489e4637dd50cd06e6432c9b50fac}{
+\index{com::diag::amigo::LC100Base@{com::diag::amigo::LC100Base}!one@{one}}
+\index{one@{one}!com::diag::amigo::LC100Base@{com::diag::amigo::LC100Base}}
+\subsubsection[{one}]{\setlength{\rightskip}{0pt plus 5cm}byte com::diag::amigo::LC100Base::one (byte {\em value})\hspace{0.3cm}{\ttfamily  \mbox{[}protected\mbox{]}}}}
+\label{classcom_1_1diag_1_1amigo_1_1LC100Base_a8e2489e4637dd50cd06e6432c9b50fac}
+
+
+Convert a one-\/based column or row value into a zero-\/based column or row value. 
+
+
+\begin{DoxyParams}{Parameters}
+\item[{\em value}]is the one-\/based value. \end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+the zero-\/based value. 
+\end{DoxyReturn}
+
+
+Definition at line 43 of file LC100.cpp.
+
+
+
+Referenced by write().
+
+\hypertarget{classcom_1_1diag_1_1amigo_1_1LC100Base_a2bbb2cc266ee6a1b9194f12c1ce9c1bf}{
+\index{com::diag::amigo::LC100Base@{com::diag::amigo::LC100Base}!read@{read}}
+\index{read@{read}!com::diag::amigo::LC100Base@{com::diag::amigo::LC100Base}}
+\subsubsection[{read}]{\setlength{\rightskip}{0pt plus 5cm}int com::diag::amigo::LC100Base::read (char $\ast$ {\em buffer})}}
+\label{classcom_1_1diag_1_1amigo_1_1LC100Base_a2bbb2cc266ee6a1b9194f12c1ce9c1bf}
+
+
+Read the current joy stick stimulus into a buffer of at least four bytes in length. 
+
+If the joy stick is indicating movement, the buffer will contain a VT100 (ANSI) arrow escape sequence indicating the direction of movement. The buffer will be nul-\/terminated, allowing it to be written directly to the serial port. Return the number of bytes placed into the buffer, zero indicating that there is no joy stick stimulus at this time. 
+\begin{DoxyParams}{Parameters}
+\item[{\em buffer}]points to a buffer of at least four bytes in length. \end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+the number of bytes placed in the buffer. 
+\end{DoxyReturn}
+
+
+Definition at line 667 of file LC100.cpp.
+
+
+
+References com::diag::amigo::Display::read().
+
+\hypertarget{classcom_1_1diag_1_1amigo_1_1LC100Base_aadfb19a306738b52afb990734a412b94}{
+\index{com::diag::amigo::LC100Base@{com::diag::amigo::LC100Base}!setCursor@{setCursor}}
+\index{setCursor@{setCursor}!com::diag::amigo::LC100Base@{com::diag::amigo::LC100Base}}
+\subsubsection[{setCursor}]{\setlength{\rightskip}{0pt plus 5cm}void com::diag::amigo::LC100Base::setCursor (byte {\em col}, \/  byte {\em row})}}
+\label{classcom_1_1diag_1_1amigo_1_1LC100Base_aadfb19a306738b52afb990734a412b94}
+
+
+Place the cursor at the specified position. 
+
+The column and row coordinates are taken modulo of the actual display dimensions. 
+\begin{DoxyParams}{Parameters}
+\item[{\em col}]is the zero-\/based column number. \item[{\em row}]is the zero-\/based row number. \end{DoxyParams}
+
+
+Definition at line 51 of file LC100.cpp.
+
+
+
+References COLS, ROWS, and com::diag::amigo::Display::setCursor().
+
+
+
+Referenced by clear(), down(), erase(), frame(), up(), and write().
+
+\hypertarget{classcom_1_1diag_1_1amigo_1_1LC100Base_a836be0f28470396a23a3c28ef835c33d}{
+\index{com::diag::amigo::LC100Base@{com::diag::amigo::LC100Base}!up@{up}}
+\index{up@{up}!com::diag::amigo::LC100Base@{com::diag::amigo::LC100Base}}
+\subsubsection[{up}]{\setlength{\rightskip}{0pt plus 5cm}void com::diag::amigo::LC100Base::up ()}}
+\label{classcom_1_1diag_1_1amigo_1_1LC100Base_a836be0f28470396a23a3c28ef835c33d}
+
+
+Scroll the scroll area up, leaving the cursor placed at a blank line at the bottom of the scroll area. 
+
+By default, the scroll area is the entire display. 
+
+Definition at line 197 of file LC100.cpp.
+
+
+
+References com::diag::amigo::Display::clear(), index(), ROWS, setCursor(), com::diag::amigo::Display::setCursor(), and com::diag::amigo::Display::write().
+
+
+
+Referenced by frame(), and write().
+
+\hypertarget{classcom_1_1diag_1_1amigo_1_1LC100Base_aa65643803194c15f83e0204d3523ec7e}{
+\index{com::diag::amigo::LC100Base@{com::diag::amigo::LC100Base}!write@{write}}
+\index{write@{write}!com::diag::amigo::LC100Base@{com::diag::amigo::LC100Base}}
+\subsubsection[{write}]{\setlength{\rightskip}{0pt plus 5cm}size\_\-t com::diag::amigo::LC100Base::write (uint8\_\-t {\em ch})}}
+\label{classcom_1_1diag_1_1amigo_1_1LC100Base_aa65643803194c15f83e0204d3523ec7e}
+
+
+Write the current character to the display. 
+
+This character may be part of a VT100 (ANSI) escape sequence, in which case it is not actually written to the display, but will be executed once the complete escape sequence is captured. 
+\begin{DoxyParams}{Parameters}
+\item[{\em ch}]is the character to be written to the display. \end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+the number of characters processed, which could be zero if the character is somehow invalid in the context of the current escape sequence, or negative is an error occurred. 
+\end{DoxyReturn}
+
+
+Definition at line 246 of file LC100.cpp.
+
+
+
+References clear(), COLS, down(), emit(), erase(), frame(), com::diag::amigo::Display::home(), index(), one(), ROWS, setCursor(), and up().
+
+
+
+The documentation for this class was generated from the following files:\begin{DoxyCompactItemize}
+\item 
+\hyperlink{LC100_8h}{LC100.h}\item 
+\hyperlink{LC100_8cpp}{LC100.cpp}\end{DoxyCompactItemize}

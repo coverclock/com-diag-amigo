@@ -1,0 +1,109 @@
+.TH "TinyTerminal.ino" 3 "21 Feb 2012" "Version 0.2.0" "Amigo" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+TinyTerminal.ino \- 
+.PP
+Copyright 2012 Digital Aggregates Corporation, Colorado, USA
+.br
+ Licensed under the terms in \fBREADME.h\fP
+.br
+ Chip Overclock mailto:coverclock@diag.com
+.br
+ http://www.diag.com/navigation/downloads/Amigo.html
+.br
+.  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <LiquidCrystal.h>\fP
+.br
+\fC#include 'LC100.h'\fP
+.br
+
+.SS "Classes"
+
+.in +1c
+.ti -1c
+.RI "class \fBMock\fP"
+.br
+.RI "\fIThis is a mock display that merely traces itself on the serial output and implements the movement keys used by the visual editor (vi). \fP"
+.in -1c
+.SS "Defines"
+
+.in +1c
+.ti -1c
+.RI "#define \fBDEBUG\fP   (0)"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "static void \fBtest\fP ()"
+.br
+.ti -1c
+.RI "void \fBsetup\fP ()"
+.br
+.ti -1c
+.RI "void \fBloop\fP ()"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "static \fBMock\fP \fBdisplay\fP"
+.br
+.ti -1c
+.RI "static const byte \fBCOLS\fP = 16"
+.br
+.ti -1c
+.RI "static const byte \fBROWS\fP = 2"
+.br
+.ti -1c
+.RI "static \fBcom::diag::amigo::LC100\fP< \fBCOLS\fP, \fBROWS\fP > \fBlc100\fP (\fBdisplay\fP, false, true, 1000/8)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+Copyright 2012 Digital Aggregates Corporation, Colorado, USA
+.br
+ Licensed under the terms in \fBREADME.h\fP
+.br
+ Chip Overclock mailto:coverclock@diag.com
+.br
+ http://www.diag.com/navigation/downloads/Amigo.html
+.br
+. 
+
+
+.PP
+Definition in file \fBTinyTerminal.ino\fP.
+.SH "Define Documentation"
+.PP 
+.SS "#define DEBUG   (0)"
+.PP
+If DEBUG is defined, TinyTerminal replaces the interface to the actual LCD hardware with a mock object that implements the same interface. The mock object just traces itself on the serial output. 
+.PP
+Definition at line 18 of file TinyTerminal.ino.
+.SH "Function Documentation"
+.PP 
+.SS "void loop ()"
+.PP
+Loop is executed continuously by the Arduino run-time software, which also does some other housekeeping each iteration, like polling the serial port for activity. The timing of the execution of this function is asynchronous. This function checks for input on the serial port and if it exists passes all of the buffered input characters to the LC100 software. It also checks for input from the LC100 software from the joystick and if it exists passes it to the serial port. 
+.PP
+Definition at line 475 of file TinyTerminal.ino.
+.PP
+References lc100.
+.SS "void setup ()"
+.PP
+Setup is executed once by the Arduino run-time software. This function initializes the serial port, the LC100 software (which in turn initializes the underlying display hardware), and runs a unit test which may or may not do anything. 
+.PP
+Definition at line 460 of file TinyTerminal.ino.
+.PP
+References lc100, and test().
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Amigo from the source code.
