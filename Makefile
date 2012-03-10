@@ -13,27 +13,12 @@ BUILD_TARGET=EtherMega2560
 BUILD_HOST=$(shell uname -s)
 BUILD_PLATFORM=MegaBlink
 
+# BUILD_HOST==Darwin identifies my Mac Mini desktop.
+# BUILD_HOST==Linux identifies my Dell quadcore server.
+
 SERIAL=/dev/tty.usbmodem26421
 #SERIAL=/dev/tty.usbmodem411
 BAUD=115200
-
-# Darwin identifies my Mac Mini desktop.
-# Linux identifies my Dell quadcore server.
-
-ifeq ($(BUILD_HOST), Darwin)
-TMP_DIR=/tmp
-APPLICATION_DIR=/Applications
-ROOT_DIR=$(HOME)/Desktop/Silver
-AMIGO_DIR=$(ROOT_DIR)/src/$(DIRECTORY)/$(DIRECTORY)
-FREERTOS_DIR=$(ROOT_DIR)/projects/$(PROJECT)/FreeRTOSV7.1.0
-endif
-
-ifeq ($(BUILD_HOST), Linux)
-TMP_DIR=/tmp
-ROOT_DIR=$(HOME)
-AMIGO_DIR=$(ROOT_DIR)/src/$(DIRECTORY)/$(DIRECTORY)
-FREERTOS_DIR=$(ROOT_DIR)/projects/$(PROJECT)/FreeRTOSV7.1.0
-endif
 
 ################################################################################
 # CONFIGURATION
@@ -89,12 +74,14 @@ PART=m2560
 endif
 
 ifeq ($(BUILD_HOST), Darwin)
+TMP_DIR=/tmp
 TOOLS_DIR=$(APPLICATION_DIR)/Arduino.app/Contents/Resources/Java/hardware/tools
 TOOLCHAIN_BIN=$(TOOLS_DIR)/$(ARCH)/bin
 AVRDUDE_CONF=$(TOOLS_DIR)/$(ARCH)/etc/avrdude.conf
 endif
 
 ifeq ($(BUILD_HOST), Linux)
+TMP_DIR=/tmp
 TOOLCHAIN_BIN=/usr/bin
 AVRDUDE_CONF=$(WORKING_DIR)/avrdude.conf
 endif
@@ -127,28 +114,22 @@ default:	all
 # two directory trees. 
 
 ifeq ($(BUILD_PLATFORM), MegaBlink)
-AMIGO_CFILES+=Demo/$(DEMO)/MegaBlink/main.c
-AMIGO_CFILES+=Demo/$(DEMO)/lib_digitalAnalog/digitalAnalog.c
-AMIGO_CFILES+=Demo/$(DEMO)/lib_serial/lib_serial.c
-FREERTOS_CFILES+=Source/portable/MemMang/heap_2.c
+CFILES+=Amigo/Demo/$(DEMO)/MegaBlink/main.c
+CFILES+=Amigo/Demo/$(DEMO)/lib_digitalAnalog/digitalAnalog.c
+CFILES+=Amigo/Demo/$(DEMO)/lib_serial/lib_serial.c
+CFILES+=Amigo/Source/portable/MemMang/heap_2.c
 endif
 
-AMIGO_CFILES+=Source/portable/$(TOOLCHAIN)/$(PORTABLE)/port.c
-FREERTOS_CFILES+=Source/croutine.c
-FREERTOS_CFILES+=Source/list.c
-FREERTOS_CFILES+=Source/queue.c
-FREERTOS_CFILES+=Source/tasks.c
-FREERTOS_CFILES+=Source/timers.c
+CFILES+=Amigo/Source/portable/$(TOOLCHAIN)/$(PORTABLE)/port.c
+CFILES+=Amigo/Source/croutine.c
+CFILES+=Amigo/Source/list.c
+CFILES+=Amigo/Source/queue.c
+CFILES+=Amigo/Source/tasks.c
+CFILES+=Amigo/Source/timers.c
 
-AMIGO_HDIRECTORIES+=Source/portable/$(TOOLCHAIN)/$(PORTABLE)
-AMIGO_HDIRECTORIES+=Demo/$(DEMO)/include
-FREERTOS_HDIRECTORIES+=Source/include
-
-CFILES+=$(addprefix $(AMIGO_DIR)/,$(AMIGO_CFILES))
-CFILES+=$(addprefix $(FREERTOS_DIR)/,$(FREERTOS_CFILES))
-
-INCLUDES+=$(addprefix -I$(AMIGO_DIR)/,$(AMIGO_HDIRECTORIES))
-INCLUDES+=$(addprefix -I$(FREERTOS_DIR)/,$(FREERTOS_HDIRECTORIES))
+HDIRECTORIES+=Amigo/Source/portable/$(TOOLCHAIN)/$(PORTABLE)
+HDIRECTORIES+=Amigo/Demo/$(DEMO)/include
+HDIRECTORIES+=Amigo/Source/include
 
 LIBRARIES+=-lm
 
@@ -255,12 +236,14 @@ manpages:
 # UTILITIES
 ################################################################################
 
-PHONY+=parameters
+PHONY+=parameters verify
 
 parameters:
 	@echo BUILD_TARGET=$(BUILD_TARGET)
 	@echo BUILD_HOST=$(BUILD_HOST)
 	@echo BUILD_PLATFORM=$(BUILD_PLATFORM)
+
+verify:	$(CFILES) $(CXXFILES) $(HDIRECTORIES)
 
 PHONY+=preprocess preassemble
 
@@ -280,22 +263,6 @@ path:
 
 implicit:
 	$(CROSS_COMPILE)$(CXX) -dM -E -mmcu=$(CONTROLLER) - < /dev/null
-
-# This is because I'm paranoid.
-
-backup:
-	( cd $(FREERTOS_DIR)/..; DIRNAME="`basename $(FREERTOS_DIR)`"; tar cvzf - $$DIRNAME > $$DIRNAME-$(TIMESTAMP).tgz )
-
-# This is a convenient way to bundle up the FreeRTOS application in one big
-# directory tree to move over to AVR Studio for debugging.
-
-bundle:	$(CFILES) $(CXXFILES) $(HDIRECTORIES)
-	TMPDIR=`mktemp -d $(TMP_DIR)/$(PROJECT).XXXXXX`; \
-	mkdir $$TMPDIR/Amigo; \
-	tar -C $(AMIGO_DIR) --exclude .svn -czf - $(AMIGO_CFILES) $(AMIGO_HDIRECTORIES) | tar -C $$TMPDIR/Amigo -xzf - ; \
-	tar -C $(FREERTOS_DIR) --exclude .svn -czf - $(FREERTOS_CFILES) $(FREERTOS_HDIRECTORIES) | tar -C $$TMPDIR/Amigo -xzf - ; \
-	( cd $$TMPDIR; tar -cvzf - Amigo ) > bundle.tgz; \
-	rm -rf $$TMPDIR
 
 # These targets only exist when running on my Mac desktop because that's to what
 # the Arduino boards connects via USB. The Dell server is two floors down!
