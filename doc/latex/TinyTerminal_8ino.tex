@@ -1,0 +1,124 @@
+\hypertarget{TinyTerminal_8ino}{
+\section{TinyTerminal.ino File Reference}
+\label{TinyTerminal_8ino}\index{TinyTerminal.ino@{TinyTerminal.ino}}
+}
+
+
+Copyright 2012 Digital Aggregates Corporation, Colorado, USA\par
+ Licensed under the terms in \hyperlink{README_8h}{README.h}\par
+ Chip Overclock mailto:\href{mailto:coverclock@diag.com}{\tt coverclock@diag.com}\par
+ \href{http://www.diag.com/navigation/downloads/Amigo.html}{\tt http://www.diag.com/navigation/downloads/Amigo.html}\par
+.  
+
+
+{\ttfamily \#include $<$LiquidCrystal.h$>$}\par
+{\ttfamily \#include \char`\"{}LC100.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \hyperlink{classMock}{Mock}
+\begin{DoxyCompactList}\small\item\em This is a mock display that merely traces itself on the serial output and implements the movement keys used by the visual editor (vi). \item\end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Defines}
+\begin{DoxyCompactItemize}
+\item 
+\#define \hyperlink{TinyTerminal_8ino_ad72dbcf6d0153db1b8d8a58001feed83}{DEBUG}~(0)
+\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{TinyTerminal_8ino_aa8dca7b867074164d5f45b0f3851269d}{
+static void \hyperlink{TinyTerminal_8ino_aa8dca7b867074164d5f45b0f3851269d}{test} ()}
+\label{TinyTerminal_8ino_aa8dca7b867074164d5f45b0f3851269d}
+
+\item 
+void \hyperlink{TinyTerminal_8ino_a4fc01d736fe50cf5b977f755b675f11d}{setup} ()
+\item 
+void \hyperlink{TinyTerminal_8ino_afe461d27b9c48d5921c00d521181f12f}{loop} ()
+\end{DoxyCompactItemize}
+\subsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{TinyTerminal_8ino_aa69ecd18e38aaa6c48d94adc9f91f0ef}{
+static \hyperlink{classMock}{Mock} \hyperlink{TinyTerminal_8ino_aa69ecd18e38aaa6c48d94adc9f91f0ef}{display}}
+\label{TinyTerminal_8ino_aa69ecd18e38aaa6c48d94adc9f91f0ef}
+
+\item 
+\hypertarget{TinyTerminal_8ino_aefd90f1160eaa105bc910d4d7c46b815}{
+static const byte \hyperlink{TinyTerminal_8ino_aefd90f1160eaa105bc910d4d7c46b815}{COLS} = 16}
+\label{TinyTerminal_8ino_aefd90f1160eaa105bc910d4d7c46b815}
+
+\item 
+\hypertarget{TinyTerminal_8ino_a829655a147df70dd4cc94eae40a2204e}{
+static const byte \hyperlink{TinyTerminal_8ino_a829655a147df70dd4cc94eae40a2204e}{ROWS} = 2}
+\label{TinyTerminal_8ino_a829655a147df70dd4cc94eae40a2204e}
+
+\item 
+\hypertarget{TinyTerminal_8ino_ac147bb31e8b56903ce5c7b9224494010}{
+static \hyperlink{classcom_1_1diag_1_1amigo_1_1LC100}{com::diag::amigo::LC100}$<$ \hyperlink{TinyTerminal_8ino_aefd90f1160eaa105bc910d4d7c46b815}{COLS}, \hyperlink{TinyTerminal_8ino_a829655a147df70dd4cc94eae40a2204e}{ROWS} $>$ \hyperlink{TinyTerminal_8ino_ac147bb31e8b56903ce5c7b9224494010}{lc100} (\hyperlink{TinyTerminal_8ino_aa69ecd18e38aaa6c48d94adc9f91f0ef}{display}, false, true, 1000/8)}
+\label{TinyTerminal_8ino_ac147bb31e8b56903ce5c7b9224494010}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Copyright 2012 Digital Aggregates Corporation, Colorado, USA\par
+ Licensed under the terms in \hyperlink{README_8h}{README.h}\par
+ Chip Overclock mailto:\href{mailto:coverclock@diag.com}{\tt coverclock@diag.com}\par
+ \href{http://www.diag.com/navigation/downloads/Amigo.html}{\tt http://www.diag.com/navigation/downloads/Amigo.html}\par
+. 
+
+Definition in file \hyperlink{TinyTerminal_8ino_source}{TinyTerminal.ino}.
+
+
+
+\subsection{Define Documentation}
+\hypertarget{TinyTerminal_8ino_ad72dbcf6d0153db1b8d8a58001feed83}{
+\index{TinyTerminal.ino@{TinyTerminal.ino}!DEBUG@{DEBUG}}
+\index{DEBUG@{DEBUG}!TinyTerminal.ino@{TinyTerminal.ino}}
+\subsubsection[{DEBUG}]{\setlength{\rightskip}{0pt plus 5cm}\#define DEBUG~(0)}}
+\label{TinyTerminal_8ino_ad72dbcf6d0153db1b8d8a58001feed83}
+
+
+If DEBUG is defined, TinyTerminal replaces the interface to the actual LCD hardware with a mock object that implements the same interface. 
+
+The mock object just traces itself on the serial output. 
+
+Definition at line 18 of file TinyTerminal.ino.
+
+
+
+\subsection{Function Documentation}
+\hypertarget{TinyTerminal_8ino_afe461d27b9c48d5921c00d521181f12f}{
+\index{TinyTerminal.ino@{TinyTerminal.ino}!loop@{loop}}
+\index{loop@{loop}!TinyTerminal.ino@{TinyTerminal.ino}}
+\subsubsection[{loop}]{\setlength{\rightskip}{0pt plus 5cm}void loop ()}}
+\label{TinyTerminal_8ino_afe461d27b9c48d5921c00d521181f12f}
+
+
+Loop is executed continuously by the Arduino run-\/time software, which also does some other housekeeping each iteration, like polling the serial port for activity. 
+
+The timing of the execution of this function is asynchronous. This function checks for input on the serial port and if it exists passes all of the buffered input characters to the LC100 software. It also checks for input from the LC100 software from the joystick and if it exists passes it to the serial port. 
+
+Definition at line 475 of file TinyTerminal.ino.
+
+
+
+References lc100.
+
+\hypertarget{TinyTerminal_8ino_a4fc01d736fe50cf5b977f755b675f11d}{
+\index{TinyTerminal.ino@{TinyTerminal.ino}!setup@{setup}}
+\index{setup@{setup}!TinyTerminal.ino@{TinyTerminal.ino}}
+\subsubsection[{setup}]{\setlength{\rightskip}{0pt plus 5cm}void setup ()}}
+\label{TinyTerminal_8ino_a4fc01d736fe50cf5b977f755b675f11d}
+
+
+Setup is executed once by the Arduino run-\/time software. 
+
+This function initializes the serial port, the LC100 software (which in turn initializes the underlying display hardware), and runs a unit test which may or may not do anything. 
+
+Definition at line 460 of file TinyTerminal.ino.
+
+
+
+References lc100, and test().
+

@@ -1,0 +1,75 @@
+\contentsline {chapter}{\numberline {1}Class Index}{1}{chapter.1}
+\contentsline {section}{\numberline {1.1}Class Hierarchy}{1}{section.1.1}
+\contentsline {chapter}{\numberline {2}Class Index}{3}{chapter.2}
+\contentsline {section}{\numberline {2.1}Class List}{3}{section.2.1}
+\contentsline {chapter}{\numberline {3}File Index}{5}{chapter.3}
+\contentsline {section}{\numberline {3.1}File List}{5}{section.3.1}
+\contentsline {chapter}{\numberline {4}Class Documentation}{7}{chapter.4}
+\contentsline {section}{\numberline {4.1}com::diag::amigo::Display Struct Reference}{7}{section.4.1}
+\contentsline {subsection}{\numberline {4.1.1}Detailed Description}{8}{subsection.4.1.1}
+\contentsline {subsection}{\numberline {4.1.2}Member Function Documentation}{8}{subsection.4.1.2}
+\contentsline {subsubsection}{\numberline {4.1.2.1}begin}{8}{subsubsection.4.1.2.1}
+\contentsline {subsubsection}{\numberline {4.1.2.2}read}{8}{subsubsection.4.1.2.2}
+\contentsline {subsubsection}{\numberline {4.1.2.3}setCursor}{8}{subsubsection.4.1.2.3}
+\contentsline {subsubsection}{\numberline {4.1.2.4}write}{9}{subsubsection.4.1.2.4}
+\contentsline {section}{\numberline {4.2}com::diag::amigo::LC100$<$ \_\discretionary {-}{}{}COLS\_\discretionary {-}{}{}, \_\discretionary {-}{}{}ROWS\_\discretionary {-}{}{} $>$ Class Template Reference}{10}{section.4.2}
+\contentsline {subsection}{\numberline {4.2.1}Detailed Description}{11}{subsection.4.2.1}
+\contentsline {subsection}{\numberline {4.2.2}Member Enumeration Documentation}{11}{subsection.4.2.2}
+\contentsline {subsubsection}{\numberline {4.2.2.1}Action}{11}{subsubsection.4.2.2.1}
+\contentsline {subsubsection}{\numberline {4.2.2.2}State}{11}{subsubsection.4.2.2.2}
+\contentsline {subsection}{\numberline {4.2.3}Constructor \& Destructor Documentation}{12}{subsection.4.2.3}
+\contentsline {subsubsection}{\numberline {4.2.3.1}LC100}{12}{subsubsection.4.2.3.1}
+\contentsline {subsection}{\numberline {4.2.4}Member Function Documentation}{12}{subsection.4.2.4}
+\contentsline {subsubsection}{\numberline {4.2.4.1}begin}{12}{subsubsection.4.2.4.1}
+\contentsline {subsubsection}{\numberline {4.2.4.2}down}{12}{subsubsection.4.2.4.2}
+\contentsline {subsubsection}{\numberline {4.2.4.3}emit}{13}{subsubsection.4.2.4.3}
+\contentsline {subsubsection}{\numberline {4.2.4.4}erase}{13}{subsubsection.4.2.4.4}
+\contentsline {subsubsection}{\numberline {4.2.4.5}frame}{14}{subsubsection.4.2.4.5}
+\contentsline {subsubsection}{\numberline {4.2.4.6}index}{14}{subsubsection.4.2.4.6}
+\contentsline {subsubsection}{\numberline {4.2.4.7}index}{14}{subsubsection.4.2.4.7}
+\contentsline {subsubsection}{\numberline {4.2.4.8}one}{15}{subsubsection.4.2.4.8}
+\contentsline {subsubsection}{\numberline {4.2.4.9}read}{15}{subsubsection.4.2.4.9}
+\contentsline {subsubsection}{\numberline {4.2.4.10}setCursor}{16}{subsubsection.4.2.4.10}
+\contentsline {subsubsection}{\numberline {4.2.4.11}up}{16}{subsubsection.4.2.4.11}
+\contentsline {subsubsection}{\numberline {4.2.4.12}write}{16}{subsubsection.4.2.4.12}
+\contentsline {section}{\numberline {4.3}com::diag::amigo::LC100Base Class Reference}{18}{section.4.3}
+\contentsline {subsection}{\numberline {4.3.1}Detailed Description}{19}{subsection.4.3.1}
+\contentsline {subsection}{\numberline {4.3.2}Member Enumeration Documentation}{19}{subsection.4.3.2}
+\contentsline {subsubsection}{\numberline {4.3.2.1}Action}{19}{subsubsection.4.3.2.1}
+\contentsline {subsubsection}{\numberline {4.3.2.2}State}{19}{subsubsection.4.3.2.2}
+\contentsline {subsection}{\numberline {4.3.3}Constructor \& Destructor Documentation}{20}{subsection.4.3.3}
+\contentsline {subsubsection}{\numberline {4.3.3.1}LC100Base}{20}{subsubsection.4.3.3.1}
+\contentsline {subsection}{\numberline {4.3.4}Member Function Documentation}{20}{subsection.4.3.4}
+\contentsline {subsubsection}{\numberline {4.3.4.1}begin}{20}{subsubsection.4.3.4.1}
+\contentsline {subsubsection}{\numberline {4.3.4.2}down}{20}{subsubsection.4.3.4.2}
+\contentsline {subsubsection}{\numberline {4.3.4.3}emit}{21}{subsubsection.4.3.4.3}
+\contentsline {subsubsection}{\numberline {4.3.4.4}erase}{21}{subsubsection.4.3.4.4}
+\contentsline {subsubsection}{\numberline {4.3.4.5}frame}{22}{subsubsection.4.3.4.5}
+\contentsline {subsubsection}{\numberline {4.3.4.6}index}{22}{subsubsection.4.3.4.6}
+\contentsline {subsubsection}{\numberline {4.3.4.7}index}{22}{subsubsection.4.3.4.7}
+\contentsline {subsubsection}{\numberline {4.3.4.8}one}{23}{subsubsection.4.3.4.8}
+\contentsline {subsubsection}{\numberline {4.3.4.9}read}{23}{subsubsection.4.3.4.9}
+\contentsline {subsubsection}{\numberline {4.3.4.10}setCursor}{24}{subsubsection.4.3.4.10}
+\contentsline {subsubsection}{\numberline {4.3.4.11}up}{24}{subsubsection.4.3.4.11}
+\contentsline {subsubsection}{\numberline {4.3.4.12}write}{24}{subsubsection.4.3.4.12}
+\contentsline {section}{\numberline {4.4}Mock Class Reference}{26}{section.4.4}
+\contentsline {subsection}{\numberline {4.4.1}Detailed Description}{26}{subsection.4.4.1}
+\contentsline {subsection}{\numberline {4.4.2}Member Function Documentation}{26}{subsection.4.4.2}
+\contentsline {subsubsection}{\numberline {4.4.2.1}begin}{26}{subsubsection.4.4.2.1}
+\contentsline {subsubsection}{\numberline {4.4.2.2}read}{27}{subsubsection.4.4.2.2}
+\contentsline {subsubsection}{\numberline {4.4.2.3}setCursor}{27}{subsubsection.4.4.2.3}
+\contentsline {subsubsection}{\numberline {4.4.2.4}write}{27}{subsubsection.4.4.2.4}
+\contentsline {chapter}{\numberline {5}File Documentation}{29}{chapter.5}
+\contentsline {section}{\numberline {5.1}LC100.cpp File Reference}{29}{section.5.1}
+\contentsline {subsection}{\numberline {5.1.1}Detailed Description}{29}{subsection.5.1.1}
+\contentsline {section}{\numberline {5.2}LC100.h File Reference}{30}{section.5.2}
+\contentsline {subsection}{\numberline {5.2.1}Detailed Description}{30}{subsection.5.2.1}
+\contentsline {section}{\numberline {5.3}README.h File Reference}{31}{section.5.3}
+\contentsline {subsection}{\numberline {5.3.1}Detailed Description}{31}{subsection.5.3.1}
+\contentsline {section}{\numberline {5.4}TinyTerminal.ino File Reference}{32}{section.5.4}
+\contentsline {subsection}{\numberline {5.4.1}Detailed Description}{32}{subsection.5.4.1}
+\contentsline {subsection}{\numberline {5.4.2}Define Documentation}{33}{subsection.5.4.2}
+\contentsline {subsubsection}{\numberline {5.4.2.1}DEBUG}{33}{subsubsection.5.4.2.1}
+\contentsline {subsection}{\numberline {5.4.3}Function Documentation}{33}{subsection.5.4.3}
+\contentsline {subsubsection}{\numberline {5.4.3.1}loop}{33}{subsubsection.5.4.3.1}
+\contentsline {subsubsection}{\numberline {5.4.3.2}setup}{33}{subsubsection.5.4.3.2}

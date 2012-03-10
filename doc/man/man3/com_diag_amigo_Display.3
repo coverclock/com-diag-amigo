@@ -1,0 +1,120 @@
+.TH "com::diag::amigo::Display" 3 "21 Feb 2012" "Version 0.2.0" "Amigo" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+com::diag::amigo::Display \- 
+.PP
+This pure (abstract) class defines the interface that the \fBLC100\fP software expects to be implemented by any display that it uses.  
+
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <LC100.h>\fP
+.PP
+Inherited by \fBMock\fP.
+.SS "Public Types"
+
+.in +1c
+.ti -1c
+.RI "enum \fBRead\fP "
+.br
+.in -1c
+.SS "Public Member Functions"
+
+.in +1c
+.ti -1c
+.RI "virtual void \fBbegin\fP (byte cols, byte rows)=0"
+.br
+.ti -1c
+.RI "virtual void \fBhome\fP ()=0"
+.br
+.ti -1c
+.RI "virtual void \fBclear\fP ()=0"
+.br
+.ti -1c
+.RI "virtual void \fBsetCursor\fP (byte col, byte row)=0"
+.br
+.ti -1c
+.RI "virtual size_t \fBwrite\fP (uint8_t ch)=0"
+.br
+.ti -1c
+.RI "virtual \fBRead\fP \fBread\fP ()=0"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+This pure (abstract) class defines the interface that the \fBLC100\fP software expects to be implemented by any display that it uses. 
+.PP
+Definition at line 24 of file LC100.h.
+.SH "Member Function Documentation"
+.PP 
+.SS "virtual void com::diag::amigo::Display::begin (byte cols, byte rows)\fC [pure virtual]\fP"
+.PP
+Initialize. This needs to be done only once. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIcols\fP is the number of columns in this display. 
+.br
+\fIrows\fP is the number of rows in this display. 
+.RE
+.PP
+
+.PP
+Implemented in \fBMock\fP.
+.PP
+Referenced by com::diag::amigo::LC100Base::begin().
+.SS "virtual \fBRead\fP com::diag::amigo::Display::read ()\fC [pure virtual]\fP"
+.PP
+Read the joystick. The returned value will be an enumerated value indicating movement left, down, up, or right, a select indication, or no input. 
+.PP
+\fBReturns:\fP
+.RS 4
+an enumerated value. 
+.RE
+.PP
+
+.PP
+Implemented in \fBMock\fP.
+.PP
+Referenced by com::diag::amigo::LC100Base::read().
+.SS "virtual void com::diag::amigo::Display::setCursor (byte col, byte row)\fC [pure virtual]\fP"
+.PP
+Place the cursor at the specified position. The column and row coordinates are taken modulo of the actual display dimensions. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIcol\fP is the zero-based column number. 
+.br
+\fIrow\fP is the zero-based row number. 
+.RE
+.PP
+
+.PP
+Implemented in \fBMock\fP.
+.PP
+Referenced by com::diag::amigo::LC100Base::down(), com::diag::amigo::LC100Base::setCursor(), and com::diag::amigo::LC100Base::up().
+.SS "virtual size_t com::diag::amigo::Display::write (uint8_t ch)\fC [pure virtual]\fP"
+.PP
+Write a character to the display. The signed value that is returned will typically be one, but can be zero if the specified character was somehow invalid, or negative if an error writing the character occurred. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIch\fP is the character that is written to the display. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+the number of characters written. 
+.RE
+.PP
+
+.PP
+Implemented in \fBMock\fP.
+.PP
+Referenced by com::diag::amigo::LC100Base::down(), com::diag::amigo::LC100Base::emit(), and com::diag::amigo::LC100Base::up().
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Amigo from the source code.

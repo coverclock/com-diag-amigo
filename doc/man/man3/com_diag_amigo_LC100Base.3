@@ -1,0 +1,352 @@
+.TH "com::diag::amigo::LC100Base" 3 "21 Feb 2012" "Version 0.2.0" "Amigo" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+com::diag::amigo::LC100Base \- 
+.PP
+This is the common base (super) class for the \fBLC100\fP software that does all of the heavy lifting for any \fBLC100\fP template instantiation regardless of the display dimensions.  
+
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <LC100.h>\fP
+.PP
+Inherited by \fBcom::diag::amigo::LC100< _COLS_, _ROWS_ >\fP.
+.SS "Public Types"
+
+.in +1c
+.ti -1c
+.RI "enum \fBAscii\fP "
+.br
+.in -1c
+.SS "Public Member Functions"
+
+.in +1c
+.ti -1c
+.RI "\fBLC100Base\fP (\fBDisplay\fP &\fBdisplay\fP, byte cols, byte rows, byte *lineLengthArray, uint8_t *frameBufferArray, boolean *tabSettingsArray, boolean sample=false, boolean debug=false, int ms=0)"
+.br
+.ti -1c
+.RI "virtual \fB~LC100Base\fP ()"
+.br
+.ti -1c
+.RI "void \fBbegin\fP ()"
+.br
+.ti -1c
+.RI "void \fBsetCursor\fP (byte col, byte row)"
+.br
+.ti -1c
+.RI "void \fBhome\fP ()"
+.br
+.ti -1c
+.RI "void \fBdown\fP ()"
+.br
+.ti -1c
+.RI "void \fBup\fP ()"
+.br
+.ti -1c
+.RI "void \fBerase\fP (byte colFrom, byte rowFrom, byte colTo, byte rowTo)"
+.br
+.ti -1c
+.RI "void \fBclear\fP ()"
+.br
+.ti -1c
+.RI "int \fBread\fP (char *buffer)"
+.br
+.ti -1c
+.RI "size_t \fBwrite\fP (uint8_t ch)"
+.br
+.in -1c
+.SS "Public Attributes"
+
+.in +1c
+.ti -1c
+.RI "const byte \fBCOLS\fP"
+.br
+.ti -1c
+.RI "const byte \fBROWS\fP"
+.br
+.in -1c
+.SS "Protected Types"
+
+.in +1c
+.ti -1c
+.RI "enum \fBConstant\fP "
+.br
+.ti -1c
+.RI "enum \fBState\fP "
+.br
+.ti -1c
+.RI "enum \fBAction\fP "
+.br
+.in -1c
+.SS "Protected Member Functions"
+
+.in +1c
+.ti -1c
+.RI "byte \fBindex\fP (byte col, byte row)"
+.br
+.ti -1c
+.RI "byte \fBindex\fP (byte row)"
+.br
+.ti -1c
+.RI "size_t \fBemit\fP (uint8_t ch)"
+.br
+.ti -1c
+.RI "size_t \fBframe\fP (uint8_t ch)"
+.br
+.ti -1c
+.RI "byte \fBone\fP (byte value)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+This is the common base (super) class for the \fBLC100\fP software that does all of the heavy lifting for any \fBLC100\fP template instantiation regardless of the display dimensions. 
+
+It derives from (extends) the Arduino Print class so that any of the usual Print methods can be used by an application. This class is not intended to be used by itself, although there is no reason why you couldn't do so. 
+.PP
+Definition at line 91 of file LC100.h.
+.SH "Member Enumeration Documentation"
+.PP 
+.SS "enum \fBcom::diag::amigo::LC100Base::Action\fP\fC [protected]\fP"
+.PP
+Actions which the push down automaton may execute. CONSUMED is the default action. All of the enumerated values are printable, making it easy to trace the PDA as it executes. 
+.PP
+Definition at line 124 of file LC100.h.
+.SS "enum \fBcom::diag::amigo::LC100Base::State\fP\fC [protected]\fP"
+.PP
+States in which the push down automaton may be. DATA is the start state. There is no end state. All of the enumerated values are printable, making it easy to trace the PDA as it executes. 
+.PP
+Definition at line 109 of file LC100.h.
+.SH "Constructor & Destructor Documentation"
+.PP 
+.SS "com::diag::amigo::LC100Base::LC100Base (\fBDisplay\fP & display, byte cols, byte rows, byte * lineLengthArray, uint8_t * frameBufferArray, boolean * tabSettingsArray, boolean sample = \fCfalse\fP, boolean debug = \fCfalse\fP, int ms = \fC0\fP)\fC [inline]\fP"
+.PP
+Ctor. \fBParameters:\fP
+.RS 4
+\fIdisplay\fP refers to the object that implements the \fBDisplay\fP interface. 
+.br
+\fIcols\fP is the number of columns in the display. 
+.br
+\fIrows\fP is the number of rows in the display. 
+.br
+\fIlineLengthArray\fP points to an array of dimension [rows] which will be used to store the length in bytes of the displayed line in each row of the display. 
+.br
+\fIframeBufferArray\fP points to an array of dimensions [rows][cols] that is used as a frame buffer to support scrolling. 
+.br
+\fItabSettingsArray\fP points to an array of dimension [cols] that is used to keep track of the tab settings for the display. 
+.br
+\fIsample\fP if true causes the joystick value to be returned continuously as long as a button is pressed; if false, the joystick value is returned intermittently when the button is released. 
+.br
+\fIdebug\fP enables debug output if debugging was compiled in. 
+.br
+\fIms\fP is the number of milliseconds to delay between each individual update of the display, which can make debugging a lot easier. 
+.RE
+.PP
+
+.PP
+Definition at line 162 of file LC100.h.
+.SH "Member Function Documentation"
+.PP 
+.SS "void com::diag::amigo::LC100Base::begin ()"
+.PP
+Initialize this object. This only needs to be called once. 
+.PP
+Definition at line 724 of file LC100.cpp.
+.PP
+References com::diag::amigo::Display::begin(), clear(), COLS, and ROWS.
+.SS "void com::diag::amigo::LC100Base::down ()"
+.PP
+Scroll the scroll area down, leaving the cursor placed at a blank line at the top of the scroll area. By default, the scroll area is the entire display. 
+.PP
+Definition at line 176 of file LC100.cpp.
+.PP
+References com::diag::amigo::Display::clear(), index(), ROWS, setCursor(), com::diag::amigo::Display::setCursor(), and com::diag::amigo::Display::write().
+.PP
+Referenced by write().
+.SS "size_t com::diag::amigo::LC100Base::emit (uint8_t ch)\fC [protected]\fP"
+.PP
+Emit a character, which both displays it on the actual display and stores it appropriately in the frame buffer. The returned value is the number of characters processed, which is nominally one but may be zero if the character is somehow invalid or negative if an error occurred. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIch\fP is the character to be emitted. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+the number of characters emitted. 
+.RE
+.PP
+
+.PP
+Definition at line 69 of file LC100.cpp.
+.PP
+References COLS, index(), ROWS, and com::diag::amigo::Display::write().
+.PP
+Referenced by erase(), frame(), and write().
+.SS "void com::diag::amigo::LC100Base::erase (byte colFrom, byte rowFrom, byte colTo, byte rowTo)"
+.PP
+Erase a square bordered by the specified upper left and lower right corners inclusive. Erasing is done by writing blanks into the display left to right, top to bottom. The cursor is placed back in its original position. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIcolFrom\fP is the zero-based column of the upper left corner of the erased square. 
+.br
+\fIrowFrom\fP is the zero-based row of the upper left corner of the erased square. 
+.br
+\fIcolTo\fP is the zero-based column of the lower right corner of the erased square. 
+.br
+\fIrowTo\fP is the zero-based row of the lower right corner of the erased square. 
+.RE
+.PP
+
+.PP
+Definition at line 109 of file LC100.cpp.
+.PP
+References COLS, emit(), index(), ROWS, and setCursor().
+.PP
+Referenced by frame(), and write().
+.SS "size_t com::diag::amigo::LC100Base::frame (uint8_t ch)\fC [protected]\fP"
+.PP
+Frame a character appropriately by dealing with line wrapping (if enabled) and screen scrolling (ditto). \fBParameters:\fP
+.RS 4
+\fIch\fP is the character to be framed. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+the number of characters framed. 
+.RE
+.PP
+
+.PP
+Definition at line 144 of file LC100.cpp.
+.PP
+References COLS, emit(), erase(), index(), ROWS, setCursor(), and up().
+.PP
+Referenced by write().
+.SS "byte com::diag::amigo::LC100Base::index (byte row)\fC [protected]\fP"
+.PP
+Concert a zero-based row value into an array index. \fBParameters:\fP
+.RS 4
+\fIrow\fP is the zero-based row value. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+an array index. 
+.RE
+.PP
+
+.PP
+Definition at line 35 of file LC100.cpp.
+.PP
+References ROWS.
+.SS "byte com::diag::amigo::LC100Base::index (byte col, byte row)\fC [protected]\fP"
+.PP
+Convert a zero-based column and row coordinate into a frame buffer index. \fBParameters:\fP
+.RS 4
+\fIcol\fP is the zero-based column value. 
+.br
+\fIrow\fP is the zero-based row value. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+a frame buffer index. 
+.RE
+.PP
+
+.PP
+Definition at line 39 of file LC100.cpp.
+.PP
+References COLS.
+.PP
+Referenced by down(), emit(), erase(), frame(), up(), and write().
+.SS "byte com::diag::amigo::LC100Base::one (byte value)\fC [protected]\fP"
+.PP
+Convert a one-based column or row value into a zero-based column or row value. \fBParameters:\fP
+.RS 4
+\fIvalue\fP is the one-based value. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+the zero-based value. 
+.RE
+.PP
+
+.PP
+Definition at line 43 of file LC100.cpp.
+.PP
+Referenced by write().
+.SS "int com::diag::amigo::LC100Base::read (char * buffer)"
+.PP
+Read the current joy stick stimulus into a buffer of at least four bytes in length. If the joy stick is indicating movement, the buffer will contain a VT100 (ANSI) arrow escape sequence indicating the direction of movement. The buffer will be nul-terminated, allowing it to be written directly to the serial port. Return the number of bytes placed into the buffer, zero indicating that there is no joy stick stimulus at this time. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbuffer\fP points to a buffer of at least four bytes in length. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+the number of bytes placed in the buffer. 
+.RE
+.PP
+
+.PP
+Definition at line 667 of file LC100.cpp.
+.PP
+References com::diag::amigo::Display::read().
+.SS "void com::diag::amigo::LC100Base::setCursor (byte col, byte row)"
+.PP
+Place the cursor at the specified position. The column and row coordinates are taken modulo of the actual display dimensions. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIcol\fP is the zero-based column number. 
+.br
+\fIrow\fP is the zero-based row number. 
+.RE
+.PP
+
+.PP
+Definition at line 51 of file LC100.cpp.
+.PP
+References COLS, ROWS, and com::diag::amigo::Display::setCursor().
+.PP
+Referenced by clear(), down(), erase(), frame(), up(), and write().
+.SS "void com::diag::amigo::LC100Base::up ()"
+.PP
+Scroll the scroll area up, leaving the cursor placed at a blank line at the bottom of the scroll area. By default, the scroll area is the entire display. 
+.PP
+Definition at line 197 of file LC100.cpp.
+.PP
+References com::diag::amigo::Display::clear(), index(), ROWS, setCursor(), com::diag::amigo::Display::setCursor(), and com::diag::amigo::Display::write().
+.PP
+Referenced by frame(), and write().
+.SS "size_t com::diag::amigo::LC100Base::write (uint8_t ch)"
+.PP
+Write the current character to the display. This character may be part of a VT100 (ANSI) escape sequence, in which case it is not actually written to the display, but will be executed once the complete escape sequence is captured. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIch\fP is the character to be written to the display. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+the number of characters processed, which could be zero if the character is somehow invalid in the context of the current escape sequence, or negative is an error occurred. 
+.RE
+.PP
+
+.PP
+Definition at line 246 of file LC100.cpp.
+.PP
+References clear(), COLS, down(), emit(), erase(), frame(), com::diag::amigo::Display::home(), index(), one(), ROWS, setCursor(), and up().
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Amigo from the source code.
