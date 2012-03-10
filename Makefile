@@ -131,6 +131,7 @@ HDIRECTORIES+=Amigo/Source/portable/$(TOOLCHAIN)/$(PORTABLE)
 HDIRECTORIES+=Amigo/Demo/$(DEMO)/include
 HDIRECTORIES+=Amigo/Source/include
 
+INCLUDES+=$(addprefix -I,$(HDIRECTORIES))
 LIBRARIES+=-lm
 
 ARCHFLAGS=-mmcu=$(CONTROLLER) -mrelax
