@@ -38,6 +38,13 @@
 		http://www.diag.com
 		mailto:jsloan@diag.com
 
+    EXCEPTIONS
+
+    Files that are part of or derived directly from the FreeRTOS distribution,
+    the Arduino distribution, or Phillip Stevens' port of FreeRTOS to the Atmel
+    AVRmega2560, are the property of those people or organizations and are
+    licensed under the terms specified in those distributions or source files.
+
 --------------------------------------------------------------------------------
 
 	ABSTRACT

@@ -13,8 +13,8 @@ BUILD_TARGET=EtherMega2560
 BUILD_HOST=$(shell uname -s)
 BUILD_PLATFORM=MegaBlink
 
-#SERIAL=/dev/tty.usbmodem26421
-SERIAL=/dev/tty.usbmodem411
+SERIAL=/dev/tty.usbmodem26421
+#SERIAL=/dev/tty.usbmodem411
 BAUD=115200
 
 # Darwin identifies my Mac Mini desktop.
@@ -24,13 +24,15 @@ ifeq ($(BUILD_HOST), Darwin)
 TMP_DIR=/tmp
 APPLICATION_DIR=/Applications
 ROOT_DIR=$(HOME)/Desktop/Silver
-PROJECT_DIR=$(ROOT_DIR)/projects/$(PROJECT)
+AMIGO_DIR=$(ROOT_DIR)/src/$(DIRECTORY)/$(DIRECTORY)
+FREERTOS_DIR=$(ROOT_DIR)/projects/$(PROJECT)/FreeRTOSV7.1.0
 endif
 
 ifeq ($(BUILD_HOST), Linux)
 TMP_DIR=/tmp
 ROOT_DIR=$(HOME)
-PROJECT_DIR=$(ROOT_DIR)/projects/$(PROJECT)
+AMIGO_DIR=$(ROOT_DIR)/src/$(DIRECTORY)/$(DIRECTORY)
+FREERTOS_DIR=$(ROOT_DIR)/projects/$(PROJECT)/FreeRTOSV7.1.0
 endif
 
 ################################################################################
@@ -45,7 +47,7 @@ HTTP_URL=http://www.diag.com/navigation/downloads/$(DIRECTORY).html
 FTP_URL=http://www.diag.com/ftp/$(PROJECT)-$(MAJOR).$(MINOR).$(BUILD).tgz
 SVN_URL=svn://graphite/$(PROJECT)/trunk/$(DIRECTORY)
 
-WORKING_DIR:=$(shell pwd)
+WORKING_DIR=$(shell pwd)
 
 DATESTAMP=$(shell date +'%Y%m%d')
 TIMESTAMP=$(shell date -u +'%Y%m%d%H%M%S%N%Z')
@@ -87,14 +89,12 @@ PART=m2560
 endif
 
 ifeq ($(BUILD_HOST), Darwin)
-FREERTOS_DIR=$(PROJECT_DIR)/FreeRTOSV7.1.0
 TOOLS_DIR=$(APPLICATION_DIR)/Arduino.app/Contents/Resources/Java/hardware/tools
 TOOLCHAIN_BIN=$(TOOLS_DIR)/$(ARCH)/bin
 AVRDUDE_CONF=$(TOOLS_DIR)/$(ARCH)/etc/avrdude.conf
 endif
 
 ifeq ($(BUILD_HOST), Linux)
-FREERTOS_DIR=$(PROJECT_DIR)/FreeRTOSV7.1.0
 TOOLCHAIN_BIN=/usr/bin
 AVRDUDE_CONF=$(WORKING_DIR)/avrdude.conf
 endif
@@ -118,48 +118,42 @@ default:	all
 # BUILD
 ################################################################################
 
+# Source files that were developed elsewhere and which have not been changed
+# from their original distribution are kept in the ~/projects/amigo directory.
+# Files which are original to this project or have been modified for this
+# project are kept in the ~/src/Amigo directory and are under source code
+# control using Subversion. This project's distribution file contains only files
+# from the latter directory tree. The build uses the transitive closure of these
+# two directory trees. 
+
 ifeq ($(BUILD_PLATFORM), MegaBlink)
-CFILES+=$(FREERTOS_DIR)/Demo/$(DEMO)/MegaBlink/main.c
-CFILES+=$(FREERTOS_DIR)/Source/portable/MemMang/heap_2.c
-CFILES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_digitalAnalog/digitalAnalog.c
-CFILES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_serial/lib_serial.c
+AMIGO_CFILES+=Demo/$(DEMO)/MegaBlink/main.c
+AMIGO_CFILES+=Demo/$(DEMO)/lib_digitalAnalog/digitalAnalog.c
+AMIGO_CFILES+=Demo/$(DEMO)/lib_serial/lib_serial.c
+FREERTOS_CFILES+=Source/portable/MemMang/heap_2.c
 endif
 
-CFILES+=$(FREERTOS_DIR)/Source/croutine.c
-CFILES+=$(FREERTOS_DIR)/Source/list.c
-CFILES+=$(FREERTOS_DIR)/Source/queue.c
-CFILES+=$(FREERTOS_DIR)/Source/tasks.c
-CFILES+=$(FREERTOS_DIR)/Source/timers.c
-CFILES+=$(FREERTOS_DIR)/Source/portable/$(TOOLCHAIN)/$(PORTABLE)/port.c
+AMIGO_CFILES+=Source/portable/$(TOOLCHAIN)/$(PORTABLE)/port.c
+FREERTOS_CFILES+=Source/croutine.c
+FREERTOS_CFILES+=Source/list.c
+FREERTOS_CFILES+=Source/queue.c
+FREERTOS_CFILES+=Source/tasks.c
+FREERTOS_CFILES+=Source/timers.c
 
-#INCLUDES+=-I$(HARDWARE_DIR)/arduino/cores/$(CORE)
-#INCLUDES+=-I$(HARDWARE_DIR)/arduino/variants/$(VARIANT)
+AMIGO_HDIRECTORIES+=Source/portable/$(TOOLCHAIN)/$(PORTABLE)
+AMIGO_HDIRECTORIES+=Demo/$(DEMO)/include
+FREERTOS_HDIRECTORIES+=Source/include
 
-HDIRECTORIES+=$(FREERTOS_DIR)/Source/include
-HDIRECTORIES+=$(FREERTOS_DIR)/Source/portable/$(TOOLCHAIN)/$(PORTABLE)
-HDIRECTORIES+=$(FREERTOS_DIR)/Demo/$(DEMO)/include
+CFILES+=$(addprefix $(AMIGO_DIR)/,$(AMIGO_CFILES))
+CFILES+=$(addprefix $(FREERTOS_DIR)/,$(FREERTOS_CFILES))
 
-INCLUDES+=$(addprefix -I,$(HDIRECTORIES))
-
-#CFILES+=$(FREERTOS_DIR)/Source/portable/MemMang/heap_1.c
-#CFILES+=$(FREERTOS_DIR)/Source/portable/MemMang/heap_3.c
-#CFILES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_crc/crc8.c
-#CFILES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_ext_ram/ext_ram.c
-#CFILES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_fatf/cc932.c
-#CFILES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_fatf/ccsbcs.c
-#CFILES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_fatf/diskio.c
-#CFILES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_fatf/ff.c
-#CFILES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_i2c/i2cMultiMaster.c
-#CFILES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_rtc/rtc.c
-#CFILES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_servo/servoPWM.c
-#CFILES+=$(FREERTOS_DIR)/Demo/$(DEMO)/lib_spi/spi.c
+INCLUDES+=$(addprefix -I$(AMIGO_DIR)/,$(AMIGO_HDIRECTORIES))
+INCLUDES+=$(addprefix -I$(FREERTOS_DIR)/,$(FREERTOS_HDIRECTORIES))
 
 LIBRARIES+=-lm
 
 ARCHFLAGS=-mmcu=$(CONTROLLER) -mrelax
-#CPPFLAGS=-DF_CPU=$(FREQUENCY) -DARDUINO=$(ARDUINO) $(INCLUDES)
-CPPFLAGS=-DF_CPU=$(FREQUENCY) $(INCLUDES)
-#CFLAGS=-g -Os -Wall -fno-exceptions -ffunction-sections -fdata-sections -std=c99
+CPPFLAGS=-DF_CPU=$(FREQUENCY) -DARDUINO=$(ARDUINO) $(INCLUDES)
 CFLAGS=-g -Os -Wall -fno-exceptions -ffunction-sections -fdata-sections
 LDFLAGS=-Os -Wl,--gc-sections
 OBJCOPYEEPFLAGS=-O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 
@@ -175,20 +169,12 @@ ARTIFACTS+=$(OFILES)
 ARTIFACTS+=$(SFILES)
 ARTIFACTS+=$(EFILES)
 ARTIFACTS+=$(BUILD_PLATFORM).elf
+ARTIFACTS+=$(BUILD_PLATFORM).hex
 ARTIFACTS+=$(BUILD_PLATFORM).map
 ARTIFACTS+=$(BUILD_PLATFORM).eep
-ARTIFACTS+=$(BUILD_PLATFORM).hex
 
 DELIVERABLES+=$(BUILD_PLATFORM).hex
 DELIVERABLES+=$(BUILD_PLATFORM).map
-	
-PHONY+=preprocess
-
-preprocess:	$(EFILES)
-
-PHONY+=preassemble
-
-preassemble:	$(SFILES)
 
 $(BUILD_PLATFORM).elf:	$(OFILES)
 	$(CROSS_COMPILE)$(CC) $(ARCHFLAGS) $(LDFLAGS) -o $@ $(OFILES) $(OBJECTS) $(ARCHIVES) $(LIBRARIES)
@@ -268,8 +254,21 @@ manpages:
 ################################################################################
 # UTILITIES
 ################################################################################
+
+PHONY+=parameters
+
+parameters:
+	@echo BUILD_TARGET=$(BUILD_TARGET)
+	@echo BUILD_HOST=$(BUILD_HOST)
+	@echo BUILD_PLATFORM=$(BUILD_PLATFORM)
+
+PHONY+=preprocess preassemble
+
+preprocess:	$(EFILES)
+
+preassemble:	$(SFILES)
 	
-PHONY+=interrogate upload terminal
+PHONY+=path implicit backup bundle
 
 # Using back quotes like `make path` on the command line sets the PATH variable
 # in your interactive shell.
@@ -277,18 +276,33 @@ PHONY+=interrogate upload terminal
 path:
 	@echo export PATH=$(PATH):$(TOOLCHAIN_BIN)
 
+# This is because I'm curious.
+
 implicit:
 	$(CROSS_COMPILE)$(CXX) -dM -E -mmcu=$(CONTROLLER) - < /dev/null
 
+# This is because I'm paranoid.
+
 backup:
-	( cd $(FREERTOS_DIR)/..; DIRNAME="`basename $(FREERTOS_DIR)`"; echo $$DIRNAME; tar cvzf - $$DIRNAME > $$DIRNAME-$(TIMESTAMP).tgz )
+	( cd $(FREERTOS_DIR)/..; DIRNAME="`basename $(FREERTOS_DIR)`"; tar cvzf - $$DIRNAME > $$DIRNAME-$(TIMESTAMP).tgz )
+
+# This is a convenient way to bundle up the FreeRTOS application in one big
+# directory tree to move over to AVR Studio for debugging.
+
+bundle:	$(CFILES) $(CXXFILES) $(HDIRECTORIES)
+	TMPDIR=`mktemp -d $(TMP_DIR)/$(PROJECT).XXXXXX`; \
+	mkdir $$TMPDIR/Amigo; \
+	tar -C $(AMIGO_DIR) --exclude .svn -czf - $(AMIGO_CFILES) $(AMIGO_HDIRECTORIES) | tar -C $$TMPDIR/Amigo -xzf - ; \
+	tar -C $(FREERTOS_DIR) --exclude .svn -czf - $(FREERTOS_CFILES) $(FREERTOS_HDIRECTORIES) | tar -C $$TMPDIR/Amigo -xzf - ; \
+	( cd $$TMPDIR; tar -cvzf - Amigo ) > bundle.tgz; \
+	rm -rf $$TMPDIR
 
 # These targets only exist when running on my Mac desktop because that's to what
 # the Arduino boards connects via USB. The Dell server is two floors down!
 
 ifeq ($(BUILD_HOST), Darwin)
 	
-PHONY+=interrogate upload terminal
+PHONY+=interrogate upload terminal enablejtag
 
 # As far as I can tell, the Arduino bootloaders on both the Uno and the Mega
 # only pretend to implement the avrdude commands to query the signature bytes
@@ -313,6 +327,16 @@ terminal:
 	# control-A control-\ y to exit.
 	screen -L $(SERIAL) $(BAUD)
 	stty -f $(SERIAL) sane
+
+ifeq ($(BUILD_TARGET),EtherMega2560)
+
+# This uses the AVRISP mkII to enable JTAG (0x40) and OCD (0x80) in the HFUSE on the ATmega2560.
+enabledebug:
+	$(AVRDUDE) -v -C$(AVRDUDE_CONF) -p$(PART) -c$(PROGRAMMER) -Pusb -b$(BAUD) -Uhfuse:r:-:h
+	$(AVRDUDE) -v -C$(AVRDUDE_CONF) -p$(PART) -c$(PROGRAMMER) -Pusb -b$(BAUD) -Uhfuse:w:0x18:m
+	$(AVRDUDE) -v -C$(AVRDUDE_CONF) -p$(PART) -c$(PROGRAMMER) -Pusb -b$(BAUD) -Uhfuse:r:-:h
+	
+endif
 
 endif
 
