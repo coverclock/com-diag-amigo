@@ -47,7 +47,7 @@ int main(void)
 
 	avrSerialPrint_P(PSTR("\r\n\n\nHello World!\r\n")); // Ok, so we're alive...
 
-#if 0
+#if 1
     xTaskCreate(
 		TaskBlinkRedLED
 		,  (const signed portCHAR *)"RedLED" // Main Arduino Mega 2560, Freetronics EtherMega (Red) LED Blink
@@ -55,7 +55,9 @@ int main(void)
 		,  NULL
 		,  3
 		,  NULL ); // */
+#endif
 
+#if 0
     xTaskCreate(
 		TaskBlinkGreenLED
 		,  (const signed portCHAR *)"GreenLED" // Main Arduino Uno 328p (Green) LED Blink
@@ -92,10 +94,10 @@ static void TaskBlinkRedLED(void *pvParameters) // Main Red LED Flash
     {
 
     	setDigitalOutput( IO_B7, 1);               // main EtherMega LED on
-		vTaskDelayUntil( &xLastWakeTime, ( 100 / portTICK_RATE_MS ) );
+		vTaskDelayUntil( &xLastWakeTime, ( 1000 / portTICK_RATE_MS ) ); // < coverclock@diag.com 2012-03-12
 
 		setDigitalOutput( IO_B7, 0);               // main EtherMega LED  off
-		vTaskDelayUntil( &xLastWakeTime, ( 200 / portTICK_RATE_MS ) );
+		vTaskDelayUntil( &xLastWakeTime, ( 2000 / portTICK_RATE_MS ) ); // < coverclock@diag.com 2012-03-12
 
 		xSerialPrintf_P(PSTR("RedLED HighWater @ %u\r\n"), uxTaskGetStackHighWaterMark(NULL));
     }
