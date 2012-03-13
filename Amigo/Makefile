@@ -13,21 +13,36 @@ BUILD_TARGET=EtherMega2560
 BUILD_HOST=$(shell uname -s)
 BUILD_PLATFORM=MegaBlink
 
-# Darwin identifies my desktop.
-# Linux identifies my server.
+# This option uses the tool chain provided with Arduino on my desktop.
+ifeq ($(BUILD_HOST), Unused)
+TMP_DIR=/tmp
+ARDUINO_DIR=/Applications/Arduino.app/Contents/Resources/Java
+BOOTLOADER_DIR=$(ARDUINO_DIR)/hardware/Arduino/bootloaders
+TOOLS_DIR=$(ARDUINO_DIR)/hardware/tools/avr
+AVRDUDE_CONF=$(TOOLS_DIR)/etc/avrdude.conf
+TOOLCHAIN_BIN=$(TOOLS_DIR)/bin
+TOOLCHAIN_DIR=$(TOOLS_DIR)/avr/include
+endif
 
+# This option uses the tool chain provided with the AVR CrossPack on my desktop.
 ifeq ($(BUILD_HOST), Darwin)
 TMP_DIR=/tmp
 ARDUINO_DIR=/Applications/Arduino.app/Contents/Resources/Java
-TOOLCHAIN_BIN=$(ARDUINO_DIR)/hardware/tools/avr/bin
-AVRDUDE_CONF=$(ARDUINO_DIR)/hardware/tools/avr/etc/avrdude.conf
+BOOTLOADER_DIR=$(ARDUINO_DIR)/hardware/Arduino/bootloaders
+CROSSPACK_DIR=/usr/local/CrossPack-AVR
+AVRDUDE_CONF=$(CROSSPACK_DIR)/etc/avrdude.conf
+TOOLCHAIN_BIN=$(CROSSPACK_DIR)/bin
+TOOLCHAIN_DIR=$(CROSSPACK_DIR)/avr/include
 endif
 
+# This option uses the tool chain provided via packages installed on my server.
 ifeq ($(BUILD_HOST), Linux)
 TMP_DIR=/tmp
 ARDUINO_DIR=$(HOME)/src/arduino-1.0-linux
+BOOTLOADER_DIR=$(ARDUINO_DIR)/hardware/arduino/bootloaders
+AVRDUDE_CONF=/etc/avrdude.conf
 TOOLCHAIN_BIN=/usr/bin
-AVRDUDE_CONF=$(ARDUINO_DIR)/hardware/tools/avrdude.conf
+TOOLCHAIN_DIR=/usr/lib/avr/include
 endif
 
 SERIAL=/dev/tty.usbmodem26421
@@ -61,7 +76,12 @@ TOOLCHAIN=GCC
 DEMO=Uno_$(TOOLCHAIN)
 CONFIG=arduino
 PROGRAMMER=avrispmkII
+ISP=stk500v2
 PART=m328p
+BOOTLOADER_HEX=$(BOOTLOADER_DIR)/optiboot/optiboot_atmega328.hex
+EFUSE=0x05
+HFUSE=0xDE# ?0xD6 EESAVE?
+LFUSE=0xFF
 endif
 
 ifeq ($(BUILD_TARGET),EtherMega2560)
@@ -79,7 +99,12 @@ TOOLCHAIN=GCC
 DEMO=EtherMega2560_$(TOOLCHAIN)
 CONFIG=stk500v2
 PROGRAMMER=avrispmkII
+ISP=stk500v2
 PART=m2560
+BOOTLOADER_HEX=$(BOOTLOADER_DIR)/stk500v2/stk500boot_v2_mega2560.hex
+EFUSE=0xFD
+HFUSE=0xD8
+LFUSE=0xFF
 endif
 
 CC=gcc
@@ -87,6 +112,7 @@ CXX=g++
 LD=gcc
 NM=nm
 OBJCOPY=objcopy
+OBJDUMP=objdump
 AVRDUDE=avrdude
 
 ################################################################################
@@ -134,6 +160,8 @@ ARCHFLAGS=-mmcu=$(CONTROLLER) -mrelax
 CPPFLAGS=-DF_CPU=$(FREQUENCY) -DARDUINO=$(ARDUINO) $(INCLUDES)
 CFLAGS=-g -Os -Wall -fno-exceptions -ffunction-sections -fdata-sections
 LDFLAGS=-Os -Wl,--gc-sections
+NMFLAGS=-n -o -a -A
+OBJDUMPFLAGS=-x -G -t -r
 OBJCOPYEEPFLAGS=-O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 
 OBJCOPYHEXFLAGS=-O ihex -R .eeprom
 
@@ -148,11 +176,11 @@ ARTIFACTS+=$(SFILES)
 ARTIFACTS+=$(EFILES)
 ARTIFACTS+=$(BUILD_PLATFORM).elf
 ARTIFACTS+=$(BUILD_PLATFORM).hex
-ARTIFACTS+=$(BUILD_PLATFORM).map
 ARTIFACTS+=$(BUILD_PLATFORM).eep
+ARTIFACTS+=$(BUILD_PLATFORM).map
+ARTIFACTS+=$(BUILD_PLATFORM).dmp
 
 DELIVERABLES+=$(BUILD_PLATFORM).hex
-DELIVERABLES+=$(BUILD_PLATFORM).map
 
 $(BUILD_PLATFORM).elf:	$(OFILES)
 	$(CROSS_COMPILE)$(CC) $(ARCHFLAGS) $(LDFLAGS) -o $@ $(OFILES) $(OBJECTS) $(ARCHIVES) $(LIBRARIES)
@@ -270,7 +298,7 @@ implicit:
 
 ifeq ($(BUILD_HOST), Darwin)
 	
-PHONY+=interrogate upload terminal enablejtag
+PHONY+=interrogate flashapplication screen flashbootloader
 
 # As far as I can tell, the Arduino bootloaders on both the Uno and the Mega
 # only pretend to implement the avrdude commands to query the signature bytes
@@ -285,24 +313,33 @@ interrogate:
 	$(AVRDUDE) -v -C$(AVRDUDE_CONF) -p$(PART) -c$(PROGRAMMER) -Pusb -b$(BAUD) -t
 
 # This uses the bootloader.
-upload:	$(BUILD_PLATFORM).hex
+flashapplication:	$(BUILD_PLATFORM).hex
 	stty -f $(SERIAL) hupcl
 	$(AVRDUDE) -v -C$(AVRDUDE_CONF) -p$(PART) -c$(CONFIG) -P$(SERIAL) -b$(BAUD) -D -Uflash:w:$<:i
 
-terminal:
+screen:
 	stty -f $(SERIAL) sane
 	stty -f $(SERIAL) hupcl
 	# control-A control-\ y to exit.
 	screen -L $(SERIAL) $(BAUD)
 	stty -f $(SERIAL) sane
+	
+# This uses the AVRISP mkII to
+# unlock the bootloader,
+# initialize all fuses to Arduino defaults including disabling JTAG,
+# reflash the bootloader, and
+# lock the bootloader.
+flashbootloader:	$(BOOTLOADER_HEX)
+	$(AVRDUDE) -C$(AVRDUDE_CONF) -p$(PART) -c$(ISP) -Pusb -e -Ulock:w:0x3F:m -Uefuse:w:$(EFUSE):m -Uhfuse:w:$(HFUSE):m -Ulfuse:w:$(LFUSE):m
+	$(AVRDUDE) -C$(AVRDUDE_CONF) -p$(PART) -c$(ISP) -Pusb -Uflash:w:$(BOOTLOADER_HEX):i -Ulock:w:0x0F:m 
 
 ifeq ($(BUILD_TARGET),EtherMega2560)
 
-# This uses the AVRISP mkII to enable JTAG (0x40) and OCD (0x80) in the HFUSE on the ATmega2560.
-enabledebug:
-	$(AVRDUDE) -v -C$(AVRDUDE_CONF) -p$(PART) -c$(PROGRAMMER) -Pusb -b$(BAUD) -Uhfuse:r:-:h
-	$(AVRDUDE) -v -C$(AVRDUDE_CONF) -p$(PART) -c$(PROGRAMMER) -Pusb -b$(BAUD) -Uhfuse:w:0x18:m
-	$(AVRDUDE) -v -C$(AVRDUDE_CONF) -p$(PART) -c$(PROGRAMMER) -Pusb -b$(BAUD) -Uhfuse:r:-:h
+PHONY+=enablejtag
+
+# This uses the AVRISP mkII to enable JTAG (0x40) in the HFUSE on the ATmega2560.
+enablejtag:
+	$(AVRDUDE) -v -C$(AVRDUDE_CONF) -p$(PART) -c$(ISP) -Pusb -b$(BAUD) -Uhfuse:w:0x98:m
 	
 endif
 
@@ -337,7 +374,10 @@ endif
 	$(CROSS_COMPILE)$(OBJCOPY) $(OBJCOPYHEXFLAGS) $< $@
 
 %.map:	%.elf
-	$(CROSS_COMPILE)$(NM) -n -o -a -A $< > $@
+	$(CROSS_COMPILE)$(NM) $(NMFLAGS) $< > $@
+
+%.dmp:	%.elf
+	$(CROSS_COMPILE)$(OBJDUMP) $(OBJDUMPFLAGS) $< > $@
 
 %:	%_unstripped
 	$(CROSS_COMPILE)$(STRIP) -o $@ $<

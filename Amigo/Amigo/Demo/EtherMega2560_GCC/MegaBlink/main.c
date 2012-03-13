@@ -99,7 +99,7 @@ static void TaskBlinkRedLED(void *pvParameters) // Main Red LED Flash
 		setDigitalOutput( IO_B7, 0);               // main EtherMega LED  off
 		vTaskDelayUntil( &xLastWakeTime, ( 2000 / portTICK_RATE_MS ) ); // < coverclock@diag.com 2012-03-12
 
-		xSerialPrintf_P(PSTR("RedLED HighWater @ %u\r\n"), uxTaskGetStackHighWaterMark(NULL));
+		//xSerialPrintf_P(PSTR("RedLED HighWater @ %u\r\n"), uxTaskGetStackHighWaterMark(NULL));
     }
 
 }
