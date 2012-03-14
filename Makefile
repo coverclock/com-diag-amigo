@@ -6,7 +6,15 @@
 ################################################################################
 
 PROJECT=amigo
-DIRECTORY=Amigo
+NAME=Amigo
+
+MAJOR=0
+MINOR=4
+BUILD=0
+
+HTTP_URL=http://www.diag.com/navigation/downloads/$(NAME).html
+FTP_URL=http://www.diag.com/ftp/$(PROJECT)-$(MAJOR).$(MINOR).$(BUILD).tgz
+SVN_URL=svn://graphite/$(PROJECT)/trunk/$(NAME)
 
 #BUILD_TARGET=Uno
 BUILD_TARGET=EtherMega2560
@@ -22,6 +30,7 @@ TOOLS_DIR=$(ARDUINO_DIR)/hardware/tools/avr
 AVRDUDE_CONF=$(TOOLS_DIR)/etc/avrdude.conf
 TOOLCHAIN_BIN=$(TOOLS_DIR)/bin
 TOOLCHAIN_DIR=$(TOOLS_DIR)/avr/include
+AVRSTUDIO_DIR=Amigo/Debug
 endif
 
 # This option uses the tool chain provided with the AVR CrossPack on my desktop.
@@ -33,9 +42,10 @@ CROSSPACK_DIR=/usr/local/CrossPack-AVR
 AVRDUDE_CONF=$(CROSSPACK_DIR)/etc/avrdude.conf
 TOOLCHAIN_BIN=$(CROSSPACK_DIR)/bin
 TOOLCHAIN_DIR=$(CROSSPACK_DIR)/avr/include
+AVRSTUDIO_DIR=Amigo/Debug
 endif
 
-# This option uses the tool chain provided via packages installed on my server.
+# This option uses the tool chain provided via AVR packages installed on my server.
 ifeq ($(BUILD_HOST), Linux)
 TMP_DIR=/tmp
 ARDUINO_DIR=$(HOME)/src/arduino-1.0-linux
@@ -43,23 +53,16 @@ BOOTLOADER_DIR=$(ARDUINO_DIR)/hardware/arduino/bootloaders
 AVRDUDE_CONF=/etc/avrdude.conf
 TOOLCHAIN_BIN=/usr/bin
 TOOLCHAIN_DIR=/usr/lib/avr/include
+AVRSTUDIO_DIR=Amigo/Debug
 endif
 
-SERIAL=/dev/tty.usbmodem26421
-#SERIAL=/dev/tty.usbmodem411
+#SERIAL=/dev/tty.usbmodem26421
+SERIAL=/dev/tty.usbmodem411
 BAUD=115200
 
 ################################################################################
 # CONFIGURATION
 ################################################################################
-
-MAJOR=0
-MINOR=4
-BUILD=0
-
-HTTP_URL=http://www.diag.com/navigation/downloads/$(DIRECTORY).html
-FTP_URL=http://www.diag.com/ftp/$(PROJECT)-$(MAJOR).$(MINOR).$(BUILD).tgz
-SVN_URL=svn://graphite/$(PROJECT)/trunk/$(DIRECTORY)
 
 ifeq ($(BUILD_TARGET),Uno)
 ARCH=avr
@@ -156,12 +159,19 @@ HDIRECTORIES+=Amigo/Source/include
 INCLUDES+=$(addprefix -I,$(HDIRECTORIES))
 LIBRARIES+=-lm
 
-ARCHFLAGS=-mmcu=$(CONTROLLER) -mrelax
+ARCHFLAGS=-mmcu=$(CONTROLLER)
 CPPFLAGS=-DF_CPU=$(FREQUENCY) -DARDUINO=$(ARDUINO) $(INCLUDES)
 CFLAGS=-g -Os -Wall -fno-exceptions -ffunction-sections -fdata-sections
+CXXFLAGS=-g -Os -Wall -fno-exceptions -ffunction-sections -fdata-sections
+#-mrelax
+#-funsigned-char -funsigned-bitfields
+#-g2 -OI
+
+
 LDFLAGS=-Os -Wl,--gc-sections
 NMFLAGS=-n -o -a -A
 OBJDUMPFLAGS=-x -G -t -r
+OBJDISASSEMBLYFLAGS=-d
 OBJCOPYEEPFLAGS=-O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 
 OBJCOPYHEXFLAGS=-O ihex -R .eeprom
 
@@ -174,11 +184,12 @@ SFILES+=$(addsuffix .s,$(basename $(CFILES) $(CXXFILES)))
 ARTIFACTS+=$(OFILES)
 ARTIFACTS+=$(SFILES)
 ARTIFACTS+=$(EFILES)
-ARTIFACTS+=$(BUILD_PLATFORM).elf
-ARTIFACTS+=$(BUILD_PLATFORM).hex
-ARTIFACTS+=$(BUILD_PLATFORM).eep
-ARTIFACTS+=$(BUILD_PLATFORM).map
-ARTIFACTS+=$(BUILD_PLATFORM).dmp
+ARTIFACTS+=$(BUILD_PLATFORM).elf# ELF output from linker
+ARTIFACTS+=$(BUILD_PLATFORM).hex# downloadable file in Intel Hex format
+ARTIFACTS+=$(BUILD_PLATFORM).eep# EEPROM file
+ARTIFACTS+=$(BUILD_PLATFORM).map# link map
+ARTIFACTS+=$(BUILD_PLATFORM).dmp# ELF dump
+ARTIFACTS+=$(BUILD_PLATFORM).dis# ELF disassembly
 
 DELIVERABLES+=$(BUILD_PLATFORM).hex
 
@@ -190,32 +201,22 @@ $(BUILD_PLATFORM).elf:	$(OFILES)
 ################################################################################
 
 PHONY+=depend
-ARTIFACTS+=$(BUILD_HOST).mk
-
-# For some reason echo in make on the Mac (Darwin) doesn't understand the -n
-# option even though its man page documents it. And echo in make on the Dell
-# (Linux) doesn't understand \c. The paths in the dependencies file are
-# different too, so we can't use the Mac dependencies file on the Dell and vice
-# versa. Nothing is ever simple.
+ARTIFACTS+=dependencies.mk
 
 depend:
-	cp /dev/null $(BUILD_HOST).mk
-ifeq ($(BUILD_HOST), Darwin)
+	cp /dev/null dependencies.mk
 	for F in $(CFILES); do \
 		D=`dirname $$F`; \
-		echo "$$D/\c" >> dependencies.mk; \
-		$(CXX) $(CPPFLAGS) -MM -MG $$F >> $(BUILD_HOST).mk; \
+		B=`basename -s .c $$F`; \
+		$(CXX) $(CPPFLAGS) -MM -MT $$D/$$B.o -MG $$F >> dependencies.mk; \
 	done
-endif
-ifeq ($(BUILD_HOST), Linux)
-	for F in $(CFILES); do \
+	for F in $(CXXFILES); do \
 		D=`dirname $$F`; \
-		echo -n "$$D/" >> dependencies.mk; \
-		$(CXX) $(CPPFLAGS) -MM -MG $$F >> $(BUILD_HOST).mk; \
+		B=`basename -s .cpp $$F`; \
+		$(CXX) $(CPPFLAGS) -MM -MT $$D/$$B.o -MG $$F >> dependencies.mk; \
 	done
-endif
 
--include $(BUILD_HOST).mk
+-include dependencies.mk
 
 ################################################################################
 # DISTRIBUTION
@@ -298,24 +299,29 @@ implicit:
 
 ifeq ($(BUILD_HOST), Darwin)
 	
-PHONY+=interrogate flashapplication screen flashbootloader
+PHONY+=interrogate flashapplication screen flashbootloader flashdebug
 
 # As far as I can tell, the Arduino bootloaders on both the Uno and the Mega
 # only pretend to implement the avrdude commands to query the signature bytes
 # from the EEPROM. But in fact the bootloaders return hardcoded values, not the
-# actual values from the EEPROM. If queried for other EEPROM values like the
-# fuses, they return hardcoded zeros. If you want to play with the EEPROM,
+# actual values from the chip. If queried for other chip values like the
+# fuses, they return hardcoded zeros. If you want to play with the chip,
 # you'll need an In-System Programmer (ISP) device like the Atmel AVRISP mkII,
 # which is what I use.
 
-# This uses the AVRISP mkII.
+# This uses the AVRISP mkII to start an interactive session.
 interrogate:
 	$(AVRDUDE) -v -C$(AVRDUDE_CONF) -p$(PART) -c$(PROGRAMMER) -Pusb -b$(BAUD) -t
 
-# This uses the bootloader.
+# This uses the bootloader to load the application.
 flashapplication:	$(BUILD_PLATFORM).hex
 	stty -f $(SERIAL) hupcl
 	$(AVRDUDE) -v -C$(AVRDUDE_CONF) -p$(PART) -c$(CONFIG) -P$(SERIAL) -b$(BAUD) -D -Uflash:w:$<:i
+
+# This uses the bootloader to load the debug image produced by AVR Studio 5.1.
+flashdebug:	$(AVRSTUDIO_DIR)/$(NAME).hex
+	stty -f $(SERIAL) hupcl
+	$(AVRDUDE) -v -C$(AVRDUDE_CONF) -p$(PART) -c$(CONFIG) -P$(SERIAL) -b$(BAUD) -D -Uflash:w:$(AVRSTUDIO_DIR)/$(NAME).hex:i
 
 screen:
 	stty -f $(SERIAL) sane
@@ -378,6 +384,9 @@ endif
 
 %.dmp:	%.elf
 	$(CROSS_COMPILE)$(OBJDUMP) $(OBJDUMPFLAGS) $< > $@
+
+%.dis:	%.elf
+	$(CROSS_COMPILE)$(OBJDUMP) $(OBJDISASSEMBLYFLAGS) $< > $@
 
 %:	%_unstripped
 	$(CROSS_COMPILE)$(STRIP) -o $@ $<

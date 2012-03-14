@@ -222,7 +222,7 @@ xComPortHandle xSerialPortInitMinimal( uint32_t ulWantedBaud, unsigned portBASE_
 		UCSR0A = _BV(U2X0);
 
 		/* Enable the Rx and Tx. Also enable the Rx interrupt. The Tx interrupt will get enabled later. */
-		UCSR0B = ( _BV(RXCIE0) | _BV(RXEN0) | _BV(TXEN0));
+		UCSR0B = ( _BV(RXCIE0) | _BV(RXEN0) | _BV(TXEN0) );
 
 		/* Set the data bit register to 8n1. */
 		UCSR0C = ( _BV(UCSZ00) | _BV(UCSZ01) );

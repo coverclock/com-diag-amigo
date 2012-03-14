@@ -38,9 +38,10 @@ static portTASK_FUNCTION(TaskBlinkGreenLED, pvParameters); // Main Arduino Uno 3
 /* Main program loop */
 int main(void)
 {
-	// v coverclock@diag.com 2012-03-09
+	// v coverclock@diag.com 2012-03-14
 	MCUCR &= ~_BV(JTD); // Enable JTAG debugging.
-	// ^ coverclock@diag.com 2012-03-09
+	MCUCR &= ~_BV(IVSEL); // Take interrupt vectors.
+	// ^ coverclock@diag.com 2012-03-14
 
     // turn on the serial port for debugging or for other USART reasons.
 	xSerialPort = xSerialPortInitMinimal( 115200, 80, 16); //  serial port: WantedBaud, TxQueueLength, RxQueueLength (8n1)
@@ -99,7 +100,9 @@ static void TaskBlinkRedLED(void *pvParameters) // Main Red LED Flash
 		setDigitalOutput( IO_B7, 0);               // main EtherMega LED  off
 		vTaskDelayUntil( &xLastWakeTime, ( 2000 / portTICK_RATE_MS ) ); // < coverclock@diag.com 2012-03-12
 
-		//xSerialPrintf_P(PSTR("RedLED HighWater @ %u\r\n"), uxTaskGetStackHighWaterMark(NULL));
+#if 0
+		xSerialPrintf_P(PSTR("RedLED HighWater @ %u\r\n"), uxTaskGetStackHighWaterMark(NULL));
+#endif
     }
 
 }
