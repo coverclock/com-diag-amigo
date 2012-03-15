@@ -60,10 +60,6 @@ endif
 SERIAL=/dev/tty.usbmodem411
 BAUD=115200
 
-################################################################################
-# CONFIGURATION
-################################################################################
-
 ifeq ($(BUILD_TARGET),Uno)
 ARCH=avr
 CROSS_COMPILE=$(ARCH)-
@@ -110,13 +106,14 @@ HFUSE=0xD8
 LFUSE=0xFF
 endif
 
+AVRDUDE=avrdude
 CC=gcc
 CXX=g++
 LD=gcc
 NM=nm
 OBJCOPY=objcopy
 OBJDUMP=objdump
-AVRDUDE=avrdude
+SIZE=size
 
 ################################################################################
 # DEFAULT
@@ -159,18 +156,19 @@ HDIRECTORIES+=Amigo/Source/include
 INCLUDES+=$(addprefix -I,$(HDIRECTORIES))
 LIBRARIES+=-lm
 
-ARCHFLAGS=-mmcu=$(CONTROLLER)
+OPT=s
+CARCH=-mmcu=$(CONTROLLER)
+CSTANDARD=-std=gnu99
+CDEBUG=-g
+CWARN=-Wall
+CTUNING=-fno-exceptions -ffunction-sections -fdata-sections -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums# -mrelax
 CPPFLAGS=-DF_CPU=$(FREQUENCY) -DARDUINO=$(ARDUINO) $(INCLUDES)
-CFLAGS=-g -Os -Wall -fno-exceptions -ffunction-sections -fdata-sections
-CXXFLAGS=-g -Os -Wall -fno-exceptions -ffunction-sections -fdata-sections
-#-mrelax
-#-funsigned-char -funsigned-bitfields
-#-g2 -OI
-
-
-LDFLAGS=-Os -Wl,--gc-sections
+CFLAGS=$(CARCH) $(CSTANDARD) $(CDEBUG) -O$(OPT) $(CWARN) $(CTUNING) $(CEXTRA)
+CXXFLAGS=$(CARCH) $(CSTANDARD) $(CDEBUG) -O$(OPT) $(CWARN) $(CTUNING) $(CXXEXTRA)
+LDFLAGS=$(CARCH) -O$(OPT) -Wl,--gc-sections
 NMFLAGS=-n -o -a -A
 OBJDUMPFLAGS=-x -G -t -r
+SIZEFLAGS=-C --mcu=$(CONTROLLER)
 OBJDISASSEMBLYFLAGS=-d
 OBJCOPYEEPFLAGS=-O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 
 OBJCOPYHEXFLAGS=-O ihex -R .eeprom
@@ -194,7 +192,7 @@ ARTIFACTS+=$(BUILD_PLATFORM).dis# ELF disassembly
 DELIVERABLES+=$(BUILD_PLATFORM).hex
 
 $(BUILD_PLATFORM).elf:	$(OFILES)
-	$(CROSS_COMPILE)$(CC) $(ARCHFLAGS) $(LDFLAGS) -o $@ $(OFILES) $(OBJECTS) $(ARCHIVES) $(LIBRARIES)
+	$(CROSS_COMPILE)$(CC) $(LDFLAGS) -o $@ $(OFILES) $(OBJECTS) $(ARCHIVES) $(LIBRARIES)
 
 ################################################################################
 # DEPENDENCIES
@@ -356,22 +354,22 @@ endif
 ################################################################################
 
 %.e:	%.cpp
-	$(CROSS_COMPILE)$(CXX) $(ARCHFLAGS) -E $(CPPFLAGS) -c $< > $*.e
+	$(CROSS_COMPILE)$(CXX)-E $(CPPFLAGS) -c $< > $*.e
 
 %.s:	%.cpp
-	$(CROSS_COMPILE)$(CXX) $(ARCHFLAGS) -S $(CPPFLAGS) $(CXXFLAGS) -o $@ -c $<
+	$(CROSS_COMPILE)$(CXX) -S $(CPPFLAGS) $(CXXFLAGS) -o $@ -c $<
 
 %.o:	%.cpp
-	$(CROSS_COMPILE)$(CXX) $(ARCHFLAGS) $(CPPFLAGS) $(CXXFLAGS) -o $@ -c $<
+	$(CROSS_COMPILE)$(CXX) $(CPPFLAGS) $(CXXFLAGS) -o $@ -c $<
 
 %.e:	%.c
-	$(CROSS_COMPILE)$(CC) $(ARCHFLAGS) -E $(CPPFLAGS) -c $< > $*.e
+	$(CROSS_COMPILE)$(CC) -E $(CPPFLAGS) -c $< > $*.e
 
 %.s:	%.c
-	$(CROSS_COMPILE)$(CC) $(ARCHFLAGS) -S $(CPPFLAGS) $(CFLAGS) -o $@ -c $<
+	$(CROSS_COMPILE)$(CC) -S $(CPPFLAGS) $(CFLAGS) -o $@ -c $<
 
 %.o:	%.c
-	$(CROSS_COMPILE)$(CC) $(ARCHFLAGS) $(CPPFLAGS) $(CFLAGS) -o $@ -c $<
+	$(CROSS_COMPILE)$(CC) $(CPPFLAGS) $(CFLAGS) -o $@ -c $<
 
 %.eep:	%.elf
 	$(CROSS_COMPILE)$(OBJCOPY) $(OBJCOPYEEPFLAGS) $< $@
@@ -387,6 +385,9 @@ endif
 
 %.dis:	%.elf
 	$(CROSS_COMPILE)$(OBJDUMP) $(OBJDISASSEMBLYFLAGS) $< > $@
+
+%.siz:	%.elf
+	$(CROSS_COMPILE)$(SIZE) $(SIZEFLAGS) $< > $@
 
 %:	%_unstripped
 	$(CROSS_COMPILE)$(STRIP) -o $@ $<
