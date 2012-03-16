@@ -182,14 +182,20 @@ SFILES+=$(addsuffix .s,$(basename $(CFILES) $(CXXFILES)))
 ARTIFACTS+=$(OFILES)
 ARTIFACTS+=$(SFILES)
 ARTIFACTS+=$(EFILES)
+
 ARTIFACTS+=$(BUILD_PLATFORM).elf# ELF output from linker
-ARTIFACTS+=$(BUILD_PLATFORM).hex# downloadable file in Intel Hex format
+ARTIFACTS+=$(BUILD_PLATFORM).hex# Intel hex file for bootloading
 ARTIFACTS+=$(BUILD_PLATFORM).eep# EEPROM file
-ARTIFACTS+=$(BUILD_PLATFORM).map# link map
-ARTIFACTS+=$(BUILD_PLATFORM).dmp# ELF dump
-ARTIFACTS+=$(BUILD_PLATFORM).dis# ELF disassembly
+ARTIFACTS+=$(BUILD_PLATFORM).map# ELF link map
+ARTIFACTS+=$(BUILD_PLATFORM).dmp# AVR dump
+ARTIFACTS+=$(BUILD_PLATFORM).dis# AVR disassembly
+ARTIFACTS+=$(BUILD_PLATFORM).siz# AVR size
 
 DELIVERABLES+=$(BUILD_PLATFORM).hex
+
+COLLATERAL+=$(BUILD_PLATFORM).map
+COLLATERAL+=$(BUILD_PLATFORM).dmp
+COLLATERAL+=$(BUILD_PLATFORM).siz
 
 $(BUILD_PLATFORM).elf:	$(OFILES)
 	$(CROSS_COMPILE)$(CC) $(LDFLAGS) -o $@ $(OFILES) $(OBJECTS) $(ARCHIVES) $(LIBRARIES)
@@ -297,7 +303,7 @@ implicit:
 
 ifeq ($(BUILD_HOST), Darwin)
 	
-PHONY+=interrogate flashapplication screen flashbootloader flashdebug
+PHONY+=interrogate screen flashapplication flashbootloader flashdebug
 
 # As far as I can tell, the Arduino bootloaders on both the Uno and the Mega
 # only pretend to implement the avrdude commands to query the signature bytes
@@ -309,7 +315,14 @@ PHONY+=interrogate flashapplication screen flashbootloader flashdebug
 
 # This uses the AVRISP mkII to start an interactive session.
 interrogate:
-	$(AVRDUDE) -v -C$(AVRDUDE_CONF) -p$(PART) -c$(PROGRAMMER) -Pusb -b$(BAUD) -t
+	$(AVRDUDE) -v -C$(AVRDUDE_CONF) -p$(PART) -c$(PROGRAMMER) -Pusb -t
+
+screen:
+	stty sane
+	stty -f $(SERIAL) hupcl
+	# control-A control-\ y to exit.
+	screen -L $(SERIAL) $(BAUD)
+	stty sane
 
 # This uses the bootloader to load the application.
 flashapplication:	$(BUILD_PLATFORM).hex
@@ -320,17 +333,10 @@ flashapplication:	$(BUILD_PLATFORM).hex
 flashdebug:	$(AVRSTUDIO_DIR)/$(NAME).hex
 	stty -f $(SERIAL) hupcl
 	$(AVRDUDE) -v -C$(AVRDUDE_CONF) -p$(PART) -c$(CONFIG) -P$(SERIAL) -b$(BAUD) -D -Uflash:w:$(AVRSTUDIO_DIR)/$(NAME).hex:i
-
-screen:
-	stty -f $(SERIAL) sane
-	stty -f $(SERIAL) hupcl
-	# control-A control-\ y to exit.
-	screen -L $(SERIAL) $(BAUD)
-	stty -f $(SERIAL) sane
 	
 # This uses the AVRISP mkII to
 # unlock the bootloader,
-# initialize all fuses to Arduino defaults including disabling JTAG,
+# initialize all fuses to Arduino defaults,
 # reflash the bootloader, and
 # lock the bootloader.
 flashbootloader:	$(BOOTLOADER_HEX)
@@ -343,7 +349,7 @@ PHONY+=enablejtag
 
 # This uses the AVRISP mkII to enable JTAG (0x40) in the HFUSE on the ATmega2560.
 enablejtag:
-	$(AVRDUDE) -v -C$(AVRDUDE_CONF) -p$(PART) -c$(ISP) -Pusb -b$(BAUD) -Uhfuse:w:0x98:m
+	$(AVRDUDE) -v -C$(AVRDUDE_CONF) -p$(PART) -c$(ISP) -Pusb -Uhfuse:w:0x98:m
 	
 endif
 
@@ -389,9 +395,6 @@ endif
 %.siz:	%.elf
 	$(CROSS_COMPILE)$(SIZE) $(SIZEFLAGS) $< > $@
 
-%:	%_unstripped
-	$(CROSS_COMPILE)$(STRIP) -o $@ $<
-
 ################################################################################
 # TARGETS
 ################################################################################
@@ -399,6 +402,10 @@ endif
 PHONY+=all
 
 all:	$(DELIVERABLES)
+
+PHONY+=full
+
+full:	$(DELIVERABLES) $(COLLATERAL)
 
 PHONY+=clean
 

@@ -52,13 +52,13 @@ int main(void)
     // turn on the serial port for debugging or for other USART reasons.
 	xSerialPort = xSerialPortInitMinimal( 115200, 80, 16); //  serial port: WantedBaud, TxQueueLength, RxQueueLength (8n1)
 
-	avrSerialPrintf_P(PSTR("\r\n\n\nHello World! 0x%x\r\n"), mcusr); // Ok, so we're alive...
+	avrSerialPrintf_P(PSTR("\r\n\n\nReset Reason: 0x%x\r\n"), mcusr); // Ok, so we're alive...
 
 #if 1
     xTaskCreate(
 		TaskBlinkRedLED
 		,  (const signed portCHAR *)"RedLED" // Main Arduino Mega 2560, Freetronics EtherMega (Red) LED Blink
-		,  168				// Tested 9 free
+		,  400
 		,  NULL
 		,  3
 		,  NULL ); // */
@@ -68,7 +68,7 @@ int main(void)
     xTaskCreate(
 		TaskBlinkGreenLED
 		,  (const signed portCHAR *)"GreenLED" // Main Arduino Uno 328p (Green) LED Blink
-		,  168				// Tested 9 free
+		,  400
 		,  NULL
 		,  3
 		,  NULL ); // */

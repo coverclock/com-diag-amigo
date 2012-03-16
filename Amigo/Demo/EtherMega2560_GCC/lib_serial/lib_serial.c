@@ -73,6 +73,7 @@
 
 /*-----------------------------------------------------------*/
 
+#if 0
 #define vInterruptOn()										\
 {															\
 	uint8_t ucByte;								    		\
@@ -91,6 +92,10 @@
 	ucByte &= ~(_BV(UDRIE0));								\
 	UCSR0B  = ucByte;										\
 }
+#else
+#define vInterruptOn()  do { UCSR0B |=  _BV(UDRIE0); } while (0)
+#define vInterruptOff() do { UCSR0B &= ~_BV(UDRIE0); } while (0)
+#endif
 
 /*-----------------------------------------------------------*/
 static xQueueHandle xRxedChars;
@@ -110,8 +115,8 @@ void xSerialPrintf( uint8_t * format, ...)
 
 	va_start(arg, format);
 	vsnprintf((char *)temp, 128, (char *)format, arg);
-	xSerialPrint(temp);
 	va_end(arg);
+	xSerialPrint(temp);
 }
 
 void xSerialPrintf_P(PGM_P format, ...)
@@ -121,8 +126,8 @@ void xSerialPrintf_P(PGM_P format, ...)
 
 	va_start(arg, format);
 	vsnprintf_P((char *)temp, 128, format, arg);
-	xSerialPrint(temp);
 	va_end(arg);
+	xSerialPrint(temp);
 }
 
 void xSerialPrint( uint8_t * str)
@@ -269,8 +274,8 @@ void avrSerialPrintf(uint8_t * format, ...)
 
 	va_start(arg, format);
 	vsnprintf((char *)temp, 128, (char *)format, arg);
-	avrSerialPrint(temp);
 	va_end(arg);
+	avrSerialPrint(temp);
 }
 
 void avrSerialPrintf_P(PGM_P format, ...)
@@ -280,8 +285,8 @@ void avrSerialPrintf_P(PGM_P format, ...)
 
 	va_start(arg, format);
 	vsnprintf_P((char *)temp, 128, format, arg);
-	avrSerialPrint(temp);
 	va_end(arg);
+	avrSerialPrint(temp);
 }
 
 void avrSerialPrint(uint8_t * str)
