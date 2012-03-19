@@ -9,7 +9,7 @@ PROJECT=amigo
 NAME=Amigo
 
 MAJOR=0
-MINOR=5
+MINOR=6
 BUILD=0
 
 HTTP_URL=http://www.diag.com/navigation/downloads/$(NAME).html
@@ -24,6 +24,7 @@ BUILD_PLATFORM=MegaBlink
 # This option uses the tool chain provided with Arduino on my desktop.
 ifeq ($(BUILD_HOST), Unused)
 TMP_DIR=/tmp
+FREERTOS_DIR=FreeRTOSV7.1.0
 ARDUINO_DIR=/Applications/Arduino.app/Contents/Resources/Java
 BOOTLOADER_DIR=$(ARDUINO_DIR)/hardware/Arduino/bootloaders
 TOOLS_DIR=$(ARDUINO_DIR)/hardware/tools/avr
@@ -36,6 +37,7 @@ endif
 # This option uses the tool chain provided with the AVR CrossPack on my desktop.
 ifeq ($(BUILD_HOST), Darwin)
 TMP_DIR=/tmp
+FREERTOS_DIR=FreeRTOSV7.1.0
 ARDUINO_DIR=/Applications/Arduino.app/Contents/Resources/Java
 BOOTLOADER_DIR=$(ARDUINO_DIR)/hardware/Arduino/bootloaders
 CROSSPACK_DIR=/usr/local/CrossPack-AVR
@@ -48,6 +50,7 @@ endif
 # This option uses the tool chain provided via AVR packages installed on my server.
 ifeq ($(BUILD_HOST), Linux)
 TMP_DIR=/tmp
+FREERTOS_DIR=FreeRTOSV7.1.0
 ARDUINO_DIR=$(HOME)/src/arduino-1.0-linux
 BOOTLOADER_DIR=$(ARDUINO_DIR)/hardware/arduino/bootloaders
 AVRDUDE_CONF=/etc/avrdude.conf
@@ -72,7 +75,7 @@ VARIANT=standard
 TARGET=__AVR_ATmega328P__
 PORTABLE=ATmega328P
 TOOLCHAIN=GCC
-DEMO=Uno_$(TOOLCHAIN)
+BOARD=Uno_$(TOOLCHAIN)
 CONFIG=arduino
 PROGRAMMER=avrispmkII
 ISP=stk500v2
@@ -95,7 +98,7 @@ VARIANT=mega
 TARGET=__AVR_ATmega2560__
 PORTABLE=ATmega2560
 TOOLCHAIN=GCC
-DEMO=EtherMega2560_$(TOOLCHAIN)
+BOARD=EtherMega2560_$(TOOLCHAIN)
 CONFIG=stk500v2
 PROGRAMMER=avrispmkII
 ISP=stk500v2
@@ -127,44 +130,44 @@ default:	all
 # BUILD
 ################################################################################
 
-# Source files that were developed elsewhere and which have not been changed
-# from their original distribution are kept in the ~/projects/amigo directory.
-# Files which are original to this project or have been modified for this
-# project are kept in the ~/src/Amigo directory and are under source code
-# control using Subversion. This project's distribution file contains only files
-# from the latter directory tree. The build uses the transitive closure of these
-# two directory trees. 
-
 ifeq ($(BUILD_PLATFORM), MegaBlink)
-CFILES+=Amigo/Demo/$(DEMO)/MegaBlink/main.c
-CFILES+=Amigo/Demo/$(DEMO)/lib_digitalAnalog/digitalAnalog.c
-CFILES+=Amigo/Demo/$(DEMO)/lib_serial/lib_serial.c
-CFILES+=Amigo/Source/portable/MemMang/heap_2.c
+CFILES+=$(FREERTOS_DIR)/Demo/$(BOARD)/$(BUILD_PLATFORM)/main.c
+CFILES+=$(FREERTOS_DIR)/Demo/$(BOARD)/lib_digitalAnalog/digitalAnalog.c
+CFILES+=$(FREERTOS_DIR)/Demo/$(BOARD)/lib_serial/lib_serial.c
+CFILES+=$(FREERTOS_DIR)/Source/portable/MemMang/heap_2.c
+HDIRECTORIES+=$(FREERTOS_DIR)/Demo/$(BOARD)/include
 endif
 
-CFILES+=Amigo/Source/portable/$(TOOLCHAIN)/$(PORTABLE)/port.c
-CFILES+=Amigo/Source/croutine.c
-CFILES+=Amigo/Source/list.c
-CFILES+=Amigo/Source/queue.c
-CFILES+=Amigo/Source/tasks.c
-CFILES+=Amigo/Source/timers.c
+ifeq ($(BUILD_PLATFORM), Blink)
+CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(BUILD_PLATFORM)/main.cpp
+CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(BUILD_PLATFORM)/heap.cpp
+CFILES+=$(FREERTOS_DIR)/Source/portable/MemMang/heap_2.c
+HDIRECTORIES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/include
+endif
 
-HDIRECTORIES+=Amigo/Source/portable/$(TOOLCHAIN)/$(PORTABLE)
-HDIRECTORIES+=Amigo/Demo/$(DEMO)/include
-HDIRECTORIES+=Amigo/Source/include
+CFILES+=$(FREERTOS_DIR)/Source/portable/$(TOOLCHAIN)/$(PORTABLE)/port.c
+CFILES+=$(FREERTOS_DIR)/Source/croutine.c
+CFILES+=$(FREERTOS_DIR)/Source/list.c
+CFILES+=$(FREERTOS_DIR)/Source/queue.c
+CFILES+=$(FREERTOS_DIR)/Source/tasks.c
+CFILES+=$(FREERTOS_DIR)/Source/timers.c
+
+HDIRECTORIES+=$(FREERTOS_DIR)/Source/portable/$(TOOLCHAIN)/$(PORTABLE)
+HDIRECTORIES+=$(FREERTOS_DIR)/Source/include
 
 INCLUDES+=$(addprefix -I,$(HDIRECTORIES))
 LIBRARIES+=-lm
 
 OPT=s
 CARCH=-mmcu=$(CONTROLLER)
-CSTANDARD=-std=gnu99
+CDIALECT=-std=gnu99 -fno-exceptions -ffunction-sections -fdata-sections -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums# -mrelax
+CXXDIALECT=-fno-exceptions -ffunction-sections -fdata-sections -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums# -mrelax
 CDEBUG=-g
 CWARN=-Wall
 CTUNING=-fno-exceptions -ffunction-sections -fdata-sections -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums# -mrelax
 CPPFLAGS=-DF_CPU=$(FREQUENCY) -DARDUINO=$(ARDUINO) $(INCLUDES)
-CFLAGS=$(CARCH) $(CSTANDARD) $(CDEBUG) -O$(OPT) $(CWARN) $(CTUNING) $(CEXTRA)
-CXXFLAGS=$(CARCH) $(CSTANDARD) $(CDEBUG) -O$(OPT) $(CWARN) $(CTUNING) $(CXXEXTRA)
+CFLAGS=$(CARCH) $(CDIALECT) $(CDEBUG) -O$(OPT) $(CWARN) $(CEXTRA)
+CXXFLAGS=$(CARCH) $(CXXDIALECT) $(CDEBUG) -O$(OPT) $(CWARN) $(CXXEXTRA)
 LDFLAGS=$(CARCH) -O$(OPT) -Wl,--gc-sections
 NMFLAGS=-n -o -a -A
 OBJDUMPFLAGS=-x -G -t -r
