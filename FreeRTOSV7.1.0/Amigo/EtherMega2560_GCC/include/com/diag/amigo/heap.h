@@ -7,10 +7,10 @@
  * Licensed under the terms in README.h\n
  * Chip Overclock mailto:coverclock@diag.com\n
  * http://www.diag.com/navigation/downloads/Amigo.html\n
- * Note that these functions are in the global name space.\n
+ * These symbols are in the global name space!\n
  */
 
-#include <stddef.h>
+#include "com/diag/amigo/types.h"
 
 void * malloc(size_t size);
 

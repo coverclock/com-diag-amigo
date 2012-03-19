@@ -19,7 +19,8 @@ SVN_URL=svn://graphite/$(PROJECT)/trunk/$(NAME)
 #BUILD_TARGET=Uno
 BUILD_TARGET=EtherMega2560
 BUILD_HOST=$(shell uname -s)
-BUILD_PLATFORM=MegaBlink
+#BUILD_PLATFORM=MegaBlink
+BUILD_PLATFORM=Blink
 
 # This option uses the tool chain provided with Arduino on my desktop.
 ifeq ($(BUILD_HOST), Unused)
@@ -131,17 +132,19 @@ default:	all
 ################################################################################
 
 ifeq ($(BUILD_PLATFORM), MegaBlink)
-CFILES+=$(FREERTOS_DIR)/Demo/$(BOARD)/$(BUILD_PLATFORM)/main.c
 CFILES+=$(FREERTOS_DIR)/Demo/$(BOARD)/lib_digitalAnalog/digitalAnalog.c
 CFILES+=$(FREERTOS_DIR)/Demo/$(BOARD)/lib_serial/lib_serial.c
 CFILES+=$(FREERTOS_DIR)/Source/portable/MemMang/heap_2.c
+CFILES+=$(FREERTOS_DIR)/Demo/$(BOARD)/$(BUILD_PLATFORM)/main.c
 HDIRECTORIES+=$(FREERTOS_DIR)/Demo/$(BOARD)/include
 endif
 
 ifeq ($(BUILD_PLATFORM), Blink)
-CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(BUILD_PLATFORM)/main.cpp
-CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(BUILD_PLATFORM)/heap.cpp
+CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(NAME)/heap.cpp
+CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(NAME)/Sink.cpp
+CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(NAME)/Source.cpp
 CFILES+=$(FREERTOS_DIR)/Source/portable/MemMang/heap_2.c
+CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(BUILD_PLATFORM)/main.cpp
 HDIRECTORIES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/include
 endif
 
@@ -208,22 +211,22 @@ $(BUILD_PLATFORM).elf:	$(OFILES)
 ################################################################################
 
 PHONY+=depend
-ARTIFACTS+=dependencies.mk
+ARTIFACTS+=$(BUILD_PLATFORM).mk
 
 depend:
-	cp /dev/null dependencies.mk
+	cp /dev/null $(BUILD_PLATFORM).mk
 	for F in $(CFILES); do \
 		D=`dirname $$F`; \
 		B=`basename -s .c $$F`; \
-		$(CXX) $(CPPFLAGS) -MM -MT $$D/$$B.o -MG $$F >> dependencies.mk; \
+		$(CXX) $(CPPFLAGS) -MM -MT $$D/$$B.o -MG $$F >> $(BUILD_PLATFORM).mk; \
 	done
 	for F in $(CXXFILES); do \
 		D=`dirname $$F`; \
 		B=`basename -s .cpp $$F`; \
-		$(CXX) $(CPPFLAGS) -MM -MT $$D/$$B.o -MG $$F >> dependencies.mk; \
+		$(CXX) $(CPPFLAGS) -MM -MT $$D/$$B.o -MG $$F >> $(BUILD_PLATFORM).mk; \
 	done
 
--include dependencies.mk
+-include $(BUILD_PLATFORM).mk
 
 ################################################################################
 # DISTRIBUTION
