@@ -18,6 +18,8 @@ namespace amigo {
 
 class Sink {
 
+public:
+
 	virtual ~Sink();
 
 	virtual ssize_t operator() () = 0; /* flush */

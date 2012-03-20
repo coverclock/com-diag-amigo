@@ -19,6 +19,8 @@ namespace amigo {
 
 class Source {
 
+public:
+
 	virtual ~Source();
 
 	virtual int operator() (bool peek = false) = 0;

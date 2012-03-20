@@ -30,13 +30,10 @@ ssize_t Source::operator() (char * str, size_t size, const char * end, bool prog
 	char * here = str;
 	int datum;
 	while ((size--) > 1) {
-		if ((datum = (*this)()) < 0) { break; }
-		if ((datum == '\0') || ((progmem ? strchr_P(end, datum) : strchr(end, datum)) != NULL)) { break; }
+		if (((datum = (*this)()) < 0) || (datum == '\0') || ((progmem ? strchr_P(end, datum) : strchr(end, datum)) != NULL)) { break; }
 		*(here++) = datum;
 	}
-	if (size > 0) {
-		*(here++) = '\0';
-	}
+	if (size > 0) { *(here++) = '\0'; }
 	return (here - str);
 }
 
