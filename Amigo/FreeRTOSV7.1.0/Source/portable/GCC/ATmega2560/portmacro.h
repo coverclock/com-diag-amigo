@@ -83,7 +83,7 @@ extern "C" {
 #define portLONG				long
 #define portSHORT				short
 #define portSTACK_TYPE			unsigned char
-#define portBASE_TYPE			char
+#define portBASE_TYPE			int
 #define portPOINTER_SIZE_TYPE	unsigned short
 /* ^ coverclock@diag.com 2012-02-29 */
 

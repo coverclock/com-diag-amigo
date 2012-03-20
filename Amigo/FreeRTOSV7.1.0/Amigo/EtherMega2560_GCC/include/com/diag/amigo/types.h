@@ -7,7 +7,6 @@
  * Licensed under the terms in README.h\n
  * Chip Overclock mailto:coverclock@diag.com\n
  * http://www.diag.com/navigation/downloads/Amigo.html\n
- * These symbols are in the global name space!\n
  */
 
 #if !defined(__BEOS__)
@@ -20,5 +19,21 @@
 #undef __BEOS__
 #endif
 #include <stdint.h>
+#include "projdefs.h"
+#include "portable.h"
+
+namespace com {
+namespace diag {
+namespace amigo {
+
+typedef portTickType Ticks;
+
+typedef unsigned portBASE_TYPE Count;
+
+typedef uint8_t Register;
+
+}
+}
+}
 
 #endif /* _COM_DIAG_AMIGO_TYPES_H_ */

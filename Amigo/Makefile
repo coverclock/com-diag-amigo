@@ -140,9 +140,13 @@ HDIRECTORIES+=$(FREERTOS_DIR)/Demo/$(BOARD)/include
 endif
 
 ifeq ($(BUILD_PLATFORM), Blink)
+CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(NAME)/BinarySemaphore.cpp
+CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(NAME)/CountingSemaphore.cpp
 CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(NAME)/heap.cpp
+CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(NAME)/MutexSemaphore.cpp
 CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(NAME)/Sink.cpp
 CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(NAME)/Source.cpp
+CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(NAME)/unused.cpp
 CFILES+=$(FREERTOS_DIR)/Source/portable/MemMang/heap_2.c
 CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(BUILD_PLATFORM)/main.cpp
 HDIRECTORIES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/include
