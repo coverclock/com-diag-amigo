@@ -18,7 +18,7 @@ BinarySemaphore::BinarySemaphore() {
 
 BinarySemaphore::~BinarySemaphore() {
 	vSemaphoreDelete(handle);
-	handle = static_cast<xSemaphoreHandle>(0);
+	handle = 0;
 }
 
 bool BinarySemaphore::take(Ticks timeout) {

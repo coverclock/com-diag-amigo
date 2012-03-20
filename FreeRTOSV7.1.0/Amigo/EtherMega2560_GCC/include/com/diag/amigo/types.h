@@ -11,11 +11,27 @@
 
 #if !defined(__BEOS__)
 #define __BEOS__
-#define _COM_DIAG_AMIGO_BEOS_
+#define _COM_DIAG_AMIGO_UNDEF_BEOS_
+#endif
+#if !defined(__need_NULL)
+#define __need_NULL
+#define _COM_DIAG_AMIGO_UNDEF_NEED_NULL_
+#endif
+#if !defined(__need_size_t)
+#define __need_size_t
+#define _COM_DIAG_AMIGO_UNDEF_NEED_SIZE_T_
 #endif
 #include <stddef.h>
-#if defined(_COM_DIAG_AMIGO_BEOS_)
-#undef _COM_DIAG_AMIGO_BEOS_
+#if defined(_COM_DIAG_AMIGO_UNDEF_NEED_SIZE_T_)
+#undef _COM_DIAG_AMIGO_UNDEF_NEED_SIZE_T_
+#undef __need_size_t
+#endif
+#if defined(_COM_DIAG_AMIGO_UNDEF_NEED_NULL_)
+#undef _COM_DIAG_AMIGO_UNDEF_NEED_NULL_
+#undef __BEOS__
+#endif
+#if defined(_COM_DIAG_AMIGO_UNDEF_BEOS_)
+#undef _COM_DIAG_AMIGO_UNDEF_BEOS_
 #undef __BEOS__
 #endif
 #include <stdint.h>
@@ -29,6 +45,8 @@ namespace amigo {
 typedef portTickType Ticks;
 
 typedef unsigned portBASE_TYPE Count;
+
+typedef unsigned portBASE_TYPE Size;
 
 typedef uint8_t Register;
 
