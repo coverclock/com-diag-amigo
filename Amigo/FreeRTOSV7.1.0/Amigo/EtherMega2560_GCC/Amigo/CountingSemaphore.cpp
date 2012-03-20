@@ -19,7 +19,7 @@ CountingSemaphore::CountingSemaphore(Count maximum, Count initial) {
 
 CountingSemaphore::~CountingSemaphore() {
 	vSemaphoreDelete(handle);
-	handle = static_cast<xSemaphoreHandle>(0);
+	handle = 0;
 }
 
 bool CountingSemaphore::take(Ticks timeout) {

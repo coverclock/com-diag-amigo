@@ -120,13 +120,13 @@ extern void vPortYield( void ) __attribute__ ( ( naked ) );
 #define portYIELD()					vPortYield()
 /*-----------------------------------------------------------*/
 
+/* v coverclock@diag.com 2012-03-03 */
 /* Task function macros as described on the FreeRTOS.org WEB site. */
 // This changed to add .lowtext tag for the linker. To make sure they are loaded in low memory.
 // #define portTASK_FUNCTION_PROTO( vFunction, pvParameters ) void vFunction( void *pvParameters )
-/* v coverclock@diag.com 2012-03-03 */
 #define portTASK_FUNCTION_PROTO( vFunction, pvParameters ) void vFunction( void *pvParameters ) __attribute__ ((section (".lowtext")))
-/* ^ coverclock@diag.com 2012-03-03 */
 #define portTASK_FUNCTION( vFunction, pvParameters ) void vFunction( void *pvParameters )
+/* ^ coverclock@diag.com 2012-03-03 */
 
 #ifdef __cplusplus
 }

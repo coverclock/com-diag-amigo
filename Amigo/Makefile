@@ -22,6 +22,14 @@ BUILD_HOST=$(shell uname -s)
 #BUILD_PLATFORM=MegaBlink
 BUILD_PLATFORM=Blink
 
+#SERIAL=/dev/tty.usbmodem26421
+SERIAL=/dev/tty.usbmodem411
+BAUD=115200
+
+################################################################################
+# HOST
+################################################################################
+
 # This option uses the tool chain provided with Arduino on my desktop.
 ifeq ($(BUILD_HOST), Unused)
 TMP_DIR=/tmp
@@ -60,9 +68,9 @@ TOOLCHAIN_DIR=/usr/lib/avr/include
 AVRSTUDIO_DIR=Amigo/Debug
 endif
 
-#SERIAL=/dev/tty.usbmodem26421
-SERIAL=/dev/tty.usbmodem411
-BAUD=115200
+################################################################################
+# TARGET
+################################################################################
 
 ifeq ($(BUILD_TARGET),Uno)
 ARCH=avr
@@ -110,6 +118,10 @@ HFUSE=0xD8
 LFUSE=0xFF
 endif
 
+################################################################################
+# TOOLS
+################################################################################
+
 AVRDUDE=avrdude
 CC=gcc
 CXX=g++
@@ -128,7 +140,7 @@ PHONY+=default
 default:	all
 
 ################################################################################
-# BUILD
+# PLATFORM
 ################################################################################
 
 ifeq ($(BUILD_PLATFORM), MegaBlink)
@@ -144,6 +156,7 @@ CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(NAME)/BinarySemaphore.cpp
 CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(NAME)/CountingSemaphore.cpp
 CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(NAME)/heap.cpp
 CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(NAME)/MutexSemaphore.cpp
+CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(NAME)/Queue.cpp
 CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(NAME)/Sink.cpp
 CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(NAME)/Source.cpp
 CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(NAME)/unused.cpp
@@ -163,7 +176,12 @@ HDIRECTORIES+=$(FREERTOS_DIR)/Source/portable/$(TOOLCHAIN)/$(PORTABLE)
 HDIRECTORIES+=$(FREERTOS_DIR)/Source/include
 
 INCLUDES+=$(addprefix -I,$(HDIRECTORIES))
+
 LIBRARIES+=-lm
+
+################################################################################
+# OPTIONS
+################################################################################
 
 OPT=s
 CARCH=-mmcu=$(CONTROLLER)
@@ -182,6 +200,10 @@ SIZEFLAGS=-C --mcu=$(CONTROLLER)
 OBJDISASSEMBLYFLAGS=-d
 OBJCOPYEEPFLAGS=-O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 
 OBJCOPYHEXFLAGS=-O ihex -R .eeprom
+
+################################################################################
+# BUILD
+################################################################################
 
 OFILES+=$(addsuffix .o,$(basename $(CFILES) $(CXXFILES)))
 
@@ -222,12 +244,12 @@ depend:
 	for F in $(CFILES); do \
 		D=`dirname $$F`; \
 		B=`basename -s .c $$F`; \
-		$(CXX) $(CPPFLAGS) -MM -MT $$D/$$B.o -MG $$F >> $(BUILD_PLATFORM).mk; \
+		$(CROSS_COMPILE)$(CC) $(CPPFLAGS) -MM -MT $$D/$$B.o -MG $$F >> $(BUILD_PLATFORM).mk; \
 	done
 	for F in $(CXXFILES); do \
 		D=`dirname $$F`; \
 		B=`basename -s .cpp $$F`; \
-		$(CXX) $(CPPFLAGS) -MM -MT $$D/$$B.o -MG $$F >> $(BUILD_PLATFORM).mk; \
+		$(CROSS_COMPILE)$(CXX) $(CPPFLAGS) -MM -MT $$D/$$B.o -MG $$F >> $(BUILD_PLATFORM).mk; \
 	done
 
 -include $(BUILD_PLATFORM).mk
@@ -250,6 +272,10 @@ dist $(PROJECT)-$(MAJOR).$(MINOR).$(BUILD).tgz:
 ################################################################################
 
 DOC_DIR=doc
+SED=sed
+DOXYGEN=doxygen
+TROFF=groff
+PS2PDF=ps2pdf
 BROWSER=firefox
 
 PHONY+=documentation browse refman manpages
@@ -257,11 +283,11 @@ DELIVERABLES+=$(DOC_DIR)
 
 documentation:
 	mkdir -p $(DOC_DIR)/latex $(DOC_DIR)/man $(DOC_DIR)/pdf
-	sed -e "s/\\\$$Name.*\\\$$/$(MAJOR).$(MINOR).$(BUILD)/" < doxygen.cf > doxygen-local.cf
-	doxygen doxygen-local.cf
+	$(SED) -e "s/\\\$$Name.*\\\$$/$(MAJOR).$(MINOR).$(BUILD)/" < doxygen.cf > doxygen-local.cf
+	$(DOXYGEN) doxygen-local.cf
 	( cd $(DOC_DIR)/latex; $(MAKE) refman.pdf; cp refman.pdf ../pdf )
-	cat $(DOC_DIR)/man/man3/*.3 | groff -man -Tps - > $(DOC_DIR)/pdf/manpages.ps
-	ps2pdf $(DOC_DIR)/pdf/manpages.ps $(DOC_DIR)/pdf/manpages.pdf
+	cat $(DOC_DIR)/man/man3/*.3 | $(TROFF) -man -Tps - > $(DOC_DIR)/pdf/manpages.ps
+	$(PS2PDF) $(DOC_DIR)/pdf/manpages.ps $(DOC_DIR)/pdf/manpages.pdf
 
 browse:
 	$(BROWSER) file:doc/html/index.html
@@ -276,7 +302,7 @@ manpages:
 # UTILITIES
 ################################################################################
 
-PHONY+=parameters verify backup
+PHONY+=parameters verify backup path implicit
 
 parameters:
 	@echo BUILD_TARGET=$(BUILD_TARGET)
@@ -289,14 +315,6 @@ backup:
 	DIRNAME="$(shell basename $(shell pwd))"; \
 	tar -C .. -cvzf - $$DIRNAME > ../$$DIRNAME-$(shell date -u +'%Y%m%d%H%M%S%N%Z').tgz
 
-PHONY+=preprocess preassemble
-
-preprocess:	$(EFILES)
-
-preassemble:	$(SFILES)
-	
-PHONY+=path implicit backup bundle
-
 # Using back quotes like `make path` on the command line sets the PATH variable
 # in your interactive shell.
 
@@ -308,8 +326,14 @@ path:
 implicit:
 	$(CROSS_COMPILE)$(CXX) -dM -E -mmcu=$(CONTROLLER) - < /dev/null
 
+PHONY+=preprocess preassemble
+
+preprocess:	$(EFILES)
+
+preassemble:	$(SFILES)
+
 # These targets only exist when running on my Mac desktop because that's to what
-# the Arduino boards connects via USB. The Dell server is two floors down!
+# the Arduino boards connects via USB. The Linux server is two floors down!
 
 ifeq ($(BUILD_HOST), Darwin)
 	
@@ -442,7 +466,7 @@ clean:
 # avr-objcopy -O ihex -R .eeprom Empty.cpp.elf Empty.cpp.hex 
 # avrdude -Cavrdude.conf -v -v -v -v -patmega2560 -cstk500v2 -P/dev/tty.usbmodem26421 -b115200 -D -Uflash:w:Empty.cpp.hex:i
 
-# These directories were of interest when using the GNU GCC AVR tool chain.
+# These directories were relevant to our interests when using the GNU GCC AVR tool chain.
 # /usr/lib/avr/include
 # /usr/lib/gcc/avr/4.3.4/include
 # /usr/lib/gcc/avr/4.3.4/include-fixed

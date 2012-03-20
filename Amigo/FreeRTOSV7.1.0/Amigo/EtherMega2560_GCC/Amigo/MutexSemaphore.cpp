@@ -18,7 +18,7 @@ MutexSemaphore::MutexSemaphore() {
 
 MutexSemaphore::~MutexSemaphore() {
 	vSemaphoreDelete(handle);
-	handle = static_cast<xSemaphoreHandle>(0);
+	handle = 0;
 }
 
 bool MutexSemaphore::take(Ticks timeout) {

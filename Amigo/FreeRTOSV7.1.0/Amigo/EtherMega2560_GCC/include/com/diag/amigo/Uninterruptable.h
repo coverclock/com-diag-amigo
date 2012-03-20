@@ -32,7 +32,7 @@ public:
 		SREG = sreg;
 	}
 
-	Register operator Register() {
+	operator Register() {
 		return sreg;
 	}
 

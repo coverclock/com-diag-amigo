@@ -27,13 +27,15 @@ public:
 
 	~CountingSemaphore();
 
-	operator bool() { return (handle != static_cast<xSemaphoreHandle>(0)); }
+	operator bool() const {
+		return (handle != 0);
+	}
 
-	bool take(Ticks timeout = FOREVER);
+	bool take(Ticks timeout = NEVER);
 
 	bool give();
 
-	bool giveFromISR(bool & woken = boolUnused);
+	bool giveFromISR(bool & woken = unused.b);
 
 private:
 

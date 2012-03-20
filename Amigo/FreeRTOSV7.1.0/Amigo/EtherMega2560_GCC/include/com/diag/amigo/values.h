@@ -15,9 +15,11 @@ namespace com {
 namespace diag {
 namespace amigo {
 
-static const Ticks FOREVER = ~(static_cast<Ticks>(0));
+static const Ticks IMMEDIATELY = static_cast<Ticks>(0);
 
-static const Count UNLIMITED = ~(static_cast<Count>(0));
+static const Ticks NEVER = ~static_cast<Ticks>(0);
+
+static const Count UNLIMITED = ~static_cast<Count>(0);
 
 }
 }

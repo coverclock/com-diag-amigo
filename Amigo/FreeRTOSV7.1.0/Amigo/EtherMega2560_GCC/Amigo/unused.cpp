@@ -12,7 +12,7 @@ namespace com {
 namespace diag {
 namespace amigo {
 
-bool boolUnused;
+Unused unused;
 
 }
 }
