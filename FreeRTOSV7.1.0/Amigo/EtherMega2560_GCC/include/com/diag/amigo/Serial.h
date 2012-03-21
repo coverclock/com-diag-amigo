@@ -109,6 +109,8 @@ public:
 
 	size_t write(uint8_t ch, Ticks timeout = NEVER);
 
+	void emit(uint8_t ch) const;
+
 protected:
 
 	Port index;
