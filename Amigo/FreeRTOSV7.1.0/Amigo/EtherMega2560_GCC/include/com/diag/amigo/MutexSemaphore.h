@@ -21,23 +21,45 @@ class MutexSemaphore {
 
 public:
 
-	MutexSemaphore();
+	explicit MutexSemaphore();
 
-	~MutexSemaphore();
+	virtual ~MutexSemaphore();
 
-	operator bool() const {
-		return (handle != 0);
-	}
+	operator bool() const { return (handle != 0); }
 
 	bool take(Ticks timeout = NEVER);
 
 	bool give();
 
-private:
+protected:
 
 	xSemaphoreHandle handle;
 
+private:
+
+    /**
+     *  Copy constructor. POISONED.
+     *
+     *  @param that refers to an R-value object of this type.
+     */
+	MutexSemaphore(const MutexSemaphore& that);
+
+    /**
+     *  Assignment operator. POISONED.
+     *
+     *  @param that refers to an R-value object of this type.
+     */
+	MutexSemaphore& operator=(const MutexSemaphore& that);
+
 };
+
+inline bool MutexSemaphore::take(Ticks timeout) {
+	return (xSemaphoreTakeRecursive(handle, timeout) == pdPASS);
+}
+
+inline bool MutexSemaphore::give() {
+	return (xSemaphoreGiveRecursive(handle) == pdPASS);
+}
 
 }
 }

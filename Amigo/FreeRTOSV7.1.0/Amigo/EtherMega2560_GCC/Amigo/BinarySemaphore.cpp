@@ -21,21 +21,6 @@ BinarySemaphore::~BinarySemaphore() {
 	handle = 0;
 }
 
-bool BinarySemaphore::take(Ticks timeout) {
-	return (xSemaphoreTake(handle, timeout) == pdPASS);
-}
-
-bool BinarySemaphore::give() {
-	return (xSemaphoreGive(handle) == pdPASS);
-}
-
-bool BinarySemaphore::giveFromISR(bool & woken) {
-	portBASE_TYPE temporary = pdFALSE;
-	bool result = (xSemaphoreGiveFromISR(handle, &temporary) == pdPASS);
-	woken = (temporary == pdTRUE);
-	return result;
-}
-
 }
 }
 }

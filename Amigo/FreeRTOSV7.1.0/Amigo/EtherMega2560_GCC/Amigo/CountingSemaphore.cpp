@@ -22,21 +22,6 @@ CountingSemaphore::~CountingSemaphore() {
 	handle = 0;
 }
 
-bool CountingSemaphore::take(Ticks timeout) {
-	return (xSemaphoreTake(handle, timeout) == pdPASS);
-}
-
-bool CountingSemaphore::give() {
-	return (xSemaphoreGive(handle) == pdPASS);
-}
-
-bool CountingSemaphore::giveFromISR(bool & woken) {
-	portBASE_TYPE temporary = pdFALSE;
-	bool result = (xSemaphoreGiveFromISR(handle, &temporary) == pdPASS);
-	woken = (temporary == pdTRUE);
-	return result;
-}
-
 }
 }
 }

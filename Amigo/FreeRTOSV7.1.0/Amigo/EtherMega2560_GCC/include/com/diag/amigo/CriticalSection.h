@@ -36,10 +36,26 @@ public:
 		return success;
 	}
 
-private:
+protected:
 
 	MutexSemaphore & mutex;
 	bool success;
+
+private:
+
+    /**
+     *  Copy constructor. POISONED.
+     *
+     *  @param that refers to an R-value object of this type.
+     */
+	CriticalSection(const CriticalSection& that);
+
+    /**
+     *  Assignment operator. POISONED.
+     *
+     *  @param that refers to an R-value object of this type.
+     */
+	CriticalSection& operator=(const CriticalSection& that);
 
 };
 

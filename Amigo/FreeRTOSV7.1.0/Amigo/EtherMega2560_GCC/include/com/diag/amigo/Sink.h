@@ -10,7 +10,6 @@
  */
 
 #include "com/diag/amigo/types.h"
-#include <avr/pgmspace.h>
 
 namespace com {
 namespace diag {

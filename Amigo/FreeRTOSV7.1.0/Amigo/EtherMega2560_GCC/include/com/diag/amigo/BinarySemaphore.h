@@ -23,13 +23,11 @@ class BinarySemaphore {
 
 public:
 
-	BinarySemaphore();
+	explicit BinarySemaphore();
 
-	~BinarySemaphore();
+	virtual ~BinarySemaphore();
 
-	operator bool() const {
-		return (handle != 0);
-	}
+	operator bool() const { return (handle != 0); }
 
 	bool take(Ticks timeout = NEVER);
 
@@ -37,11 +35,42 @@ public:
 
 	bool giveFromISR(bool & woken = unused.b);
 
-private:
+protected:
 
 	xSemaphoreHandle handle;
 
+private:
+
+    /**
+     *  Copy constructor. POISONED.
+     *
+     *  @param that refers to an R-value object of this type.
+     */
+	BinarySemaphore(const BinarySemaphore& that);
+
+    /**
+     *  Assignment operator. POISONED.
+     *
+     *  @param that refers to an R-value object of this type.
+     */
+	BinarySemaphore& operator=(const BinarySemaphore& that);
+
 };
+
+inline bool BinarySemaphore::take(Ticks timeout) {
+	return (xSemaphoreTake(handle, timeout) == pdPASS);
+}
+
+inline bool BinarySemaphore::give() {
+	return (xSemaphoreGive(handle) == pdPASS);
+}
+
+inline bool BinarySemaphore::giveFromISR(bool & woken) {
+	portBASE_TYPE temporary = pdFALSE;
+	bool result = (xSemaphoreGiveFromISR(handle, &temporary) == pdPASS);
+	woken = (temporary == pdTRUE);
+	return result;
+}
 
 }
 }

@@ -7,6 +7,7 @@
  */
 
 #include "com/diag/amigo/Sink.h"
+#include <avr/pgmspace.h>
 #include <string.h>
 
 namespace com {

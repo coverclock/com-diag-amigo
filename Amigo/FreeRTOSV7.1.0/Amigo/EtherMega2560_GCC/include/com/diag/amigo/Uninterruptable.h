@@ -36,9 +36,25 @@ public:
 		return sreg;
 	}
 
-private:
+protected:
 
 	Register sreg;
+
+private:
+
+    /**
+     *  Copy constructor. POISONED.
+     *
+     *  @param that refers to an R-value object of this type.
+     */
+	Uninterruptable(const Uninterruptable& that);
+
+    /**
+     *  Assignment operator. POISONED.
+     *
+     *  @param that refers to an R-value object of this type.
+     */
+	Uninterruptable& operator=(const Uninterruptable& that);
 
 };
 
