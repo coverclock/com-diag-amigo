@@ -108,6 +108,8 @@ void Serial::start(Baud baud, Data data, Parity parity, Stop stop) const {
 
 	Uninterruptable uninterruptable;
 
+	UCSRB = 0;
+
 	UBRRL = value & 0xff;
 	UBRRH = (value >> 8) & 0xff;
 
@@ -115,7 +117,7 @@ void Serial::start(Baud baud, Data data, Parity parity, Stop stop) const {
 
 	UCSRC = parity | stop | data;
 
-	UCSRB = (_BV(RXCIE0) | _BV(RXEN0) | _BV(TXEN0));
+	UCSRB = _BV(RXCIE0) | _BV(RXEN0) | _BV(TXEN0);
 }
 
 void Serial::stop() const {
@@ -150,6 +152,13 @@ size_t Serial::write(uint8_t ch, Ticks timeout) {
 		enable();
 		return 1;
 	}
+}
+
+void Serial::emit(uint8_t ch) const {
+	while ((UCSRA & _BV(UDRE0)) == 0) {
+		;
+	}
+	UDR = ch;
 }
 
 void Serial::receiver() {

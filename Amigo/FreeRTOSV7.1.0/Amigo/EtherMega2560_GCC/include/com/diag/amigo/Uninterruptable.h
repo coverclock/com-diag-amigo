@@ -32,13 +32,13 @@ public:
 		SREG = sreg;
 	}
 
-	operator Register() {
+	operator uint8_t() {
 		return sreg;
 	}
 
 protected:
 
-	Register sreg;
+	uint8_t sreg;
 
 private:
 

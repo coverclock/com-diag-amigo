@@ -48,8 +48,6 @@ typedef unsigned portBASE_TYPE Count;
 
 typedef unsigned portBASE_TYPE Size;
 
-typedef uint8_t Register;
-
 }
 }
 }
