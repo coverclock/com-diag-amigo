@@ -22,13 +22,11 @@ class Queue {
 
 public:
 
-	Queue(Count count, Size size = 1, const signed char * name = NULL);
+	explicit Queue(Count count, Size size = 1, const signed char * name = NULL);
 
-	~Queue();
+	virtual ~Queue();
 
-	operator bool() const {
-		return (handle != 0);
-	}
+	operator bool() const { return (handle != 0); }
 
 	bool isEmptyFromISR() const;
 
@@ -52,11 +50,80 @@ public:
 
 	bool expressFromISR(const void * dat, bool & woken = unused.b);
 
-private:
+protected:
 
 	xQueueHandle handle;
 
+private:
+
+    /**
+     *  Copy constructor. POISONED.
+     *
+     *  @param that refers to an R-value object of this type.
+     */
+	Queue(const Queue& that);
+
+    /**
+     *  Assignment operator. POISONED.
+     *
+     *  @param that refers to an R-value object of this type.
+     */
+	Queue& operator=(const Queue& that);
+
 };
+
+inline bool Queue::isEmptyFromISR() const {
+	return (xQueueIsQueueEmptyFromISR(handle) == pdFALSE);
+}
+
+inline bool Queue::isFullFromISR() const {
+	return (xQueueIsQueueFullFromISR(handle) != pdFALSE);
+}
+
+inline Count Queue::available() const {
+	return uxQueueMessagesWaiting(handle);
+}
+
+inline Count Queue::availableFromISR() const {
+	return uxQueueMessagesWaitingFromISR(handle);
+}
+
+inline bool Queue::peek(void * buf, Ticks timeout) {
+	return (xQueuePeek(handle, buf, timeout) == pdPASS);
+}
+
+inline bool Queue::receive(void * buf, Ticks timeout) {
+	return (xQueueReceive(handle, buf, timeout) == pdPASS);
+}
+
+inline bool Queue::send(const void * dat, Ticks timeout) {
+	return (xQueueSendToBack(handle, dat, timeout) == pdPASS);
+}
+
+inline bool Queue::express(const void * dat, Ticks timeout) {
+	return (xQueueSendToFront(handle, dat, timeout) == pdPASS);
+}
+
+inline bool Queue::receiveFromISR(void * buf, bool & woken) {
+	portBASE_TYPE temporary = pdFALSE;
+	bool result = (xQueueReceiveFromISR(handle, buf, &temporary) == pdPASS);
+	woken = (temporary == pdTRUE);
+	return result;
+}
+
+inline bool Queue::sendFromISR(const void * dat, bool & woken) {
+	portBASE_TYPE temporary = pdFALSE;
+	bool result = (xQueueSendToBackFromISR(handle, dat, &temporary) == pdPASS);
+	woken = (temporary == pdTRUE);
+	return result;
+}
+
+inline bool Queue::expressFromISR(const void * dat, bool & woken) {
+	portBASE_TYPE temporary = pdFALSE;
+	bool result = (xQueueSendToFrontFromISR(handle, dat, &temporary) == pdPASS);
+	woken = (temporary == pdTRUE);
+	return result;
+}
 
 }
 }

@@ -7,6 +7,7 @@
  */
 
 #include "com/diag/amigo/Source.h"
+#include <avr/pgmspace.h>
 #include <string.h>
 
 namespace com {

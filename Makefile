@@ -143,37 +143,45 @@ default:	all
 # PLATFORM
 ################################################################################
 
+AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(NAME)/BinarySemaphore.cpp
+AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(NAME)/CountingSemaphore.cpp
+AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(NAME)/heap.cpp
+AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(NAME)/MutexSemaphore.cpp
+AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(NAME)/Queue.cpp
+AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(NAME)/Sink.cpp
+AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(NAME)/Source.cpp
+AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(NAME)/unused.cpp
+
+AMIGO_HDIRECTORIES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/include
+
+FREERTOS_CFILES+=$(FREERTOS_DIR)/Source/portable/$(TOOLCHAIN)/$(PORTABLE)/port.c
+FREERTOS_CFILES+=$(FREERTOS_DIR)/Source/croutine.c
+FREERTOS_CFILES+=$(FREERTOS_DIR)/Source/list.c
+FREERTOS_CFILES+=$(FREERTOS_DIR)/Source/queue.c
+FREERTOS_CFILES+=$(FREERTOS_DIR)/Source/tasks.c
+FREERTOS_CFILES+=$(FREERTOS_DIR)/Source/timers.c
+
+FREERTOS_HDIRECTORIES+=$(FREERTOS_DIR)/Source/portable/$(TOOLCHAIN)/$(PORTABLE)
+FREERTOS_HDIRECTORIES+=$(FREERTOS_DIR)/Source/include
+
 ifeq ($(BUILD_PLATFORM), MegaBlink)
+CFILES+=$(FREERTOS_CFILES)
 CFILES+=$(FREERTOS_DIR)/Demo/$(BOARD)/lib_digitalAnalog/digitalAnalog.c
 CFILES+=$(FREERTOS_DIR)/Demo/$(BOARD)/lib_serial/lib_serial.c
 CFILES+=$(FREERTOS_DIR)/Source/portable/MemMang/heap_2.c
 CFILES+=$(FREERTOS_DIR)/Demo/$(BOARD)/$(BUILD_PLATFORM)/main.c
 HDIRECTORIES+=$(FREERTOS_DIR)/Demo/$(BOARD)/include
+HDIRECTORIES+=$(FREERTOS_HDIRECTORIES)
 endif
 
 ifeq ($(BUILD_PLATFORM), Blink)
-CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(NAME)/BinarySemaphore.cpp
-CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(NAME)/CountingSemaphore.cpp
-CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(NAME)/heap.cpp
-CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(NAME)/MutexSemaphore.cpp
-CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(NAME)/Queue.cpp
-CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(NAME)/Sink.cpp
-CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(NAME)/Source.cpp
-CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(NAME)/unused.cpp
-CFILES+=$(FREERTOS_DIR)/Source/portable/MemMang/heap_2.c
+CXXFILES+=$(AMIGO_CXXFILES)
 CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/$(BUILD_PLATFORM)/main.cpp
-HDIRECTORIES+=$(FREERTOS_DIR)/$(NAME)/$(BOARD)/include
+CFILES+=$(FREERTOS_CFILES)
+CFILES+=$(FREERTOS_DIR)/Source/portable/MemMang/heap_2.c
+HDIRECTORIES+=$(AMIGO_HDIRECTORIES)
+HDIRECTORIES+=$(FREERTOS_HDIRECTORIES)
 endif
-
-CFILES+=$(FREERTOS_DIR)/Source/portable/$(TOOLCHAIN)/$(PORTABLE)/port.c
-CFILES+=$(FREERTOS_DIR)/Source/croutine.c
-CFILES+=$(FREERTOS_DIR)/Source/list.c
-CFILES+=$(FREERTOS_DIR)/Source/queue.c
-CFILES+=$(FREERTOS_DIR)/Source/tasks.c
-CFILES+=$(FREERTOS_DIR)/Source/timers.c
-
-HDIRECTORIES+=$(FREERTOS_DIR)/Source/portable/$(TOOLCHAIN)/$(PORTABLE)
-HDIRECTORIES+=$(FREERTOS_DIR)/Source/include
 
 INCLUDES+=$(addprefix -I,$(HDIRECTORIES))
 

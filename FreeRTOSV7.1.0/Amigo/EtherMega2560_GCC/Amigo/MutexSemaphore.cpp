@@ -21,14 +21,6 @@ MutexSemaphore::~MutexSemaphore() {
 	handle = 0;
 }
 
-bool MutexSemaphore::take(Ticks timeout) {
-	return (xSemaphoreTakeRecursive(handle, timeout) == pdPASS);
-}
-
-bool MutexSemaphore::give() {
-	return (xSemaphoreGiveRecursive(handle) == pdPASS);
-}
-
 }
 }
 }
