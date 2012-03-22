@@ -11,8 +11,6 @@
 
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
-#include "FreeRTOS.h"
-#include "task.h"
 #include "com/diag/amigo/Serial.h"
 #include "com/diag/amigo/Uninterruptable.h"
 #include "com/diag/amigo/io.h"
@@ -29,7 +27,7 @@ namespace amigo {
 #define UBRRH		COM_DIAG_AMIGO_MMIO_8(base, 5)
 #define UDR			COM_DIAG_AMIGO_MMIO_8(base, 6)
 
-Serial * Serial::driver[] = {
+Serial * Serial::serial[] = {
 	0,
 #if defined(UCSR1A)
 	0,
@@ -42,22 +40,10 @@ Serial * Serial::driver[] = {
 #endif
 };
 
-inline void Serial::enable() const {
-	UCSRB |= _BV(UDRIE0);
-}
-
-inline void Serial::disable() const {
-	UCSRB &= ~_BV(UDRIE0);
-}
-
-inline bool Serial::isEnabled() const {
-	return ((UCSRB & _BV(UDRIE0)) != 0);
-}
-
 Serial::Serial(Port port, Count transmits, Count receives)
 : index(port)
-, transmitting(transmits)
 , received(receives)
+, transmitting(transmits)
 {
 	switch (port) {
 	default:
@@ -72,13 +58,13 @@ Serial::Serial(Port port, Count transmits, Count receives)
 #endif
 #endif
 	}
-	driver[index] = this;
+	serial[index] = this;
 }
 
 Serial::~Serial() {
 	Uninterruptable uninterruptable;
 	stop();
-	driver[index] = 0;
+	serial[index] = 0;
 }
 
 void Serial::start(Baud baud, Data data, Parity parity, Stop stop) const {
@@ -125,33 +111,16 @@ void Serial::stop() const {
 	UCSRB = 0;
 }
 
-int Serial::available() const {
-	return received.available();
+void Serial::enable() const {
+	UCSRB |= _BV(UDRIE0);
 }
 
-void Serial::flush() const {
-	while (isEnabled()) {
-		taskYIELD();
-	}
+void Serial::disable() const {
+	UCSRB &= ~_BV(UDRIE0);
 }
 
-int Serial::peek(Ticks timeout) {
-	uint8_t ch;
-	return (received.peek(&ch, timeout) ? ch : -1);
-}
-
-int Serial::read(Ticks timeout) {
-	uint8_t ch;
-	return (received.receive(&ch, timeout) ? ch : -1);
-}
-
-size_t Serial::write(uint8_t ch, Ticks timeout) {
-	if (!transmitting.send(&ch, timeout)) {
-		return 0;
-	} else {
-		enable();
-		return 1;
-	}
+bool Serial::isEnabled() const {
+	return ((UCSRB & _BV(UDRIE0)) != 0);
 }
 
 void Serial::emit(uint8_t ch) const {
