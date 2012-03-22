@@ -10,6 +10,8 @@
  */
 
 #include <avr/io.h>
+#include "FreeRTOS.h"
+#include "task.h"
 #include "com/diag/amigo/types.h"
 #include "com/diag/amigo/values.h"
 #include "com/diag/amigo/Queue.h"
@@ -22,10 +24,6 @@ namespace amigo {
 class Serial {
 
 public:
-
-	static const Count TRANSMITS = 82;
-
-	static const Count RECEIVES = 16;
 
 	enum Port {
 		USART0		= 0,
@@ -86,15 +84,19 @@ public:
 		TWO			= _BV(USBS0)
 	};
 
-protected:
+	static const Count RECEIVES = 16;
 
-	static Serial * driver[MAXUSART + 1];
-
-public:
+	static const Count TRANSMITS = 82;
 
 	static void receive(Port port);
 
 	static void transmit(Port port);
+
+protected:
+
+	static Serial * serial[MAXUSART + 1];
+
+public:
 
 	explicit Serial(Port port = USART0, Count transmits = TRANSMITS, Count receives = RECEIVES);
 
@@ -120,16 +122,16 @@ protected:
 
 	Port index;
 	volatile void * base;
-	Queue transmitting;
 	Queue received;
+	Queue transmitting;
 
 private:
 
-	inline void enable() const;
+	void enable() const;
 
-	inline void disable() const;
+	void disable() const;
 
-	inline bool isEnabled() const;
+	bool isEnabled() const;
 
 	void receiver();
 
@@ -152,14 +154,43 @@ private:
 };
 
 inline void Serial::receive(Port port) {
-	if (driver[port] != 0) {
-		driver[port]->receiver();
+	if (serial[port] != 0) {
+		serial[port]->receiver();
 	}
 }
 
 inline void Serial::transmit(Port port) {
-	if (driver[port] != 0) {
-		driver[port]->transmitter();
+	if (serial[port] != 0) {
+		serial[port]->transmitter();
+	}
+}
+
+inline int Serial::available() const {
+	return received.available();
+}
+
+inline void Serial::flush() const {
+	while (isEnabled()) {
+		taskYIELD();
+	}
+}
+
+inline int Serial::peek(Ticks timeout) {
+	uint8_t ch;
+	return (received.peek(&ch, timeout) ? ch : -1);
+}
+
+inline int Serial::read(Ticks timeout) {
+	uint8_t ch;
+	return (received.receive(&ch, timeout) ? ch : -1);
+}
+
+inline size_t Serial::write(uint8_t ch, Ticks timeout) {
+	if (!transmitting.send(&ch, timeout)) {
+		return 0;
+	} else {
+		enable();
+		return 1;
 	}
 }
 
