@@ -12,7 +12,6 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "com/diag/amigo/Serial.h"
-#include "com/diag/amigo/debug.h"
 
 int main(void)
 {

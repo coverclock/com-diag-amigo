@@ -1,5 +1,5 @@
-#ifndef _COM_DIAG_SINK_H_
-#define _COM_DIAG_SINK_H_
+#ifndef _COM_DIAG_PRINT_H_
+#define _COM_DIAG_PRINT_H_
 
 /**
  * @file
@@ -9,25 +9,31 @@
  * http://www.diag.com/navigation/downloads/Amigo.html\n
  */
 
-#include "com/diag/amigo/types.h"
+#include "com/diag/amigo/Sink.h"
 
 namespace com {
 namespace diag {
 namespace amigo {
 
-class Sink {
+class Print {
 
 public:
 
-	explicit Sink() {}
+	explicit Print(Sink & outputsink, bool progmemformat = false)
+	: sink(&outputsink)
+	, progmem(progmemformat)
+	{
+	}
 
-	virtual ~Sink() {}
+	virtual ~Print() {
+	}
 
-	virtual size_t operator() () = 0;
+	size_t operator() (const char * format, ...);
 
-	virtual size_t operator() (uint8_t ch) = 0;
+protected:
 
-	size_t operator() (const void * dat, size_t size, bool progmem = false);
+	Sink * sink;
+	bool progmem;
 
 };
 
