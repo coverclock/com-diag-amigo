@@ -19,13 +19,13 @@ class Source {
 
 public:
 
-	virtual ~Source();
+	explicit Source() {}
+
+	virtual ~Source() {}
 
 	virtual int operator() (bool peek = false) = 0;
 
-	ssize_t operator() (void * buf, size_t size);
-
-	ssize_t operator() (char * str, size_t size, const char * end, bool progmem = false);
+	size_t operator() (void * buf, size_t size);
 
 };
 

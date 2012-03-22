@@ -11,6 +11,7 @@
 
 #include "FreeRTOS.h"
 #include "queue.h"
+#include "com/diag/amigo/SourceSink.h"
 #include "com/diag/amigo/values.h"
 #include "com/diag/amigo/unused.h"
 

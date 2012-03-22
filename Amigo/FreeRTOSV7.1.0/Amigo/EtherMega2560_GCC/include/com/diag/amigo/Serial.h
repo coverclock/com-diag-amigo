@@ -13,6 +13,7 @@
 #include "com/diag/amigo/types.h"
 #include "com/diag/amigo/values.h"
 #include "com/diag/amigo/Queue.h"
+#include "com/diag/amigo/SourceSink.h"
 
 namespace com {
 namespace diag {
@@ -21,6 +22,10 @@ namespace amigo {
 class Serial {
 
 public:
+
+	static const Count TRANSMITS = 82;
+
+	static const Count RECEIVES = 16;
 
 	enum Port {
 		USART0		= 0,
@@ -91,7 +96,7 @@ public:
 
 	static void transmit(Port port);
 
-	explicit Serial(Port port = USART0, Count transmits = 82, Count receives = 16);
+	explicit Serial(Port port = USART0, Count transmits = TRANSMITS, Count receives = RECEIVES);
 
 	virtual ~Serial();
 

@@ -14,20 +14,13 @@ namespace com {
 namespace diag {
 namespace amigo {
 
-Sink::~Sink() {
-}
-
-ssize_t Sink::operator() (const void * buf, size_t size, bool progmem) {
-	const unsigned char * here = static_cast<const unsigned char *>(buf);
+size_t Sink::operator() (const void * dat, size_t size, bool progmem) {
+	const unsigned char * here = static_cast<const unsigned char *>(dat);
 	while ((size--) > 0) {
 		if ((*this)(progmem ? pgm_read_byte(*here) : *here) != 1) { break; }
 		++here;
 	}
-	return (here - static_cast<const unsigned char *>(buf));
-}
-
-ssize_t Sink::operator() (const char * str, bool progmem) {
-	return (*this)(str, progmem ? strlen_P(str) : strlen(str), progmem);
+	return (here - static_cast<const unsigned char *>(dat));
 }
 
 }
