@@ -20,7 +20,8 @@ namespace com {
 namespace diag {
 namespace amigo {
 
-class Serial {
+class Serial
+{
 
 public:
 
@@ -99,7 +100,7 @@ protected:
 
 public:
 
-	explicit Serial(Port port = USART0, Count transmits = TRANSMITS, Count receives = RECEIVES, uint8_t bad = BAD);
+	explicit Serial(Port myport = USART0, Count transmits = TRANSMITS, Count receives = RECEIVES, uint8_t mybad = BAD);
 
 	virtual ~Serial();
 
@@ -119,15 +120,15 @@ public:
 
 	size_t write(uint8_t ch, Ticks timeout = NEVER);
 
-	void emit(uint8_t ch) const;
+	size_t emit(uint8_t ch) const;
 
 protected:
 
-	Port index;
+	Port port;
 	volatile void * base;
 	TypedQueue<uint8_t> received;
 	TypedQueue<uint8_t> transmitting;
-	uint8_t invalid;
+	uint8_t bad;
 
 private:
 

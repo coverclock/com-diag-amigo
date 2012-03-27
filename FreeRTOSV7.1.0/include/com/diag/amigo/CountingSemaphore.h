@@ -19,7 +19,8 @@ namespace com {
 namespace diag {
 namespace amigo {
 
-class CountingSemaphore {
+class CountingSemaphore
+{
 
 public:
 

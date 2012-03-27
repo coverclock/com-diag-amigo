@@ -12,24 +12,23 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "com/diag/amigo/arch/Serial.h"
+#include "com/diag/amigo/DebugSink.h"
+#include "com/diag/amigo/SerialSink.h"
+#include "com/diag/amigo/Print.h"
 
 int main(void)
 {
 	sei();
 
 	com::diag::amigo::Serial console;
+	com::diag::amigo::DebugSink debugsink(console);
+	com::diag::amigo::SerialSink serialsink(console);
+	com::diag::amigo::Print debugf(debugsink);
+	com::diag::amigo::Print printf(serialsink);
 
 	console.start();
 
-	console.emit('r');
-	console.emit('u');
-	console.emit('n');
-	console.emit('n');
-	console.emit('i');
-	console.emit('n');
-	console.emit('g');
-	console.emit('\r');
-	console.emit('\n');
+	debugf("running\n");
 
 	DDRB |= _BV(7);
 	for (int ii = 0; ii < 10; ++ii) {
@@ -39,13 +38,7 @@ int main(void)
 		_delay_ms(500);
 	}
 
-	console.write('r');
-	console.write('e');
-	console.write('a');
-	console.write('d');
-	console.write('y');
-	console.write('\r');
-	console.write('\n');
+	printf("ready\n");
 
 	for (;;) {
 		while (console.available() > 0) {

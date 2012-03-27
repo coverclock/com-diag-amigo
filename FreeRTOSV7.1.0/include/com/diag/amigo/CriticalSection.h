@@ -16,7 +16,8 @@ namespace com {
 namespace diag {
 namespace amigo {
 
-class CriticalSection {
+class CriticalSection
+{
 
 public:
 

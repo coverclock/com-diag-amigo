@@ -18,7 +18,8 @@ namespace com {
 namespace diag {
 namespace amigo {
 
-class Uninterruptable {
+class Uninterruptable
+{
 
 public:
 

@@ -1,5 +1,5 @@
-#ifndef _COM_DIAG_PRINT_H_
-#define _COM_DIAG_PRINT_H_
+#ifndef _COM_DIAG_DEBUGSINK_H_
+#define _COM_DIAG_DEBUGSINK_H_
 
 /**
  * @file
@@ -15,24 +15,29 @@ namespace com {
 namespace diag {
 namespace amigo {
 
-class Print
+class Serial;
+
+class DebugSink
+: public Sink
 {
 
 public:
 
-	Print(Sink & outputsink, bool progmemformat = false)
-	: sink(&outputsink)
-	, progmem(progmemformat)
+	explicit DebugSink(Serial & myserial)
+	: serial(&myserial)
 	{}
 
-	~Print() {}
+	virtual ~DebugSink();
 
-	size_t operator() (const char * format, ...);
+	virtual size_t write(uint8_t ch);
+
+	virtual void flush();
+
+	using Sink::write;
 
 protected:
 
-	Sink * sink;
-	bool progmem;
+	Serial * serial;
 
 };
 
@@ -40,4 +45,4 @@ protected:
 }
 }
 
-#endif /* _COM_DIAG_SINK_H_ */
+#endif /* _COM_DIAG_DEBUGSINK_H_ */
