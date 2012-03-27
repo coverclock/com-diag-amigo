@@ -23,9 +23,9 @@ class CountingSemaphore {
 
 public:
 
-	CountingSemaphore(Count maximum, Count initial);
+	explicit CountingSemaphore(Count maximum, Count initial = 0);
 
-	~CountingSemaphore();
+	virtual ~CountingSemaphore();
 
 	operator bool() const { return (handle != 0); }
 

@@ -22,8 +22,10 @@ BUILD_HOST=$(shell uname -s)
 #BUILD_PLATFORM=MegaBlink
 BUILD_PLATFORM=Blink
 
+# SERIAL will depend on, for example, into which port you plub your USB cable.
 #SERIAL=/dev/tty.usbmodem26421
-SERIAL=/dev/tty.usbmodem411
+#SERIAL=/dev/tty.usbmodem411
+SERIAL=/dev/tty.usbmodem441
 BAUD=115200
 
 ################################################################################
