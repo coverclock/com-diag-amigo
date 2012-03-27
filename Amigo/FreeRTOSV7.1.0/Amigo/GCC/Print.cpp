@@ -29,10 +29,10 @@ size_t Print::operator() (const char * format, ...) {
 	size_t length = strlen(buffer);
 	if ((buffer[length - 1] == '\n') && (length < (sizeof(buffer) - 1))) {
 		buffer[length++] = '\r';
-		buffer[length++] = '\0';
+		buffer[length] = '\0';
 	}
 
-	return (*sink)(buffer, length);
+	return sink->write(buffer, length);
 }
 
 }

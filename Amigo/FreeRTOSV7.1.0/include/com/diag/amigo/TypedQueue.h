@@ -17,7 +17,8 @@ namespace amigo {
 
 template <typename _TYPE_>
 class TypedQueue
-: public Queue {
+: public Queue
+{
 
 public:
 
@@ -27,19 +28,19 @@ public:
 
 	virtual ~TypedQueue() {}
 
-	bool peek(_TYPE_ * buf, Ticks timeout = IMMEDIATELY) { return Queue::peek(buf, timeout); }
+	bool peek(_TYPE_ * buffer, Ticks timeout = IMMEDIATELY) { return Queue::peek(buffer, timeout); }
 
-	bool receive(_TYPE_ * buf, Ticks timeout = NEVER) { return Queue::receive(buf, timeout); }
+	bool receive(_TYPE_ * buffer, Ticks timeout = NEVER) { return Queue::receive(buffer, timeout); }
 
-	bool receiveFromISR(_TYPE_ * buf, bool & woken = unused.b) { return Queue::receiveFromISR(buf, woken); }
+	bool receiveFromISR(_TYPE_ * buffer, bool & woken = unused.b) { return Queue::receiveFromISR(buffer, woken); }
 
-	bool send(const _TYPE_ * dat, Ticks timeout = NEVER) { return Queue::send(dat, timeout); }
+	bool send(const _TYPE_ * datum, Ticks timeout = NEVER) { return Queue::send(datum, timeout); }
 
-	bool sendFromISR(const _TYPE_ * dat, bool & woken = unused.b) { return Queue::sendFromISR(dat, woken); }
+	bool sendFromISR(const _TYPE_ * datum, bool & woken = unused.b) { return Queue::sendFromISR(datum, woken); }
 
-	bool express(const _TYPE_ * dat, Ticks timeout = NEVER) { return Queue::express(dat, timeout); }
+	bool express(const _TYPE_ * datum, Ticks timeout = NEVER) { return Queue::express(datum, timeout); }
 
-	bool expressFromISR(const _TYPE_ * dat, bool & woken = unused.b) { return Queue::expressFromISR(dat, woken); }
+	bool expressFromISR(const _TYPE_ * datum, bool & woken = unused.b) { return Queue::expressFromISR(datum, woken); }
 
 };
 

@@ -1,6 +1,3 @@
-#ifndef _COM_DIAG_SOURCE_H_
-#define _COM_DIAG_SOURCE_H_
-
 /**
  * @file
  * Copyright 2012 Digital Aggregates Corporation, Colorado, USA\n
@@ -9,25 +6,23 @@
  * http://www.diag.com/navigation/downloads/Amigo.html\n
  */
 
-#include "com/diag/amigo/types.h"
+#include "com/diag/amigo/SerialSink.h"
+#include "com/diag/amigo/arch/Serial.h"
 
 namespace com {
 namespace diag {
 namespace amigo {
 
-class Source
-{
+SerialSink::~SerialSink() {}
 
-public:
+size_t SerialSink::write(uint8_t ch) {
+	return serial->write(ch);
+}
 
-	virtual int available() = 0;
-
-	virtual int read() = 0;
-
-};
+void SerialSink::flush() {
+	serial->flush();
+}
 
 }
 }
 }
-
-#endif /* _COM_DIAG_SOURCE_H_ */

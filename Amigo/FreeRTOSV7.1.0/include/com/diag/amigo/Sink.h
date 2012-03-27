@@ -9,25 +9,25 @@
  * http://www.diag.com/navigation/downloads/Amigo.html\n
  */
 
+#include <string.h>
 #include "com/diag/amigo/types.h"
 
 namespace com {
 namespace diag {
 namespace amigo {
 
-class Sink {
+class Sink
+{
 
 public:
 
-	explicit Sink() {}
+	virtual size_t write(uint8_t ch) = 0;
 
-	virtual ~Sink() {}
+	virtual void flush() = 0;
 
-	virtual size_t operator() () = 0;
+    virtual size_t write(const void * datum, size_t size);
 
-	virtual size_t operator() (uint8_t ch) = 0;
-
-	size_t operator() (const void * dat, size_t size, bool progmem = false);
+    size_t write(const char * string) { return write(string, strlen(string)); }
 
 };
 

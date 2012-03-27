@@ -17,7 +17,8 @@ namespace com {
 namespace diag {
 namespace amigo {
 
-class MutexSemaphore {
+class MutexSemaphore
+{
 
 public:
 

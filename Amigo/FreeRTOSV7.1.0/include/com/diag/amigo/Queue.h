@@ -11,7 +11,6 @@
 
 #include "FreeRTOS.h"
 #include "queue.h"
-#include "com/diag/amigo/SourceSink.h"
 #include "com/diag/amigo/values.h"
 #include "com/diag/amigo/unused.h"
 
@@ -19,7 +18,8 @@ namespace com {
 namespace diag {
 namespace amigo {
 
-class Queue {
+class Queue
+{
 
 public:
 
@@ -37,19 +37,19 @@ public:
 
 	Count availableFromISR() const;
 
-	bool peek(void * buf, Ticks timeout = IMMEDIATELY);
+	bool peek(void * buffer, Ticks timeout = IMMEDIATELY);
 
-	bool receive(void * buf, Ticks timeout = NEVER);
+	bool receive(void * buffer, Ticks timeout = NEVER);
 
-	bool receiveFromISR(void * buf, bool & woken = unused.b);
+	bool receiveFromISR(void * buffer, bool & woken = unused.b);
 
-	bool send(const void * dat, Ticks timeout = NEVER);
+	bool send(const void * datum, Ticks timeout = NEVER);
 
-	bool sendFromISR(const void * dat, bool & woken = unused.b);
+	bool sendFromISR(const void * datum, bool & woken = unused.b);
 
-	bool express(const void * dat, Ticks timeout = NEVER);
+	bool express(const void * datum, Ticks timeout = NEVER);
 
-	bool expressFromISR(const void * dat, bool & woken = unused.b);
+	bool expressFromISR(const void * datum, bool & woken = unused.b);
 
 protected:
 
@@ -89,39 +89,39 @@ inline Count Queue::availableFromISR() const {
 	return uxQueueMessagesWaitingFromISR(handle);
 }
 
-inline bool Queue::peek(void * buf, Ticks timeout) {
-	return (xQueuePeek(handle, buf, timeout) == pdPASS);
+inline bool Queue::peek(void * buffer, Ticks timeout) {
+	return (xQueuePeek(handle, buffer, timeout) == pdPASS);
 }
 
-inline bool Queue::receive(void * buf, Ticks timeout) {
-	return (xQueueReceive(handle, buf, timeout) == pdPASS);
+inline bool Queue::receive(void * buffer, Ticks timeout) {
+	return (xQueueReceive(handle, buffer, timeout) == pdPASS);
 }
 
-inline bool Queue::send(const void * dat, Ticks timeout) {
-	return (xQueueSendToBack(handle, dat, timeout) == pdPASS);
+inline bool Queue::send(const void * datum, Ticks timeout) {
+	return (xQueueSendToBack(handle, datum, timeout) == pdPASS);
 }
 
-inline bool Queue::express(const void * dat, Ticks timeout) {
-	return (xQueueSendToFront(handle, dat, timeout) == pdPASS);
+inline bool Queue::express(const void * datum, Ticks timeout) {
+	return (xQueueSendToFront(handle, datum, timeout) == pdPASS);
 }
 
-inline bool Queue::receiveFromISR(void * buf, bool & woken) {
+inline bool Queue::receiveFromISR(void * buffer, bool & woken) {
 	portBASE_TYPE temporary = pdFALSE;
-	bool result = (xQueueReceiveFromISR(handle, buf, &temporary) == pdPASS);
+	bool result = (xQueueReceiveFromISR(handle, buffer, &temporary) == pdPASS);
 	woken = (temporary == pdTRUE);
 	return result;
 }
 
-inline bool Queue::sendFromISR(const void * dat, bool & woken) {
+inline bool Queue::sendFromISR(const void * datum, bool & woken) {
 	portBASE_TYPE temporary = pdFALSE;
-	bool result = (xQueueSendToBackFromISR(handle, dat, &temporary) == pdPASS);
+	bool result = (xQueueSendToBackFromISR(handle, datum, &temporary) == pdPASS);
 	woken = (temporary == pdTRUE);
 	return result;
 }
 
-inline bool Queue::expressFromISR(const void * dat, bool & woken) {
+inline bool Queue::expressFromISR(const void * datum, bool & woken) {
 	portBASE_TYPE temporary = pdFALSE;
-	bool result = (xQueueSendToFrontFromISR(handle, dat, &temporary) == pdPASS);
+	bool result = (xQueueSendToFrontFromISR(handle, datum, &temporary) == pdPASS);
 	woken = (temporary == pdTRUE);
 	return result;
 }

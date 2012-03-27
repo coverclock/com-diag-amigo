@@ -4,7 +4,7 @@
  * Licensed under the terms in README.h\n
  * Chip Overclock mailto:coverclock@diag.com\n
  * http://www.diag.com/navigation/downloads/Amigo.html\n
- * This code is gratefully inspired by <util/baud.h>, FreeRTOS lib_serial.c,
+ * This code is gratefully inspired by <util/baud.h>, FreeRTOS lib_serial.
  * and <http://feilipu.posterous.com/ethermega-arduino-mega-2560-and-freertos>.
  * A special THANK YOU goes to Richard Barry and Phillip Stevens.
  */
@@ -40,11 +40,11 @@ Serial * Serial::serial[] = {
 #endif
 };
 
-Serial::Serial(Port port, Count transmits, Count receives, uint8_t bad)
-: index(port)
+Serial::Serial(Port myport, Count transmits, Count receives, uint8_t mybad)
+: port(myport)
 , received(receives)
 , transmitting(transmits)
-, invalid(bad)
+, bad(mybad)
 {
 	switch (port) {
 	default:
@@ -59,13 +59,13 @@ Serial::Serial(Port port, Count transmits, Count receives, uint8_t bad)
 #endif
 #endif
 	}
-	serial[index] = this;
+	serial[port] = this;
 }
 
 Serial::~Serial() {
 	Uninterruptable uninterruptable;
 	stop();
-	serial[index] = 0;
+	serial[port] = 0;
 }
 
 void Serial::start(Baud baud, Data data, Parity parity, Stop stop) const {
@@ -120,7 +120,7 @@ void Serial::disable() const {
 	UCSRB &= ~_BV(UDRIE0);
 }
 
-void Serial::emit(uint8_t ch) const {
+size_t Serial::emit(uint8_t ch) const {
 	Uninterruptable uninterrutable;
 	uint8_t ucsrb = UCSRB;
 	UCSRB = _BV(RXCIE0) | _BV(RXEN0) | _BV(TXEN0);
@@ -129,11 +129,12 @@ void Serial::emit(uint8_t ch) const {
 	}
 	UDR = ch;
 	UCSRB = ucsrb;
+	return 1;
 }
 
 void Serial::receiver() {
 	// Only called from an ISR hence implicitly uninterrutable;
-	uint8_t ch = ((UCSRA & (_BV(FE0) | _BV(DOR0) | _BV(UPE0))) == 0) ? UDR : invalid;
+	uint8_t ch = ((UCSRA & (_BV(FE0) | _BV(DOR0) | _BV(UPE0))) == 0) ? UDR : bad;
 	bool woken = false;
 	received.sendFromISR(&ch, woken);
 	if (woken) {
