@@ -40,10 +40,11 @@ Serial * Serial::serial[] = {
 #endif
 };
 
-Serial::Serial(Port port, Count transmits, Count receives)
+Serial::Serial(Port port, Count transmits, Count receives, uint8_t bad)
 : index(port)
 , received(receives)
 , transmitting(transmits)
+, invalid(bad)
 {
 	switch (port) {
 	default:
@@ -92,8 +93,6 @@ void Serial::start(Baud baud, Data data, Parity parity, Stop stop) const {
 
 	uint16_t value = (((configCPU_CLOCK_HZ) + (4UL * rate)) / (8UL * rate)) - 1UL;
 
-	Uninterruptable uninterruptable;
-
 	UCSRB = 0;
 
 	UBRRL = value & 0xff;
@@ -112,26 +111,29 @@ void Serial::stop() const {
 }
 
 void Serial::enable() const {
+	Uninterruptable uninterruptable;
 	UCSRB |= _BV(UDRIE0);
 }
 
 void Serial::disable() const {
+	Uninterruptable uninterruptable;
 	UCSRB &= ~_BV(UDRIE0);
 }
 
-bool Serial::isEnabled() const {
-	return ((UCSRB & _BV(UDRIE0)) != 0);
-}
-
 void Serial::emit(uint8_t ch) const {
+	Uninterruptable uninterrutable;
+	uint8_t ucsrb = UCSRB;
+	UCSRB = _BV(RXCIE0) | _BV(RXEN0) | _BV(TXEN0);
 	while ((UCSRA & _BV(UDRE0)) == 0) {
-		;
+		// Do nothing.
 	}
 	UDR = ch;
+	UCSRB = ucsrb;
 }
 
 void Serial::receiver() {
-	uint8_t ch = ((UCSRA & (_BV(FE0) | _BV(DOR0) | _BV(UPE0))) == 0) ? UDR : 0xff;
+	// Only called from an ISR hence implicitly uninterrutable;
+	uint8_t ch = ((UCSRA & (_BV(FE0) | _BV(DOR0) | _BV(UPE0))) == 0) ? UDR : invalid;
 	bool woken = false;
 	received.sendFromISR(&ch, woken);
 	if (woken) {
@@ -140,6 +142,7 @@ void Serial::receiver() {
 }
 
 void Serial::transmitter() {
+	// Only called from an ISR hence implicitly uninterrutable;
 	uint8_t ch;
 	if (transmitting.receiveFromISR(&ch)) {
 		UDR = ch;

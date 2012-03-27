@@ -14,8 +14,7 @@
 #include "task.h"
 #include "com/diag/amigo/types.h"
 #include "com/diag/amigo/values.h"
-#include "com/diag/amigo/Queue.h"
-#include "com/diag/amigo/SourceSink.h"
+#include "com/diag/amigo/TypedQueue.h"
 
 namespace com {
 namespace diag {
@@ -88,6 +87,8 @@ public:
 
 	static const Count TRANSMITS = 82;
 
+	static const uint8_t BAD = '?';
+
 	static void receive(Port port);
 
 	static void transmit(Port port);
@@ -98,11 +99,13 @@ protected:
 
 public:
 
-	explicit Serial(Port port = USART0, Count transmits = TRANSMITS, Count receives = RECEIVES);
+	explicit Serial(Port port = USART0, Count transmits = TRANSMITS, Count receives = RECEIVES, uint8_t bad = BAD);
 
 	virtual ~Serial();
 
 	void start(Baud baud = B115200, Data data = EIGHT, Parity parity = NONE, Stop stop = ONE) const;
+
+	void restart() const;
 
 	void stop() const;
 
@@ -122,16 +125,15 @@ protected:
 
 	Port index;
 	volatile void * base;
-	Queue received;
-	Queue transmitting;
+	TypedQueue<uint8_t> received;
+	TypedQueue<uint8_t> transmitting;
+	uint8_t invalid;
 
 private:
 
 	void enable() const;
 
 	void disable() const;
-
-	bool isEnabled() const;
 
 	void receiver();
 
@@ -165,12 +167,18 @@ inline void Serial::transmit(Port port) {
 	}
 }
 
+inline void Serial::restart() const {
+	if (transmitting.available() > 0) {
+		enable();
+	}
+}
+
 inline int Serial::available() const {
 	return received.available();
 }
 
 inline void Serial::flush() const {
-	while (isEnabled()) {
+	while (transmitting.available() > 0) {
 		taskYIELD();
 	}
 }
