@@ -11,7 +11,7 @@
 #include <util/delay.h>
 #include "FreeRTOS.h"
 #include "task.h"
-#include "com/diag/amigo/Serial.h"
+#include "com/diag/amigo/arch/Serial.h"
 
 int main(void)
 {

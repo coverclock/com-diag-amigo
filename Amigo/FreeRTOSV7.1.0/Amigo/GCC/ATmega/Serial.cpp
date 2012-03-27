@@ -11,8 +11,8 @@
 
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
-#include "com/diag/amigo/Serial.h"
-#include "com/diag/amigo/Uninterruptable.h"
+#include "com/diag/amigo/arch/Serial.h"
+#include "com/diag/amigo/arch/Uninterruptable.h"
 #include "com/diag/amigo/io.h"
 
 namespace com {
