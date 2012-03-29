@@ -7,7 +7,7 @@
  */
 
 #include "com/diag/amigo/Console.h"
-#include "com/diag/amigo/arch/Uninterruptable.h"
+#include "com/diag/amigo/target/Uninterruptable.h"
 
 extern "C" void __cxa_pure_virtual() {
 	com::diag::amigo::Uninterruptable uninterruptable;

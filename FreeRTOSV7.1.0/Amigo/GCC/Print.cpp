@@ -11,7 +11,7 @@
 #include <string.h>
 #include <avr/pgmspace.h>
 #include "com/diag/amigo/Print.h"
-#include "com/diag/amigo/arch/Serial.h"
+#include "com/diag/amigo/target/Serial.h"
 
 namespace com {
 namespace diag {
