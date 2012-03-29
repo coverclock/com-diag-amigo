@@ -70,10 +70,12 @@ Serial::Serial(Port myport, Count transmits, Count receives, uint8_t mybad)
 #endif
 	}
 
+#if 0
 	Console console;
 	console.start();
 	console.write("port=0x").write(&port, sizeof(port)).write("\r\n");
 	console.write("base=0x").write(&base, sizeof(base)).write("\r\n");
+#endif
 }
 
 Serial::~Serial() {

@@ -10,8 +10,10 @@
 #include <avr/interrupt.h>
 #include <math.h>
 #include <util/delay.h>
+#include <stddef.h>
 #include "FreeRTOS.h"
 #include "task.h"
+#include "com/diag/amigo/types.h"
 #include "com/diag/amigo/arch/Serial.h"
 #include "com/diag/amigo/arch/Uninterruptable.h"
 #include "com/diag/amigo/DebugSink.h"
@@ -44,53 +46,43 @@ static void morse(const char * code) {
 	}
 }
 
-int main(void)
-{
-	morse(" ... ");
+static com::diag::amigo::Serial * serialp;
 
+static void unittest(void * parm) __attribute__((section(".lowtext")));
+static void unittest(void * parm) {
+	com::diag::amigo::SerialSink serialsink(*serialp);
+	com::diag::amigo::Print printf(serialsink);
+
+	printf("ready\n");
+
+	for (;;) {
+		while (serialp->available() > 0) {
+			serialp->write(serialp->read());
+		}
+	}
+
+}
+
+int16_t main() __attribute__((OS_main));
+int16_t main() {
 	com::diag::amigo::Console console;
-	console.start().write("starting\r\n");
-
-	morse(" ..- ");
+	console.start().write("starting\r\n").flush();
 
 	sei();
 
 	com::diag::amigo::Serial serial;
+	serialp = &serial;
+	serialp->start();
 
-	morse(" .-. ");
-
-	serial.start();
-
-	morse(" .-- ");
-
-	serial.emit('n');
-	serial.emit('o');
-	serial.emit('w');
-	serial.emit('\n');
-	serial.emit('\r');
-
-	morse(" -.. ");
-
-	com::diag::amigo::DebugSink debugsink(serial);
-	com::diag::amigo::SerialSink serialsink(serial);
+	com::diag::amigo::DebugSink debugsink(*serialp);
 	com::diag::amigo::Print debugf(debugsink);
-	com::diag::amigo::Print printf(serialsink);
-
-	morse(" -.- ");
-
 	debugf("running\n");
 
-	morse(" --. ");
+    xTaskCreate(unittest, (const signed char *)"UnitTest", 512, 0, 3, 0);
 
-	printf("ready\n");
+	vTaskStartScheduler();
 
-	morse(" --- ");
+	console.start().write("exiting\r\n");
 
-	for (;;) {
-		while (serial.available() > 0) {
-			serial.write(serial.read());
-		}
-	}
-
-    return(0);
+	for (;;);
 }
