@@ -16,10 +16,10 @@ HTTP_URL=http://www.diag.com/navigation/downloads/$(NAME).html
 FTP_URL=http://www.diag.com/ftp/$(PROJECT)-$(MAJOR).$(MINOR).$(BUILD).tgz
 SVN_URL=svn://graphite/$(PROJECT)/trunk/$(NAME)
 
-#BUILD_TARGET=Uno
-BUILD_TARGET=EtherMega2560
+#BUILD_TARGET=ArduinoUno
+BUILD_TARGET=FreetronicsEtherMega2560
 BUILD_HOST=$(shell uname -s)
-BUILD_PLATFORM=Blink
+BUILD_PLATFORM=UnitTest
 
 # SERIAL will depend on, for example, into which port you plub your USB cable.
 #SERIAL=/dev/tty.usbmodem26421
@@ -74,7 +74,7 @@ endif
 # TARGET
 ################################################################################
 
-ifeq ($(BUILD_TARGET),Uno)
+ifeq ($(BUILD_TARGET),ArduinoUno)
 ARCH=avr
 CROSS_COMPILE=$(ARCH)-
 FAMILY=avr5
@@ -83,10 +83,9 @@ FREQUENCY=16000000L
 ARDUINO=100
 CORE=arduino
 VARIANT=standard
-TARGET=__AVR_ATmega328P__
-PORTABLE=ATmega
+TARGET=megaAVR
 TOOLCHAIN=GCC
-BOARD=ArduinoUno
+BOARD=$(BUILD_TARGET)
 CONFIG=arduino
 PROGRAMMER=avrispmkII
 ISP=stk500v2
@@ -97,7 +96,7 @@ HFUSE=0xDE# ?0xD6 EESAVE?
 LFUSE=0xFF
 endif
 
-ifeq ($(BUILD_TARGET),EtherMega2560)
+ifeq ($(BUILD_TARGET),FreetronicsEtherMega2560)
 ARCH=avr
 CROSS_COMPILE=$(ARCH)-
 FAMILY=avr6
@@ -106,10 +105,9 @@ FREQUENCY=16000000L
 ARDUINO=100
 CORE=arduino
 VARIANT=mega
-TARGET=__AVR_ATmega2560__
-PORTABLE=ATmega
+TARGET=megaAVR
 TOOLCHAIN=GCC
-BOARD=FreetronicsEtherMega2560
+BOARD=$(BUILD_TARGET)
 CONFIG=stk500v2
 PROGRAMMER=avrispmkII
 ISP=stk500v2
@@ -157,22 +155,24 @@ AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/Sink.cpp
 AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/unused.cpp
 AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/virtual.cpp
 
-AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/$(PORTABLE)/Console.cpp
-AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/$(PORTABLE)/Serial.cpp
+AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/$(TARGET)/Console.cpp
+AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/$(TARGET)/Serial.cpp
 
 AMIGO_HDIRECTORIES+=$(FREERTOS_DIR)/include
 
-FREERTOS_CFILES+=$(FREERTOS_DIR)/Source/portable/$(TOOLCHAIN)/$(PORTABLE)/port.c
+DELIVERABLES+=$(FREERTOS_DIR)/include/com/diag/amigo/target
+
+FREERTOS_CFILES+=$(FREERTOS_DIR)/Source/portable/$(TOOLCHAIN)/$(TARGET)/port.c
 FREERTOS_CFILES+=$(FREERTOS_DIR)/Source/croutine.c
 FREERTOS_CFILES+=$(FREERTOS_DIR)/Source/list.c
 FREERTOS_CFILES+=$(FREERTOS_DIR)/Source/queue.c
 FREERTOS_CFILES+=$(FREERTOS_DIR)/Source/tasks.c
 FREERTOS_CFILES+=$(FREERTOS_DIR)/Source/timers.c
 
-FREERTOS_HDIRECTORIES+=$(FREERTOS_DIR)/Source/portable/$(TOOLCHAIN)/$(PORTABLE)
+FREERTOS_HDIRECTORIES+=$(FREERTOS_DIR)/Source/portable/$(TOOLCHAIN)/$(TARGET)
 FREERTOS_HDIRECTORIES+=$(FREERTOS_DIR)/Source/include
 
-ifeq ($(BUILD_PLATFORM), Blink)
+ifeq ($(BUILD_PLATFORM), UnitTest)
 CXXFILES+=$(AMIGO_CXXFILES)
 CXXFILES+=$(FREERTOS_DIR)/Demo/$(TOOLCHAIN)/$(BOARD)/$(BUILD_PLATFORM)/main.cpp
 CFILES+=$(FREERTOS_CFILES)
@@ -238,6 +238,9 @@ COLLATERAL+=$(BUILD_PLATFORM).siz
 
 $(BUILD_PLATFORM).elf:	$(OFILES)
 	$(CROSS_COMPILE)$(CC) $(LDFLAGS) -o $@ $(OFILES) $(OBJECTS) $(ARCHIVES) $(LIBRARIES)
+
+$(FREERTOS_DIR)/include/com/diag/amigo/target:	$(FREERTOS_DIR)/include/com/diag/amigo/$(TARGET)
+	( cd $(FREERTOS_DIR)/include/com/diag/amigo; ln -f -s $(TARGET) target )
 
 ################################################################################
 # DEPENDENCIES
@@ -388,7 +391,7 @@ flash:	$(BOOTLOADER_HEX)
 	$(AVRDUDE) -C$(AVRDUDE_CONF) -p$(PART) -c$(ISP) -Pusb -e -Ulock:w:0x3F:m -Uefuse:w:$(EFUSE):m -Uhfuse:w:$(HFUSE):m -Ulfuse:w:$(LFUSE):m
 	$(AVRDUDE) -C$(AVRDUDE_CONF) -p$(PART) -c$(ISP) -Pusb -Uflash:w:$(BOOTLOADER_HEX):i -Ulock:w:0x0F:m 
 
-ifeq ($(BUILD_TARGET),EtherMega2560)
+ifeq ($(BUILD_TARGET),FreetronicsEtherMega2560)
 
 PHONY+=enablejtag
 
