@@ -19,7 +19,7 @@
 #include "com/diag/amigo/DebugSink.h"
 #include "com/diag/amigo/SerialSink.h"
 #include "com/diag/amigo/Print.h"
-#include "com/diag/amigo/Console.h"
+#include "com/diag/amigo/target/Console.h"
 
 static void morse(const char * code) {
 	static const double DOT = 125.0;
@@ -63,10 +63,10 @@ static void unittest(void * parm) {
 
 }
 
-int16_t main() __attribute__((OS_main));
-int16_t main() {
+int main() __attribute__((OS_main));
+int main() {
 	com::diag::amigo::Console console;
-	console.start().write("starting\r\n").flush();
+	console.start().write("starting\r\n").flush().stop();
 
 	sei();
 
@@ -82,7 +82,7 @@ int16_t main() {
 
 	vTaskStartScheduler();
 
-	console.start().write("exiting\r\n");
+	console.start().write("exiting\r\n").flush().stop();
 
 	for (;;);
 }
