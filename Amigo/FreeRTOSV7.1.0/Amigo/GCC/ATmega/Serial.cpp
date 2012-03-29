@@ -9,11 +9,13 @@
  * A special THANK YOU goes to Richard Barry and Phillip Stevens.
  */
 
-#include <avr/pgmspace.h>
 #include <avr/interrupt.h>
+#include "FreeRTOS.h"
+#include "task.h"
 #include "com/diag/amigo/arch/Serial.h"
 #include "com/diag/amigo/arch/Uninterruptable.h"
 #include "com/diag/amigo/io.h"
+#include "com/diag/amigo/Console.h"
 
 namespace com {
 namespace diag {
@@ -42,10 +44,18 @@ Serial * Serial::serial[] = {
 
 Serial::Serial(Port myport, Count transmits, Count receives, uint8_t mybad)
 : port(myport)
+, base(0)
 , received(receives)
 , transmitting(transmits)
 , bad(mybad)
 {
+	serial[port] = this;
+
+	// Important safety tip: placing the code below in a static map function
+	// that returned a volatile pointer returned NULL instead. Putting some
+	// debugging code in that function to display the pointer caused the
+	// function to return the correct value. Not good.
+
 	switch (port) {
 	default:
 	case USART0:	base = &UCSR0A;	break;
@@ -54,16 +64,19 @@ Serial::Serial(Port myport, Count transmits, Count receives, uint8_t mybad)
 #if defined(UCSR2A)
 	case USART2:	base = &UCSR2A;	break;
 #if defined(UCSR3A)
-	case USART3:	base = &UCSR2A;	break;
+	case USART3:	base = &UCSR3A;	break;
 #endif
 #endif
 #endif
 	}
-	serial[port] = this;
+
+	Console console;
+	console.start();
+	console.write("port=0x").write(&port, sizeof(port)).write("\r\n");
+	console.write("base=0x").write(&base, sizeof(base)).write("\r\n");
 }
 
 Serial::~Serial() {
-	Uninterruptable uninterruptable;
 	stop();
 	serial[port] = 0;
 }
@@ -71,36 +84,72 @@ Serial::~Serial() {
 void Serial::start(Baud baud, Data data, Parity parity, Stop stop) const {
 	uint32_t rate;
 	switch (baud) {
-	case B50:		rate = 50;		break;
-	case B75:		rate = 75;		break;
-	case B110:		rate = 110;		break;
-	case B134:		rate = 134;		break;
-	case B150:		rate = 150;		break;
-	case B200:		rate = 200;		break;
-	case B300:		rate = 300;		break;
-	case B600:		rate = 600;		break;
-	case B1200:		rate = 1200;	break;
-	case B1800:		rate = 1800;	break;
-	case B2400:		rate = 2400;	break;
-	case B4800:		rate = 4800;	break;
-	case B9600:		rate = 9600;	break;
-	case B19200:	rate = 19200;	break;
-	case B38400:	rate = 38400;	break;
-	case B57600:	rate = 57600;	break;
+	case B50:		rate = 50UL;		break;
+	case B75:		rate = 75UL;		break;
+	case B110:		rate = 110UL;		break;
+	case B134:		rate = 134UL;		break;
+	case B150:		rate = 150UL;		break;
+	case B200:		rate = 200UL;		break;
+	case B300:		rate = 300UL;		break;
+	case B600:		rate = 600UL;		break;
+	case B1200:		rate = 1200UL;		break;
+	case B1800:		rate = 1800UL;		break;
+	case B2400:		rate = 2400UL;		break;
+	case B4800:		rate = 4800UL;		break;
+	case B9600:		rate = 9600UL;		break;
+	case B19200:	rate = 19200UL;		break;
+	case B38400:	rate = 38400UL;		break;
+	case B57600:	rate = 57600UL;		break;
 	default:
-	case B115200:	rate = 115200;	break;
+	case B115200:	rate = 115200UL;	break;
 	}
 
-	uint16_t value = (((configCPU_CLOCK_HZ) + (4UL * rate)) / (8UL * rate)) - 1UL;
+	start(rate, data, parity, stop);
+}
+
+// This form of the start() function exists only to support Arduino, whose
+// HardwareSerial interface expects to be able to specify the baud rate as an
+// unsigned long in its begin() function. Otherwise it's definitely safer to
+// use other form of start() whose Baud enumeration keeps you from coding a
+// baud rate that is not supported. However, the counter calculation quantizes
+// the result so that even incorrect rates will probably yield something useful.
+void Serial::start(uint32_t rate, Data data, Parity parity, Stop stop) const {
+	uint16_t counter = (((configCPU_CLOCK_HZ) + (4UL * rate)) / (8UL * rate)) - 1UL;
+
+	uint8_t databits;
+	switch (data) {
+	case FIVE:	databits = 0;							break;
+	case SIX:	databits = _BV(UCSZ00);					break;
+	case SEVEN:	databits = _BV(UCSZ01);					break;
+	default:
+	case EIGHT:	databits = _BV(UCSZ01) | _BV(UCSZ00);	break;
+	}
+
+	uint8_t paritybits;
+	switch (parity) {
+	default:
+	case NONE:	paritybits = 0;							break;
+	case EVEN:	paritybits = _BV(UPM01);				break;
+	case ODD:	paritybits = _BV(UPM01) | _BV(UPM00);	break;
+	}
+
+	uint8_t stopbits;
+	switch (stop) {
+	default:
+	case ONE:	stopbits = 0;			break;
+	case TWO:	stopbits = _BV(USBS0);	break;
+	}
+
+	Uninterruptable uninterruptable;
 
 	UCSRB = 0;
 
-	UBRRL = value & 0xff;
-	UBRRH = (value >> 8) & 0xff;
+	UBRRL = counter & 0xff;
+	UBRRH = (counter >> 8) & 0xff;
 
 	UCSRA = _BV(U2X0);
 
-	UCSRC = parity | stop | data;
+	UCSRC = databits | paritybits | stopbits;
 
 	UCSRB = _BV(RXCIE0) | _BV(RXEN0) | _BV(TXEN0);
 }
@@ -120,6 +169,10 @@ void Serial::disable() const {
 	UCSRB &= ~_BV(UDRIE0);
 }
 
+void Serial::yield() const {
+	taskYIELD();
+}
+
 size_t Serial::emit(uint8_t ch) const {
 	Uninterruptable uninterrutable;
 	uint8_t ucsrb = UCSRB;
@@ -132,17 +185,29 @@ size_t Serial::emit(uint8_t ch) const {
 	return 1;
 }
 
-void Serial::receiver() {
+inline void Serial::receive(Port port) {
+	if (serial[port] != 0) {
+		serial[port]->receive();
+	}
+}
+
+void Serial::receive() {
 	// Only called from an ISR hence implicitly uninterrutable;
 	uint8_t ch = ((UCSRA & (_BV(FE0) | _BV(DOR0) | _BV(UPE0))) == 0) ? UDR : bad;
 	bool woken = false;
 	received.sendFromISR(&ch, woken);
 	if (woken) {
-		taskYIELD();
+		yield();
 	}
 }
 
-void Serial::transmitter() {
+inline void Serial::transmit(Port port) {
+	if (serial[port] != 0) {
+		serial[port]->transmit();
+	}
+}
+
+void Serial::transmit() {
 	// Only called from an ISR hence implicitly uninterrutable;
 	uint8_t ch;
 	if (transmitting.receiveFromISR(&ch)) {

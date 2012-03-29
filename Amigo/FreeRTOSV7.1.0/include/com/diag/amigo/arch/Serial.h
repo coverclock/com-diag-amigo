@@ -10,8 +10,6 @@
  */
 
 #include <avr/io.h>
-#include "FreeRTOS.h"
-#include "task.h"
 #include "com/diag/amigo/types.h"
 #include "com/diag/amigo/values.h"
 #include "com/diag/amigo/TypedQueue.h"
@@ -26,6 +24,7 @@ class Serial
 public:
 
 	enum Port {
+		CONSOLE		= 0,
 		USART0		= 0,
 #if defined(UCSR1A)
 		USART1		= 1,
@@ -66,22 +65,22 @@ public:
 	};
 
 	enum Data {
-		FIVE		= 0,
-		SIX			= _BV(UCSZ00),
-		SEVEN		= _BV(UCSZ01),
-		EIGHT		= _BV(UCSZ01) | _BV(UCSZ00)
+		FIVE,
+		SIX,
+		SEVEN,
+		EIGHT
 	};
 
 
 	enum Parity {
-		NONE		= 0,
-		EVEN		= _BV(UPM01),
-		ODD			= _BV(UPM01) | _BV(UPM00)
+		NONE,
+		EVEN,
+		ODD
 	};
 
 	enum Stop {
-		ONE			= 0,
-		TWO			= _BV(USBS0)
+		ONE,
+		TWO
 	};
 
 	static const Count RECEIVES = 16;
@@ -100,11 +99,13 @@ protected:
 
 public:
 
-	explicit Serial(Port myport = USART0, Count transmits = TRANSMITS, Count receives = RECEIVES, uint8_t mybad = BAD);
+	explicit Serial(Port myport = CONSOLE, Count transmits = TRANSMITS, Count receives = RECEIVES, uint8_t mybad = BAD);
 
 	virtual ~Serial();
 
 	void start(Baud baud = B115200, Data data = EIGHT, Parity parity = NONE, Stop stop = ONE) const;
+
+	void start(uint32_t rate, Data data = EIGHT, Parity parity = NONE, Stop stop = ONE) const;
 
 	void restart() const;
 
@@ -130,15 +131,17 @@ protected:
 	TypedQueue<uint8_t> transmitting;
 	uint8_t bad;
 
-private:
-
 	void enable() const;
 
 	void disable() const;
 
-	void receiver();
+	void yield() const;
 
-	void transmitter();
+private:
+
+	void receive();
+
+	void transmit();
 
     /**
      *  Copy constructor. POISONED.
@@ -156,18 +159,6 @@ private:
 
 };
 
-inline void Serial::receive(Port port) {
-	if (serial[port] != 0) {
-		serial[port]->receiver();
-	}
-}
-
-inline void Serial::transmit(Port port) {
-	if (serial[port] != 0) {
-		serial[port]->transmitter();
-	}
-}
-
 inline void Serial::restart() const {
 	if (transmitting.available() > 0) {
 		enable();
@@ -180,7 +171,7 @@ inline int Serial::available() const {
 
 inline void Serial::flush() const {
 	while (transmitting.available() > 0) {
-		taskYIELD();
+		yield();
 	}
 }
 
