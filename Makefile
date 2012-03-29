@@ -19,7 +19,6 @@ SVN_URL=svn://graphite/$(PROJECT)/trunk/$(NAME)
 #BUILD_TARGET=Uno
 BUILD_TARGET=EtherMega2560
 BUILD_HOST=$(shell uname -s)
-#BUILD_PLATFORM=MegaBlink
 BUILD_PLATFORM=Blink
 
 # SERIAL will depend on, for example, into which port you plub your USB cable.
@@ -27,6 +26,7 @@ BUILD_PLATFORM=Blink
 #SERIAL=/dev/tty.usbmodem411
 SERIAL=/dev/tty.usbmodem441
 BAUD=115200
+FORMAT=cs8
 
 ################################################################################
 # HOST
@@ -155,7 +155,9 @@ AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/Queue.cpp
 AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/SerialSink.cpp
 AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/Sink.cpp
 AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/unused.cpp
+AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/virtual.cpp
 
+AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/$(PORTABLE)/Console.cpp
 AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/$(PORTABLE)/Serial.cpp
 
 AMIGO_HDIRECTORIES+=$(FREERTOS_DIR)/include
@@ -169,16 +171,6 @@ FREERTOS_CFILES+=$(FREERTOS_DIR)/Source/timers.c
 
 FREERTOS_HDIRECTORIES+=$(FREERTOS_DIR)/Source/portable/$(TOOLCHAIN)/$(PORTABLE)
 FREERTOS_HDIRECTORIES+=$(FREERTOS_DIR)/Source/include
-
-ifeq ($(BUILD_PLATFORM), MegaBlink)
-CFILES+=$(FREERTOS_CFILES)
-CFILES+=$(FREERTOS_DIR)/Demo/EtherMega2560_GCC/lib_digitalAnalog/digitalAnalog.c
-CFILES+=$(FREERTOS_DIR)/Demo/EtherMega2560_GCC/lib_serial/lib_serial.c
-CFILES+=$(FREERTOS_DIR)/Source/portable/MemMang/heap_2.c
-CFILES+=$(FREERTOS_DIR)/Demo/EtherMega2560_GCC/$(BUILD_PLATFORM)/main.c
-HDIRECTORIES+=$(FREERTOS_DIR)/Demo/EtherMega2560_GCC/include
-HDIRECTORIES+=$(FREERTOS_HDIRECTORIES)
-endif
 
 ifeq ($(BUILD_PLATFORM), Blink)
 CXXFILES+=$(AMIGO_CXXFILES)
@@ -317,7 +309,7 @@ manpages:
 # UTILITIES
 ################################################################################
 
-PHONY+=parameters verify backup path implicit
+PHONY+=parameters verify backup bundle path implicit
 
 parameters:
 	@echo BUILD_TARGET=$(BUILD_TARGET)
@@ -329,6 +321,10 @@ verify:	$(CFILES) $(CXXFILES) $(HDIRECTORIES)
 backup:
 	DIRNAME="$(shell basename $(shell pwd))"; \
 	tar -C .. -cvzf - $$DIRNAME > ../$$DIRNAME-$(shell date -u +'%Y%m%d%H%M%S%N%Z').tgz
+	
+bundle:
+	DIRNAME="$(shell basename $(shell pwd))"; \
+	tar -C .. --exclude .svn -cvzf - $$DIRNAME/$(FREERTOS_DIR) > ../$$DIRNAME-$(shell date -u +'%Y%m%d').tgz
 
 # Using back quotes like `make path` on the command line sets the PATH variable
 # in your interactive shell.
@@ -352,7 +348,7 @@ preassemble:	$(SFILES)
 
 ifeq ($(BUILD_HOST), Darwin)
 	
-PHONY+=interrogate screen flashapplication flashbootloader flashdebug
+PHONY+=interrogate screen upload flash debug
 
 # As far as I can tell, the Arduino bootloaders on both the Uno and the Mega
 # only pretend to implement the avrdude commands to query the signature bytes
@@ -370,16 +366,16 @@ screen:
 	stty sane
 	stty -f $(SERIAL) hupcl
 	# control-A control-\ y to exit.
-	screen -L $(SERIAL) $(BAUD)
+	screen -L $(SERIAL) $(BAUD) $(FORMAT)
 	stty sane
 
 # This uses the bootloader to load the application.
-flashapplication:	$(BUILD_PLATFORM).hex
+upload:	$(BUILD_PLATFORM).hex
 	stty -f $(SERIAL) hupcl
 	$(AVRDUDE) -v -C$(AVRDUDE_CONF) -p$(PART) -c$(CONFIG) -P$(SERIAL) -b$(BAUD) -D -Uflash:w:$<:i
 
 # This uses the bootloader to load the debug image produced by AVR Studio 5.1.
-flashdebug:	$(AVRSTUDIO_DIR)/$(NAME).hex
+debug:	$(AVRSTUDIO_DIR)/$(NAME).hex
 	stty -f $(SERIAL) hupcl
 	$(AVRDUDE) -v -C$(AVRDUDE_CONF) -p$(PART) -c$(CONFIG) -P$(SERIAL) -b$(BAUD) -D -Uflash:w:$(AVRSTUDIO_DIR)/$(NAME).hex:i
 	
@@ -388,7 +384,7 @@ flashdebug:	$(AVRSTUDIO_DIR)/$(NAME).hex
 # initialize all fuses to Arduino defaults,
 # reflash the bootloader, and
 # lock the bootloader.
-flashbootloader:	$(BOOTLOADER_HEX)
+flash:	$(BOOTLOADER_HEX)
 	$(AVRDUDE) -C$(AVRDUDE_CONF) -p$(PART) -c$(ISP) -Pusb -e -Ulock:w:0x3F:m -Uefuse:w:$(EFUSE):m -Uhfuse:w:$(HFUSE):m -Ulfuse:w:$(LFUSE):m
 	$(AVRDUDE) -C$(AVRDUDE_CONF) -p$(PART) -c$(ISP) -Pusb -Uflash:w:$(BOOTLOADER_HEX):i -Ulock:w:0x0F:m 
 

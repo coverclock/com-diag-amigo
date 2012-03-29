@@ -101,8 +101,11 @@
     #define configTICK_RATE_HZ		( ( portTickType ) 400 )        // Use 200Hz for TIMER0 and 400Hz for TIMER1
                                                                     // Use 1000Hz to get mSec timing.
 
-    #define configCPU_CLOCK_HZ		( ( unsigned long ) 22118400 )  // Modded Arduino (usually 16000000) with 328p device
+/* v coverclock@diag.com 2012-03-28 */
+    #define configCPU_CLOCK_HZ		( ( unsigned long ) F_CPU )     // Arduino Uno Rev3
+//  #define configCPU_CLOCK_HZ		( ( unsigned long ) 22118400 )  // Modded Arduino (usually 16000000) with 328p device
 //  #define configCPU_CLOCK_HZ		( ( unsigned long ) 16000000 )  // Arduino with 328p device
+/* ^ coverclock@diag.com 2012-03-28 */
 
 	// Cannot emphasise how important it is to watch and massage this heap size number.
 	// Greater than 100% memory usage. Subtle fail.

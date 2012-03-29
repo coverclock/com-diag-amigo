@@ -23,14 +23,23 @@ class Uninterruptable
 
 public:
 
-	Uninterruptable()
-	: sreg(SREG)
-	{
+	static uint8_t begin() {
+		uint8_t sreg = SREG;
 		cli();
+		return sreg;
+	}
+
+	static void end(uint8_t sreg) {
+		SREG = sreg;
+	}
+
+	Uninterruptable()
+	{
+		sreg = begin();
 	}
 
 	~Uninterruptable() {
-		SREG = sreg;
+		end(sreg);
 	}
 
 	operator uint8_t() {
