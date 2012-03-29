@@ -38,9 +38,11 @@ public:
 
 private:
 
-	uint8_t begin() const;
-
-	void end(uint8_t ucsrb) const;
+	uint8_t ubrrl;
+	uint8_t ubrrh;
+	uint8_t ucsra;
+	uint8_t ucsrb;
+	uint8_t ucsrc;
 
 	void emit(uint8_t ch) const;
 

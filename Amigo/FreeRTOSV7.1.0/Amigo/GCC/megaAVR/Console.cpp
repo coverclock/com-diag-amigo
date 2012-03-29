@@ -7,26 +7,21 @@
  */
 
 #include <avr/io.h>
-#include "com/diag/amigo/Console.h"
+#include "com/diag/amigo/target/Console.h"
 
 namespace com {
 namespace diag {
 namespace amigo {
 
 Console::Console()
+: ubrrl(0)
+, ubrrh(0)
+, ucsra(0)
+, ucsrb(0)
+, ucsrc(0)
 {}
 
 Console::~Console() {
-}
-
-inline uint8_t Console::begin() const {
-	uint8_t ucsrb = UCSR0B;
-	UCSR0B = _BV(RXEN0) | _BV(TXEN0);
-	return ucsrb;
-}
-
-inline void Console::end(uint8_t ucsrb) const {
-	UCSR0B = ucsrb;
 }
 
 inline void Console::wait() const {
@@ -41,6 +36,12 @@ inline void Console::emit(uint8_t ch) const {
 }
 
 Console & Console::start() {
+	ubrrl = UBRR0L;
+	ubrrh = UBRR0H;
+	ucsra = UCSR0A;
+	ucsrb = UCSR0B;
+	ucsrc = UCSR0C;
+
 	static const uint16_t COUNTER = (((F_CPU) + (4UL * 115200UL)) / (8UL * 115200UL)) - 1UL;
 
 	UBRR0L = COUNTER & 0xff;
@@ -48,33 +49,36 @@ Console & Console::start() {
 
 	UCSR0A = _BV(U2X0);
 
+	UCSR0B = _BV(RXEN0) | _BV(TXEN0);
+
 	UCSR0C = _BV(UCSZ01) | _BV(UCSZ00);
 
 	return *this;
 }
 
 Console & Console::stop() {
+	UBRR0L = ubrrl;
+	UBRR0H = ubrrh;
+	UCSR0A = ucsra;
+	UCSR0B = ucsrb;
+	UCSR0C = ucsrc;
+
 	return *this;
 }
 
 Console & Console::write(uint8_t ch) {
-	uint8_t ucsrb = begin();
 	emit(ch);
-	end(ucsrb);
 	return *this;
 }
 
 Console & Console::write(const char * string) {
-	uint8_t ucsrb = begin();
 	while (*string != '\0') {
 		emit(*(string++));
 	}
-	end(ucsrb);
 	return *this;
 }
 
 Console & Console::write(const void * data, size_t size) {
-	uint8_t ucsrb = begin();
 	static const char HEX[] = "0123456789ABCDEF";
 	const uint8_t * here = static_cast<const uint8_t *>(data);
 	uint8_t datum;
@@ -83,7 +87,6 @@ Console & Console::write(const void * data, size_t size) {
 		emit(HEX[datum >> 4]);
 		emit(HEX[datum & 0xf]);
 	}
-	end(ucsrb);
 	return *this;
 }
 

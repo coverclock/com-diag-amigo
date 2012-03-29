@@ -353,7 +353,7 @@ ifeq ($(BUILD_HOST), Darwin)
 	
 PHONY+=interrogate screen upload flash debug
 
-# As far as I can tell, the Arduino bootloaders on both the Uno and the Mega
+# The Arduino bootloaders on both the Uno (optiboot) and the Mega (stk500)
 # only pretend to implement the avrdude commands to query the signature bytes
 # from the EEPROM. But in fact the bootloaders return hardcoded values, not the
 # actual values from the chip. If queried for other chip values like the
@@ -382,11 +382,8 @@ debug:	$(AVRSTUDIO_DIR)/$(NAME).hex
 	stty -f $(SERIAL) hupcl
 	$(AVRDUDE) -v -C$(AVRDUDE_CONF) -p$(PART) -c$(CONFIG) -P$(SERIAL) -b$(BAUD) -D -Uflash:w:$(AVRSTUDIO_DIR)/$(NAME).hex:i
 	
-# This uses the AVRISP mkII to
-# unlock the bootloader,
-# initialize all fuses to Arduino defaults,
-# reflash the bootloader, and
-# lock the bootloader.
+# This uses the AVRISP mkII to unlock the bootloader, initialize all fuses to
+# Arduino defaults, reflash the bootloader, and relock the bootloader.
 flash:	$(BOOTLOADER_HEX)
 	$(AVRDUDE) -C$(AVRDUDE_CONF) -p$(PART) -c$(ISP) -Pusb -e -Ulock:w:0x3F:m -Uefuse:w:$(EFUSE):m -Uhfuse:w:$(HFUSE):m -Ulfuse:w:$(LFUSE):m
 	$(AVRDUDE) -C$(AVRDUDE_CONF) -p$(PART) -c$(ISP) -Pusb -Uflash:w:$(BOOTLOADER_HEX):i -Ulock:w:0x0F:m 
@@ -395,7 +392,9 @@ ifeq ($(BUILD_TARGET),FreetronicsEtherMega2560)
 
 PHONY+=enablejtag
 
-# This uses the AVRISP mkII to enable JTAG (0x40) in the HFUSE on the ATmega2560.
+# This uses the AVRISP mkII to enable JTAG (0x40) in the HFUSE on the
+# ATmega2560. JTAG debugging isn't supported on smaller megaAVRs like the
+# ATmega328P used on the Uno.
 enablejtag:
 	$(AVRDUDE) -v -C$(AVRDUDE_CONF) -p$(PART) -c$(ISP) -Pusb -Uhfuse:w:0x98:m
 	

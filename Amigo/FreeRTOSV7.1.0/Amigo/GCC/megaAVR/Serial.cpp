@@ -15,7 +15,7 @@
 #include "com/diag/amigo/target/Serial.h"
 #include "com/diag/amigo/target/Uninterruptable.h"
 #include "com/diag/amigo/io.h"
-#include "com/diag/amigo/Console.h"
+#include "com/diag/amigo/target/Console.h"
 
 namespace com {
 namespace diag {
@@ -198,9 +198,11 @@ void Serial::receive() {
 	uint8_t ch = ((UCSRA & (_BV(FE0) | _BV(DOR0) | _BV(UPE0))) == 0) ? UDR : bad;
 	bool woken = false;
 	received.sendFromISR(&ch, woken);
+#if 0
 	if (woken) {
 		yield();
 	}
+#endif
 }
 
 inline void Serial::transmit(Port port) {
