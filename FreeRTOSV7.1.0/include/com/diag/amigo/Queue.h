@@ -11,9 +11,8 @@
 
 #include "FreeRTOS.h"
 #include "queue.h"
-#include "com/diag/amigo/values.h"
+#include "com/diag/amigo/types.h"
 #include "com/diag/amigo/unused.h"
-#include "com/diag/amigo/target/Console.h"
 
 namespace com {
 namespace diag {
@@ -23,6 +22,10 @@ class Queue
 {
 
 public:
+
+	static const Ticks IMMEDIATELY = 0;
+
+	static const Ticks NEVER = portMAX_DELAY; // Nominally ~0.
 
 	explicit Queue(Count count, Size size = 1, const signed char * name = NULL);
 
@@ -99,7 +102,6 @@ inline bool Queue::receive(void * buffer, Ticks timeout) {
 }
 
 inline bool Queue::send(const void * datum, Ticks timeout) {
-	Console console; console.start().write(*(uint8_t*)datum).flush().stop();
 	return (xQueueSendToBack(handle, datum, timeout) == pdPASS);
 }
 
@@ -111,7 +113,6 @@ inline bool Queue::receiveFromISR(void * buffer, bool & woken) {
 	portBASE_TYPE temporary = pdFALSE;
 	bool result = (xQueueReceiveFromISR(handle, buffer, &temporary) == pdPASS);
 	woken = (temporary == pdTRUE);
-	if (result) { Console console; console.start().write((*(uint8_t*)buffer)-('a'-'A')).flush().stop(); }
 	return result;
 }
 

@@ -38,7 +38,9 @@
 #endif
 
 #include <stdint.h>
+
 #include "projdefs.h"
+#include "FreeRTOSConfig.h"
 #include "portable.h"
 
 #if defined(__cplusplus)

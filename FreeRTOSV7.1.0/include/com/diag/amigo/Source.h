@@ -9,8 +9,6 @@
  * http://www.diag.com/navigation/downloads/Amigo.html\n
  */
 
-#include "com/diag/amigo/types.h"
-
 namespace com {
 namespace diag {
 namespace amigo {

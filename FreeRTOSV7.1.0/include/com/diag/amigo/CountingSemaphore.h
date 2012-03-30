@@ -12,8 +12,9 @@
 
 #include "FreeRTOS.h"
 #include "semphr.h"
-#include "com/diag/amigo/values.h"
+#include "com/diag/amigo/types.h"
 #include "com/diag/amigo/unused.h"
+#include "com/diag/amigo/Queue.h"
 
 namespace com {
 namespace diag {
@@ -23,6 +24,10 @@ class CountingSemaphore
 {
 
 public:
+
+	static const Ticks IMMEDIATELY = Queue::IMMEDIATELY;
+
+	static const Ticks NEVER = Queue::NEVER;
 
 	explicit CountingSemaphore(Count maximum, Count initial = 0);
 

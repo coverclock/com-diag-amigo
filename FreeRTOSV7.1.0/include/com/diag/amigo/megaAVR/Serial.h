@@ -11,7 +11,6 @@
 
 #include <avr/io.h>
 #include "com/diag/amigo/types.h"
-#include "com/diag/amigo/values.h"
 #include "com/diag/amigo/TypedQueue.h"
 
 namespace com {
@@ -82,6 +81,10 @@ public:
 		ONE,
 		TWO
 	};
+
+	static const Ticks IMMEDIATELY = Queue::IMMEDIATELY;
+
+	static const Ticks NEVER = Queue::NEVER;
 
 	static const Count RECEIVES = 16;
 

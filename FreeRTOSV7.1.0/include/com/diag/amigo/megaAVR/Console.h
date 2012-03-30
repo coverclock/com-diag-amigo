@@ -24,7 +24,7 @@ class Console
 
 public:
 
-	static const uint32_t RATE = 115200UL;
+	static const uint32_t BAUD = 115200UL;
 
 	static Console & instance();
 
@@ -32,7 +32,7 @@ public:
 
 	virtual ~Console();
 
-	Console & start(uint32_t rate = RATE);
+	Console & start(uint32_t rate = BAUD);
 
 	Console & stop();
 
@@ -58,6 +58,8 @@ private:
 
 	void emit(uint8_t ch);
 
+	void wait();
+
 };
 
 }
@@ -66,7 +68,7 @@ private:
 
 #endif
 
-CXXCAPI void amigo_console_start(uint32_t rate);
+CXXCAPI void amigo_console_start();
 
 CXXCAPI void amigo_console_stop(void);
 
