@@ -15,7 +15,6 @@
 #include "com/diag/amigo/target/Serial.h"
 #include "com/diag/amigo/target/Uninterruptable.h"
 #include "com/diag/amigo/io.h"
-#include "com/diag/amigo/target/Console.h"
 
 namespace com {
 namespace diag {
@@ -69,13 +68,6 @@ Serial::Serial(Port myport, Count transmits, Count receives, uint8_t mybad)
 #endif
 #endif
 	}
-
-#if 0
-	Console console;
-	console.start();
-	console.write("port=0x").write(&port, sizeof(port)).write("\r\n");
-	console.write("base=0x").write(&base, sizeof(base)).write("\r\n");
-#endif
 }
 
 Serial::~Serial() {

@@ -25,7 +25,7 @@ union Unused {
 	int i;
 	long l;
 	short s;
-	long long x;
+	long long ll;
 	size_t z;
 	int8_t s8;
 	int16_t s16;

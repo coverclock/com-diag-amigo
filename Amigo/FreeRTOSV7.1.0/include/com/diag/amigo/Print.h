@@ -9,6 +9,7 @@
  * http://www.diag.com/navigation/downloads/Amigo.html\n
  */
 
+#include "com/diag/amigo/types.h"
 #include "com/diag/amigo/Sink.h"
 
 namespace com {

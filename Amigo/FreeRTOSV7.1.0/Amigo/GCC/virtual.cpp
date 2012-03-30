@@ -12,6 +12,6 @@
 extern "C" void __cxa_pure_virtual() {
 	com::diag::amigo::Uninterruptable uninterruptable;
 	com::diag::amigo::Console console;
-	console.start().write("__cxa_pure_virtual() called!\r\n").flush().stop();
+	com::diag::amigo::Console::instance().start().write("__cxa_pure_virtual() called!\r\n").flush().stop();
 	while (!0) {}
 }
