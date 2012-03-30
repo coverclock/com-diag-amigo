@@ -9,8 +9,9 @@
  * http://www.diag.com/navigation/downloads/Amigo.html\n
  */
 
-#include <stdint.h>
+#include "com/diag/amigo/types.h"
+#include "com/diag/amigo/cxxcapi.h"
 
-#define COM_DIAG_AMIGO_MMIO_8(_BASE_, _OFFSET_)  (*(static_cast<volatile uint8_t *>((static_cast<volatile uint8_t *>(_BASE_))  + (_OFFSET_))))
+#define AMIGO_MMIO_8(_BASE_, _OFFSET_)  (*CXXCSTATICCAST(volatile uint8_t *,CXXCSTATICCAST(volatile uint8_t *, (_BASE_))  + (_OFFSET_)))
 
 #endif /* _COM_DIAG_AMIGO_IO_H_ */

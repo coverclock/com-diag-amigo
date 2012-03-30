@@ -7,11 +7,20 @@
  */
 
 #include <avr/io.h>
+#include <util/delay.h>
 #include "com/diag/amigo/target/Console.h"
 
 namespace com {
 namespace diag {
 namespace amigo {
+
+static const char HEX[] PROGMEM = "0123456789ABCDEF";
+
+static Console console;
+
+Console & Console::instance() {
+	return console;
+}
 
 Console::Console()
 : ubrrl(0)
@@ -24,28 +33,24 @@ Console::Console()
 Console::~Console() {
 }
 
-inline void Console::wait() const {
+inline void Console::emit(uint8_t ch) {
 	while ((UCSR0A & _BV(UDRE0)) == 0) {
 		// Do nothing.
 	}
-}
-
-inline void Console::emit(uint8_t ch) const {
-	wait();
 	UDR0 = ch;
 }
 
-Console & Console::start() {
+Console & Console::start(uint32_t rate) {
 	ubrrl = UBRR0L;
 	ubrrh = UBRR0H;
 	ucsra = UCSR0A;
 	ucsrb = UCSR0B;
 	ucsrc = UCSR0C;
 
-	static const uint16_t COUNTER = (((F_CPU) + (4UL * 115200UL)) / (8UL * 115200UL)) - 1UL;
+	uint16_t counter = (((F_CPU) + (4UL * rate)) / (8UL * rate)) - 1UL;
 
-	UBRR0L = COUNTER & 0xff;
-	UBRR0H = (COUNTER >> 8) & 0xff;
+	UBRR0L = counter & 0xff;
+	UBRR0H = (counter >> 8) & 0xff;
 
 	UCSR0A = _BV(U2X0);
 
@@ -78,21 +83,82 @@ Console & Console::write(const char * string) {
 	return *this;
 }
 
-Console & Console::write(const void * data, size_t size) {
-	static const char HEX[] = "0123456789ABCDEF";
-	const uint8_t * here = static_cast<const uint8_t *>(data);
-	uint8_t datum;
-	while ((size--) > 0) {
-		datum = *(here++);
-		emit(HEX[datum >> 4]);
-		emit(HEX[datum & 0xf]);
+Console & Console::write_P(PGM_P string) {
+	uint8_t ch;
+	while ((ch = pgm_read_byte(string++)) != '\0') {
+		emit(ch);
 	}
 	return *this;
 }
 
-Console & Console::flush() {
-	wait();
+Console & Console::write(const void * data, size_t size) {
+	const uint8_t * here = static_cast<const uint8_t *>(data);
+	uint8_t datum;
+	while ((size--) > 0) {
+		datum = *(here++);
+		emit(pgm_read_byte(&HEX[datum >> 4]));
+		emit(pgm_read_byte(&HEX[datum & 0xf]));
+	}
 	return *this;
+}
+
+Console & Console::write_P(PGM_VOID_P data, size_t size) {
+	PGM_P here = static_cast<PGM_P>(data);
+	uint8_t datum;
+	while ((size--) > 0) {
+		datum = pgm_read_byte(here++);
+		emit(pgm_read_byte(&HEX[datum >> 4]));
+		emit(pgm_read_byte(&HEX[datum & 0xf]));
+	}
+	return *this;
+}
+
+// Merely checking the UDRE bit is not sufficient to insure that all data has
+// been sent. Resetting the device prior to the TXC bit being set loses the
+// hidden character in the two-level FIFO in the USART and it never gets
+// transmitted. After some experience, even checking the TXC bit isn't
+// sufficient, despite that the data sheet may say. This manifests as losing
+// the last character, typically a newline. The delay below is equivalent to
+// a little more than ten-bits at 115200 baud.
+Console & Console::flush() {
+	while ((UCSR0A & (_BV(UDRE0) | _BV(TXC0))) != (_BV(UDRE0) | _BV(TXC0))) {
+		// Do nothing.
+	}
+	_delay_us(100.0);
+	return *this;
+}
+
+CXXCAPI void amigo_console_start(uint32_t rate) {
+	Console::instance().start(rate);
+}
+
+CXXCAPI void amigo_console_stop(void) {
+	Console::instance().stop();
+}
+
+CXXCAPI void com_diag_amigo_console_write_char(uint8_t ch) {
+	Console::instance().write(ch);
+}
+
+CXXCAPI void amigo_console_write_string(const char * string) {
+	Console::instance().write(string);
+}
+
+CXXCAPI void amigo_console_write_string_P(PGM_P string) {
+	Console::instance().write_P(string);
+}
+
+CXXCAPI void amigo_console_write_data(const void * data, size_t size) {
+	Console::instance().write(data, size);
+}
+
+CXXCAPI void amigo_console_write_data_P(PGM_VOID_P data, size_t size) {
+	Console::instance().write_P(data, size);
+
+}
+
+CXXCAPI void amigo_console_flush(void) {
+	Console::instance().flush();
 }
 
 }

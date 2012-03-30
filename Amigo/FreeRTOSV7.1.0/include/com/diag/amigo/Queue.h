@@ -13,6 +13,7 @@
 #include "queue.h"
 #include "com/diag/amigo/values.h"
 #include "com/diag/amigo/unused.h"
+#include "com/diag/amigo/target/Console.h"
 
 namespace com {
 namespace diag {
@@ -98,6 +99,7 @@ inline bool Queue::receive(void * buffer, Ticks timeout) {
 }
 
 inline bool Queue::send(const void * datum, Ticks timeout) {
+	Console console; console.start().write(*(uint8_t*)datum).flush().stop();
 	return (xQueueSendToBack(handle, datum, timeout) == pdPASS);
 }
 
@@ -109,6 +111,7 @@ inline bool Queue::receiveFromISR(void * buffer, bool & woken) {
 	portBASE_TYPE temporary = pdFALSE;
 	bool result = (xQueueReceiveFromISR(handle, buffer, &temporary) == pdPASS);
 	woken = (temporary == pdTRUE);
+	if (result) { Console console; console.start().write((*(uint8_t*)buffer)-('a'-'A')).flush().stop(); }
 	return result;
 }
 

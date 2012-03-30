@@ -10,19 +10,19 @@
 #include <FreeRTOS.h>
 #include "com/diag/amigo/heap.h"
 
-void * malloc(size_t size) {
+extern "C" void * malloc(size_t size) {
 	return pvPortMalloc(size);
 }
 
-void free(void * ptr) {
+extern "C" void free(void * ptr) {
 	vPortFree(ptr);
 }
 
-void * calloc(size_t nmemb, size_t size) {
+extern "C" void * calloc(size_t nmemb, size_t size) {
 	return pvPortMalloc(nmemb * size);
 }
 
-void * realloc(void * ptr, size_t size) {
+extern "C" void * realloc(void * ptr, size_t size) {
 	vPortFree(ptr);
 	return pvPortMalloc(size);
 }

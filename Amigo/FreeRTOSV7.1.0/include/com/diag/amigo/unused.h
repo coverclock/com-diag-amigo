@@ -11,6 +11,8 @@
 
 #include "com/diag/amigo/types.h"
 
+#if defined(__cplusplus)
+
 namespace com {
 namespace diag {
 namespace amigo {
@@ -40,5 +42,7 @@ extern Unused unused;
 }
 }
 }
+
+#endif
 
 #endif /* _COM_DIAG_AMIGO_UNUSED_H_ */

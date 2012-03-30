@@ -1,5 +1,5 @@
-#ifndef _COM_DIAG_AMIGO_UNINTERRUPTABLE_H_
-#define _COM_DIAG_AMIGO_UNINTERRUPTABLE_H_
+#ifndef _COM_DIAG_AMIGO_MEGAAVR_UNINTERRUPTABLE_H_
+#define _COM_DIAG_AMIGO_MEGAAVR_UNINTERRUPTABLE_H_
 
 /**
  * @file
@@ -13,6 +13,19 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include "com/diag/amigo/types.h"
+#include "com/diag/amigo/cxxcapi.h"
+
+CXXCINLINE uint8_t amigo_uninterruptable_begin() {
+	uint8_t sreg = SREG;
+	cli();
+	return sreg;
+}
+
+CXXCINLINE void amigo_uninterruptable_end(uint8_t sreg) {
+	SREG = sreg;
+}
+
+#if defined(__cplusplus)
 
 namespace com {
 namespace diag {
@@ -23,23 +36,13 @@ class Uninterruptable
 
 public:
 
-	static uint8_t begin() {
-		uint8_t sreg = SREG;
-		cli();
-		return sreg;
-	}
-
-	static void end(uint8_t sreg) {
-		SREG = sreg;
-	}
-
 	Uninterruptable()
 	{
-		sreg = begin();
+		sreg = amigo_uninterruptable_begin();
 	}
 
 	~Uninterruptable() {
-		end(sreg);
+		amigo_uninterruptable_end(sreg);
 	}
 
 	operator uint8_t() {
@@ -72,4 +75,6 @@ private:
 }
 }
 
-#endif /* _COM_DIAG_AMIGO_UNINTERRUPTABLE_H_ */
+#endif /* defined(__cplusplus) */
+
+#endif /* _COM_DIAG_AMIGO_MEGAAVR_UNINTERRUPTABLE_H_ */

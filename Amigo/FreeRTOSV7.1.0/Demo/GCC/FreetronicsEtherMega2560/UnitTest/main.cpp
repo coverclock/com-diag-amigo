@@ -8,9 +8,9 @@
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <avr/pgmspace.h>
 #include <math.h>
 #include <util/delay.h>
-#include <stddef.h>
 #include "FreeRTOS.h"
 #include "task.h"
 #include "com/diag/amigo/types.h"
@@ -53,7 +53,9 @@ static void unittest(void * parm) {
 	com::diag::amigo::SerialSink serialsink(*serialp);
 	com::diag::amigo::Print printf(serialsink);
 
+	{ com::diag::amigo::Uninterruptable uninterruptable;
 	printf("ready\n");
+	}
 
 	for (;;) {
 		while (serialp->available() > 0) {
@@ -66,11 +68,19 @@ static void unittest(void * parm) {
 int main() __attribute__((OS_main));
 int main() {
 	com::diag::amigo::Console console;
+
 	console.start().write("starting\r\n").flush().stop();
+
+#if 1
+	static const char STARTING[] PROGMEM = "STARTING=0x";
+	console.start().write_P(STARTING).write_P(&STARTING, sizeof(STARTING)).write('\r').write('\n').flush().stop();
+	void (*task)(void *) = unittest;
+	console.start().write("TASK=0x").write(&task, sizeof(task)).write('\r').write('\n').flush().stop();
+#endif
 
 	sei();
 
-	com::diag::amigo::Serial serial;
+	com::diag::amigo::Serial serial(com::diag::amigo::Serial::USART1);
 	serialp = &serial;
 	serialp->start();
 
@@ -84,5 +94,5 @@ int main() {
 
 	console.start().write("exiting\r\n").flush().stop();
 
-	for (;;);
+	while (!0);
 }

@@ -21,13 +21,13 @@ namespace com {
 namespace diag {
 namespace amigo {
 
-#define UCSRA		COM_DIAG_AMIGO_MMIO_8(base, 0)
-#define UCSRB		COM_DIAG_AMIGO_MMIO_8(base, 1)
-#define UCSRC		COM_DIAG_AMIGO_MMIO_8(base, 2)
-//      RESERVED	COM_DIAG_AMIGO_MMIO_8(base, 3)
-#define UBRRL		COM_DIAG_AMIGO_MMIO_8(base, 4)
-#define UBRRH		COM_DIAG_AMIGO_MMIO_8(base, 5)
-#define UDR			COM_DIAG_AMIGO_MMIO_8(base, 6)
+#define UCSRA		AMIGO_MMIO_8(base, 0)
+#define UCSRB		AMIGO_MMIO_8(base, 1)
+#define UCSRC		AMIGO_MMIO_8(base, 2)
+//      RESERVED	AMIGO_MMIO_8(base, 3)
+#define UBRRL		AMIGO_MMIO_8(base, 4)
+#define UBRRH		AMIGO_MMIO_8(base, 5)
+#define UDR			AMIGO_MMIO_8(base, 6)
 
 Serial * Serial::serial[] = {
 	0,

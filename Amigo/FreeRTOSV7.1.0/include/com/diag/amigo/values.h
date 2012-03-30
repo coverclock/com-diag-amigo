@@ -11,18 +11,24 @@
 
 #include "com/diag/amigo/types.h"
 
+#if defined(__cplusplus)
 namespace com {
 namespace diag {
 namespace amigo {
+#endif
 
-static const Ticks IMMEDIATELY = static_cast<Ticks>(0);
+static const Ticks IMMEDIATELY = 0;
 
-static const Ticks NEVER = ~static_cast<Ticks>(0);
+static const Ticks NEVER = ~IMMEDIATELY;
 
-static const Count UNLIMITED = ~static_cast<Count>(0);
+static const Count NONE = 0;
 
+static const Count UNLIMITED = ~NONE;
+
+#if defined(__cplusplus)
 }
 }
 }
+#endif
 
 #endif /* _COM_DIAG_AMIGO_VALUES_H_ */
