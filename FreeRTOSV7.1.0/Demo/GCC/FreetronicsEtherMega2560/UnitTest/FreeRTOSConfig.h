@@ -81,10 +81,8 @@
     #define configTOTAL_HEAP_SIZE	( (size_t ) ( 4500 ) )			// used for heap_1.c and heap2.c only
 																	// around 4500 works for standard memory
                                                                     // Should be 0xffff - 0x2200 = 56831 for heap in Extended RAM
-#if 0
-	#define configEXT_RAM											// Use the Rugged Circuits External (512kByte) QuadRAM device, only one 56kByte bank.
-    #define configEXT_RAM_8_BANK									// Memory is available as 8 banks of 56kByte.
-#endif
+	#undef configEXT_RAM											// Use the Rugged Circuits External (512kByte) QuadRAM device, only one 56kByte bank.
+    #undef configEXT_RAM_8_BANK										// Memory is available as 8 banks of 56kByte.
 /* ^ coverclock@diag.com 2012-03-11 */
 
 #elif (defined(__AVR_ATmega1284P__) || defined(__AVR_ATmega1284PA__)) // Pololu SVP with 1284p

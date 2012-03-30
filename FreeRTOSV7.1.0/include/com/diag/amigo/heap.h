@@ -11,14 +11,9 @@
  */
 
 #include "com/diag/amigo/types.h"
+#include "com/diag/amigo/cxxcapi.h"
 
-void * malloc(size_t size);
-
-void free(void * ptr);
-
-void * calloc(size_t nmemb, size_t size);
-
-void * realloc(void * ptr, size_t size);
+#if defined(__cplusplus)
 
 void * operator new(size_t size);
 
@@ -27,5 +22,15 @@ void operator delete(void * ptr);
 void * operator new[](size_t size);
 
 void operator delete[](void * ptr);
+
+#endif
+
+CXXCAPI void * malloc(size_t size);
+
+CXXCAPI void free(void * ptr);
+
+CXXCAPI void * calloc(size_t nmemb, size_t size);
+
+CXXCAPI void * realloc(void * ptr, size_t size);
 
 #endif /* _COM_DIAG_AMIGO_HEAP_H_ */
