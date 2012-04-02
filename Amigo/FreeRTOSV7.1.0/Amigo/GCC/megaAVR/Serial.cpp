@@ -52,11 +52,12 @@ Serial * Serial::serial[] = {
 };
 
 Serial::Serial(Port myport, Count transmits, Count receives, uint8_t mybad)
-: port(myport)
-, base(0)
+: base(0)
 , received(receives)
 , transmitting(transmits)
+, port(myport)
 , bad(mybad)
+, errors(0)
 {
 	serial[port] = this;
 
@@ -171,25 +172,25 @@ void Serial::enable() const {
 	UCSRB |= _BV(UDRIE0);
 }
 
-void Serial::disable() const {
+void Serial::restart() const {
 	Uninterruptable uninterruptable;
-	UCSRB &= ~_BV(UDRIE0);
-}
-
-void Serial::yield() const {
-	taskYIELD();
-}
-
-size_t Serial::emit(uint8_t ch) const {
-	Uninterruptable uninterrutable;
-	uint8_t ucsrb = UCSRB;
 	UCSRB = _BV(RXCIE0) | _BV(RXEN0) | _BV(TXEN0);
-	while ((UCSRA & _BV(UDRE0)) == 0) {
-		// Do nothing.
+	if (transmitting.available() > 0) {
+		UCSRB |= _BV(UDRIE0);
 	}
-	UDR = ch;
-	UCSRB = ucsrb;
-	return 1;
+}
+
+void Serial::flush() const {
+	while (transmitting.available() > 0) {
+		taskYIELD();
+	}
+}
+
+Serial & Serial::operator=(uint8_t value) {
+	// It is fun to think about why this has to be uninterruptable.
+	Uninterruptable uninterruptable;
+	errors = value;
+	return *this;
 }
 
 inline void Serial::receive(Port port) {
@@ -201,7 +202,15 @@ inline void Serial::receive(Port port) {
 
 void Serial::receive() {
 	// Only called from an ISR hence implicitly uninterrutable;
-	uint8_t ch = ((UCSRA & (_BV(FE0) | _BV(DOR0) | _BV(UPE0))) == 0) ? UDR : bad;
+	uint8_t ch;
+	if ((UCSRA & (_BV(FE0) | _BV(DOR0) | _BV(UPE0))) == 0) {
+		ch = UDR;
+	} else {
+		ch = bad;
+		if (errors < ~static_cast<uint8_t>(0)) {
+			++errors;
+		}
+	}
 	bool woken = false;
 	received.sendFromISR(&ch, woken);
 	// Doing a context switch from inside an ISR seems wrong, both from an
@@ -213,7 +222,7 @@ void Serial::receive() {
 	// reenabled in the new task when it is returned from this ISR. It still
 	// seems like a violation against the laws of Man and God.
 	if (woken) {
-		yield();
+		taskYIELD();
 	}
 }
 
@@ -230,7 +239,7 @@ void Serial::transmit() {
 	if (transmitting.receiveFromISR(&ch)) {
 		UDR = ch;
 	} else {
-		disable();
+		UCSRB &= ~_BV(UDRIE0);
 	}
 }
 

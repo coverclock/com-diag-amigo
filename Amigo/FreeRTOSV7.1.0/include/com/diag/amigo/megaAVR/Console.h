@@ -84,7 +84,7 @@ public:
 	Console & start(uint32_t rate = RATE);
 
 	/**
-	 * Deinitializes USART0 by restoring the memory mapped I/O registers saved
+	 * Deinitialize USART0 by restoring the memory mapped I/O registers saved
 	 * by start();
 	 * @return a reference to this Console object.
 	 */
@@ -182,7 +182,7 @@ private:
 CXXCAPI void amigo_console_start();
 
 /**
- * Deinitializes USART0 by restoring the memory mapped I/O registers saved
+ * Deinitialize USART0 by restoring the memory mapped I/O registers saved
  * by start();
  */
 CXXCAPI void amigo_console_stop(void);
