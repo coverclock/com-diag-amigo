@@ -20,6 +20,10 @@ namespace com {
 namespace diag {
 namespace amigo {
 
+// These are our memory mapped I/O register addresses expressed as displacements
+// from the base address identifying the specific USART. This makes this code
+// independent of the specific USART.
+
 #define UCSRA		AMIGO_MMIO_8(base, 0)
 #define UCSRB		AMIGO_MMIO_8(base, 1)
 #define UCSRC		AMIGO_MMIO_8(base, 2)
@@ -28,6 +32,12 @@ namespace amigo {
 #define UBRRH		AMIGO_MMIO_8(base, 5)
 #define UDR			AMIGO_MMIO_8(base, 6)
 
+/**
+ * This table in SRAM will be filled in with the this pointer from a specific
+ * Serial object when it is instantiated. Only one Serial object per port
+ * should be instantiated; otherwise it will overwrite the this pointer of any
+ * previous Serial object for that same port.
+ */
 Serial * Serial::serial[] = {
 	0,
 #if defined(UCSR1A)
@@ -50,10 +60,13 @@ Serial::Serial(Port myport, Count transmits, Count receives, uint8_t mybad)
 {
 	serial[port] = this;
 
-	// Important safety tip: placing the code below in a static map function
+	// Important safety tip: placing the code below in a static function
 	// that returned a volatile pointer returned NULL instead. Putting some
 	// debugging code in that function to display the pointer caused the
-	// function to return the correct value. Not good.
+	// function to return the correct value. Not good. Seems like yet another
+	// compiler bug in dealing with volatiles. This occurred when building on
+	// my Mac using GCC 4.5.1 and AVR libc 1.8.0. It did NOT occur when building
+	// on Windows using AVR Studio 5.1 with GCC 4.5.1 and AVR libc 1.7.1.
 
 	switch (port) {
 	default:
@@ -180,6 +193,7 @@ size_t Serial::emit(uint8_t ch) const {
 }
 
 inline void Serial::receive(Port port) {
+	// Only called from an ISR hence implicitly uninterrutable;
 	if (serial[port] != 0) {
 		serial[port]->receive();
 	}
@@ -190,14 +204,21 @@ void Serial::receive() {
 	uint8_t ch = ((UCSRA & (_BV(FE0) | _BV(DOR0) | _BV(UPE0))) == 0) ? UDR : bad;
 	bool woken = false;
 	received.sendFromISR(&ch, woken);
-#if 0
+	// Doing a context switch from inside an ISR seems wrong, both from an
+	// architectural POV and a correctness POV. But that's what happens in
+	// other FreeRTOS code, and I understand the rationale for it. Careful
+	// perusal of the underlying code has _mostly_ convinced me that this
+	// works as intended. Interrupts will be re-enabled in the next task when
+	// its SREG is restored from the context frame on its stack. They will be
+	// reenabled in the new task when it is returned from this ISR. It still
+	// seems like a violation against the laws of Man and God.
 	if (woken) {
 		yield();
 	}
-#endif
 }
 
 inline void Serial::transmit(Port port) {
+	// Only called from an ISR hence implicitly uninterrutable;
 	if (serial[port] != 0) {
 		serial[port]->transmit();
 	}
@@ -216,6 +237,14 @@ void Serial::transmit() {
 }
 }
 }
+
+// These are the ISR routines which are jumped to from an ISR vector in low
+// memory. Note that the class methods are inlined, so there is really only
+// two levels of indirection: a jump from the vector to this routine, then an
+// inline class method call (which doesn't count because it's inline), then
+// a call to the instance method that actually implements the ISR for a
+// specific instance of the Serial object. Note that these functions have C
+// linkage.
 
 extern "C" {
 

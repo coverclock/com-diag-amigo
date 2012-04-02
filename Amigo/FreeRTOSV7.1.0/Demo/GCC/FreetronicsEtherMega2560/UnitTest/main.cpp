@@ -69,10 +69,14 @@ int main() {
 	com::diag::amigo::Console::instance().start().write("starting\r\n").flush().stop();
 
 #if 0
+	// Console Unit Test
 	static const char STARTING[] PROGMEM = "STARTING=0x";
-	com::diag::amigo::Console::instance().start().write_P(STARTING).write_P(&STARTING, sizeof(STARTING)).write('\r').write('\n').flush().stop();
+	com::diag::amigo::Console::instance().start().write_P(STARTING).dump_P(&STARTING, sizeof(STARTING)).write('\r').write('\n').flush().stop();
+	com::diag::amigo::Console::instance().start().write_P(STARTING, strlen_P(STARTING)).dump_P(&STARTING, sizeof(STARTING)).write('\r').write('\n').flush().stop();
 	void (*task)(void *) = unittest;
-	com::diag::amigo::Console::instance().start().write("TASK=0x").write(&task, sizeof(task)).write('\r').write('\n').flush().stop();
+	static const char TASK[] = "TASK=0x";
+	com::diag::amigo::Console::instance().start().write(TASK).dump(&task, sizeof(task)).write('\r').write('\n').flush().stop();
+	com::diag::amigo::Console::instance().start().write(TASK, strlen(TASK)).dump(&task, sizeof(task)).write('\r').write('\n').flush().stop();
 #endif
 
 	sei();
