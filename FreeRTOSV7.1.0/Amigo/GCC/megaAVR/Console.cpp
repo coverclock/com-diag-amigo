@@ -44,23 +44,6 @@ inline void Console::emit(uint8_t ch) {
 	UDR0 = ch;
 }
 
-inline void Console::wait() {
-	// Merely checking the UDRE bit is not sufficient to insure that all data
-	// has been sent. Resetting the device prior to the TXC bit being set loses
-	// the pending character in the two-level FIFO in the USART and it is never
-	// transmitted.
-	while ((UCSR0A & (_BV(UDRE0) | _BV(TXC0))) != (_BV(UDRE0) | _BV(TXC0))) {
-		// Do nothing.
-	}
-	// Even checking the TXC bit isn't sufficient, despite what the data sheet
-	// may say. This manifests as losing the last character, typically a
-	// newline. A delay of 100 microseconds is equivalent to a little more
-	// than the transmission latency for one ten-bit character at 115200 baud.
-	// Note that this built-in function will not accept a variable; its
-	// argument has to be a constant.
-	_delay_us(MICROSECONDS);
-}
-
 Console & Console::start(uint32_t rate) {
 	ubrrl = UBRR0L;
 	ubrrh = UBRR0H;
@@ -83,8 +66,6 @@ Console & Console::start(uint32_t rate) {
 }
 
 Console & Console::stop() {
-	wait();
-
 	UBRR0L = ubrrl;
 	UBRR0H = ubrrh;
 	UCSR0A = ucsra;
@@ -116,16 +97,32 @@ Console & Console::write_P(PGM_P string) {
 
 Console & Console::write(const void * data, size_t size) {
 	const uint8_t * here = static_cast<const uint8_t *>(data);
-	uint8_t datum;
 	while ((size--) > 0) {
-		datum = *(here++);
-		emit(pgm_read_byte(&HEX[(datum >> 4) & 0xf]));
-		emit(pgm_read_byte(&HEX[datum & 0xf]));
+		emit(*(here++));
 	}
 	return *this;
 }
 
 Console & Console::write_P(PGM_VOID_P data, size_t size) {
+	PGM_P here = static_cast<PGM_P>(data);
+	while ((size--) > 0) {
+		emit(pgm_read_byte(here++));
+	}
+	return *this;
+}
+
+Console & Console::dump(const void * data, size_t size) {
+	const uint8_t * here = static_cast<const uint8_t *>(data);
+	uint8_t datum;
+	while ((size--) > 0) {
+		datum = *(here++);
+		emit(pgm_read_byte(&HEX[datum >> 4]));
+		emit(pgm_read_byte(&HEX[datum & 0xf]));
+	}
+	return *this;
+}
+
+Console & Console::dump_P(PGM_VOID_P data, size_t size) {
 	PGM_P here = static_cast<PGM_P>(data);
 	uint8_t datum;
 	while ((size--) > 0) {
@@ -137,7 +134,21 @@ Console & Console::write_P(PGM_VOID_P data, size_t size) {
 }
 
 Console & Console::flush() {
-	wait();
+	// Merely checking the UDRE bit is not sufficient to insure that all data
+	// has been sent. Resetting the device prior to the TXC bit being set loses
+	// the pending character in the two-level FIFO in the USART and it is never
+	// transmitted.
+	while ((UCSR0A & (_BV(UDRE0) | _BV(TXC0))) != (_BV(UDRE0) | _BV(TXC0))) {
+		// Do nothing.
+	}
+	// Even checking the TXC bit isn't sufficient, despite what the data sheet
+	// may say. This manifests as losing the last character, typically a
+	// newline. A delay of 100 microseconds is equivalent to a little more
+	// than the transmission latency for one ten-bit character at 115200 baud.
+	// Note that this built-in function will not accept a variable; its
+	// argument has to be a constant. That means we can't compute this delay
+	// at run-time based on the baud rate.
+	_delay_us(MICROSECONDS);
 	return *this;
 }
 
@@ -167,6 +178,15 @@ CXXCAPI void amigo_console_write_data(const void * data, size_t size) {
 
 CXXCAPI void amigo_console_write_data_P(PGM_VOID_P data, size_t size) {
 	Console::instance().write_P(data, size);
+
+}
+
+CXXCAPI void amigo_console_dump(const void * data, size_t size) {
+	Console::instance().dump(data, size);
+}
+
+CXXCAPI void amigo_console_dump_P(PGM_VOID_P data, size_t size) {
+	Console::instance().dump_P(data, size);
 
 }
 
