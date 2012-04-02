@@ -16,7 +16,6 @@
 #include "com/diag/amigo/types.h"
 #include "com/diag/amigo/target/Serial.h"
 #include "com/diag/amigo/target/Uninterruptable.h"
-#include "com/diag/amigo/DebugSink.h"
 #include "com/diag/amigo/SerialSink.h"
 #include "com/diag/amigo/Print.h"
 #include "com/diag/amigo/target/Console.h"
@@ -84,10 +83,6 @@ int main() {
 	com::diag::amigo::Serial serial; // This will never go out of scope.
 	serialp = &serial;
 	serialp->start();
-
-	com::diag::amigo::DebugSink debugsink(*serialp);
-	com::diag::amigo::Print debugf(debugsink);
-	debugf("running\n");
 
     xTaskCreate(unittest, (const signed char *)"UnitTest", 512, 0, 3, 0);
 
