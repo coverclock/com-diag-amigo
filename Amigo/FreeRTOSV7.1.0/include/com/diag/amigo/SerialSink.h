@@ -18,20 +18,40 @@ namespace amigo {
 
 class Serial;
 
+/**
+ * SerialSink implements a Sink interface for a Serial object. This allows
+ * a Serial object to be used in any application that expects a Sink. Print
+ * is an example of such an application.
+ */
 class SerialSink
 : public Sink
 {
 
 public:
 
+	/**
+	 * Constructor.
+	 * @param myserial refers to the Serial object.
+	 */
 	explicit SerialSink(Serial & myserial)
 	: serial(&myserial)
 	{}
 
+	/**
+	 * Destructor.
+	 */
 	virtual ~SerialSink();
 
+	/**
+	 * Implements the Sink write method for the Serial object.
+	 * @param ch is the byte to write.
+	 * @return the number of byte written (nominally one) or zero for fail.
+	 */
 	virtual size_t write(uint8_t ch);
 
+	/**
+	 * Implements the Sink flush method for the Serial object.
+	 */
 	virtual void flush();
 
 	using Sink::write;

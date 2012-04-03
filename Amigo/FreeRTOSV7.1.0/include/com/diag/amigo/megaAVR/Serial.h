@@ -242,7 +242,7 @@ public:
 	/**
 	 * Return the number of characters in the receive ring buffer available to
 	 * be read. This includes bad characters.
-	 * @param return the number of characters available or <0 if fail.
+	 * @return the number of characters available or <0 if fail.
 	 */
 	int available() const;
 
@@ -275,6 +275,7 @@ public:
 
 	/**
 	 * Append a character to the end of the transmit ring buffer.
+	 * @param ch is the character to be appended.
 	 * @param timeout is the number of ticks to wait when the buffer is full.
 	 * @return one if the function was successful, zero otherwise.
 	 */
@@ -286,6 +287,7 @@ public:
 	 * all other pending characters in the buffer. This is useful for sending
 	 * special characters "out of band" for purposes of, for example, flow
 	 * control.
+	 * @param ch is the character to be prepended.
 	 * @param timeout is the number of ticks to wait when the buffer is full.
 	 * @return one if the function was successful, zero otherwise.
 	 */
@@ -302,7 +304,7 @@ public:
 	/**
 	 * Set the error counter to the specified integer value. Zero is a good
 	 * value, which resets the error counter.
-	 * @param param value is the new error counter value.
+	 * @param value is the new error counter value.
 	 * @return a reference to this object.
 	 */
 	Serial & operator=(uint8_t value);

@@ -57,8 +57,7 @@ public:
 	virtual ~Queue();
 
 	/**
-	 * Cast operator returns true if the construction of the Queue was
-	 * successful.
+	 * Returns true if the construction of the Queue was successful.
 	 * @return true if successful, false otherwise.
 	 */
 	operator bool() const { return (handle != 0); }
@@ -66,14 +65,14 @@ public:
 	/**
 	 * Return true if the Queue is empty. Can only be called by an interrupt
 	 * service routine.
-	 * @param return true if empty, false otherwise.
+	 * @return true if empty, false otherwise.
 	 */
 	bool isEmptyFromISR() const;
 
 	/**
 	 * Return true if the Queue is full. Can only be called by an interrupt
 	 * service routine.
-	 * @param return true if full, false otherwise.
+	 * @return true if full, false otherwise.
 	 */
 	bool isFullFromISR() const;
 
