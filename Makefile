@@ -3,6 +3,18 @@
 # Licensed under the terms in README.h
 # Chip Overclock <coverclock@diag.com>
 # http://www.diag.com/navigation/downloads/Amigo
+#
+# PRIMARY TARGETS
+#	depend			- generate dependencies
+#	all				- generate deliverables (default)
+#	clean			- remove artifacts
+#	upload			- upload into target using Avrdude
+#
+# SECONDARY TARGETS
+#	full			- generate deliverables and collateral
+#	pristine		- remove deliverables and collateral
+#	documentation	- generate documentation using Doxygen
+#
 ################################################################################
 
 PROJECT=amigo
@@ -161,7 +173,7 @@ AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/$(TARGET)/Serial.cpp
 
 AMIGO_HDIRECTORIES+=$(FREERTOS_DIR)/include
 
-DELIVERABLES+=$(FREERTOS_DIR)/include/com/diag/amigo/target
+PREREQUISITES+=$(FREERTOS_DIR)/include/com/diag/amigo/target
 
 FREERTOS_CFILES+=$(FREERTOS_DIR)/Source/portable/$(TOOLCHAIN)/$(TARGET)/port.c
 FREERTOS_CFILES+=$(FREERTOS_DIR)/Source/croutine.c
@@ -290,7 +302,8 @@ PS2PDF=ps2pdf
 BROWSER=firefox
 
 PHONY+=documentation browse refman manpages
-DELIVERABLES+=$(DOC_DIR)
+
+PREREQUISITES+=$(DOC_DIR)
 
 documentation:
 	mkdir -p $(DOC_DIR)/latex $(DOC_DIR)/man $(DOC_DIR)/pdf
@@ -449,16 +462,21 @@ endif
 
 PHONY+=all
 
-all:	$(DELIVERABLES)
+all:	$(PREREQUISITES) $(DELIVERABLES)
 
 PHONY+=full
 
-full:	$(DELIVERABLES) $(COLLATERAL)
+full:	all $(COLLATERAL)
 
 PHONY+=clean
 
 clean:
 	rm -rf $(ARTIFACTS)
+
+PHONY+=pristine
+
+pristine:	clean
+	rm -rf $(DELIVERABLES) $(COLLATERAL)
 
 ################################################################################
 # END
