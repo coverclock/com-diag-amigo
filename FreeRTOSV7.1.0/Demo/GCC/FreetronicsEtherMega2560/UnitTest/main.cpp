@@ -61,18 +61,19 @@ static void morse(const char * code) {
 
 static com::diag::amigo::Serial * serialp;
 
+static volatile int takerstatus = 0;
+
 static void takerbody(com::diag::amigo::BinarySemaphore * binarysemaphorep) {
 	com::diag::amigo::SerialSink serialsink(*serialp);
 	com::diag::amigo::Print printf(serialsink);
 
 #if 1
-	printf("BinarySemaphore Unit Test...\n");
 	if (!(*binarysemaphorep)) {
-		printf("BinarySemaphore() FAILED!\n");
+		takerstatus = -1;
 	} else if (!binarysemaphorep->take()) {
-		printf("BinarySemaphore::take() FAILED!\n");
+		takerstatus = -2;
 	} else {
-		printf("BinarySemaphore Unit Test PASSED.\n");
+		takerstatus = 1;
 	}
 #endif
 
@@ -87,8 +88,6 @@ static void taker(void * parm) {
 static void unittestbody(com::diag::amigo::BinarySemaphore * binarysemaphorep) {
 	com::diag::amigo::SerialSink serialsink(*serialp);
 	com::diag::amigo::Print printf(serialsink);
-
-	taskYIELD();
 
 #if 1
 	printf("Uninterruptable Unit Test...\n");
@@ -109,13 +108,19 @@ static void unittestbody(com::diag::amigo::BinarySemaphore * binarysemaphorep) {
 #endif
 
 #if 1
+	printf("BinarySemaphore Unit Test...\n");
+	taskYIELD();
 	if (!(*binarysemaphorep)) {
 		printf("BinarySemaphore() FAILED!\n");
 	} else if (!binarysemaphorep->give()) {
 		printf("BinarySemaphore::give() FAILED!\n");
 	} else {
 		taskYIELD();
-		printf("BinarySemaphore Unit Test PASSED.\n");
+		if (takerstatus != 1) {
+			printf("takerstatus FAILED!\n");
+		} else {
+			printf("BinarySemaphore Unit Test PASSED.\n");
+		}
 	}
 #endif
 
@@ -199,6 +204,7 @@ int main() {
 	static const char TASK[] = "TASK=0x";
 	com::diag::amigo::Console::instance().start().write(TASK).dump(&task, sizeof(task)).write('\r').write('\n').flush().stop();
 	com::diag::amigo::Console::instance().start().write(TASK, strlen(TASK)).dump(&task, sizeof(task)).write('\r').write('\n').flush().stop();
+	com::diag::amigo::Console::instance().start().write("Console Unit Test PASSED\r\n").flush().stop();
 #endif
 
 	sei();
