@@ -13,6 +13,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "com/diag/amigo/types.h"
+#include "com/diag/amigo/target/Morse.h"
 #include "com/diag/amigo/target/Serial.h"
 #include "com/diag/amigo/target/Uninterruptable.h"
 #include "com/diag/amigo/SerialSink.h"
@@ -23,41 +24,6 @@
 #include "com/diag/amigo/CountingSemaphore.h"
 #include "com/diag/amigo/CriticalSection.h"
 #include "com/diag/amigo/MutexSemaphore.h"
-
-/**
- * This function, which is quite board-specific, blinks an LED according to
- * a caller-specified pattern. This is useful for debugging when absolutely
- * nothing else is working. A dash ('-') is a long blink of about 375ms. A dot
- * ('.') is a short blink of about 125ms. Anything else like a space (' ') is
- * a word separator of about 475ms of dark. Dots and spaces are separated by
- * about 125ms of dark. Example: " .-. " could indicates the value two in
- * a three bit binary sequence.
- * @param code points to a string indicating the blink pattern.
- */
-static void morse(const char * code) {
-	static const double DOT = 125.0;
-	static const double DASH = 3 * DOT;
-	static const double SPACE = DOT;
-	static const double WORD = 7 * DOT;
-	DDRB |= _BV(7);
-	PORTB &= ~_BV(7);
-	while (*code != '\0') {
-		if (*code == '.') {
-			_delay_ms(SPACE);
-			PORTB |= _BV(7);
-			_delay_ms(DOT);
-			PORTB &= ~_BV(7);
-		} else if (*code == '-') {
-			_delay_ms(SPACE);
-			PORTB |= _BV(7);
-			_delay_ms(DASH);
-			PORTB &= ~_BV(7);
-		} else {
-			_delay_ms(WORD);
-		}
-		++code;
-	}
-}
 
 static com::diag::amigo::Serial * serialp;
 
@@ -127,15 +93,25 @@ static void unittestbody(com::diag::amigo::BinarySemaphore * binarysemaphorep) {
 #if 1
 	printf("CountingSemaphore Unit Test...\n");
 	{
-		com::diag::amigo::CountingSemaphore countingsemaphore(1);
+		com::diag::amigo::CountingSemaphore countingsemaphore(2, 2);
 		if (!countingsemaphore) {
 			printf("CountingSemaphore() failed!\n");
+		} else if (!countingsemaphore.take(com::diag::amigo::CountingSemaphore::IMMEDIATELY)) {
+			printf("CountingSemaphore::take() 1 FAILED!\n");
+		} else if (!countingsemaphore.take(com::diag::amigo::CountingSemaphore::IMMEDIATELY)) {
+			printf("CountingSemaphore::take() 2 FAILED!\n");
 		} else if (countingsemaphore.take(com::diag::amigo::CountingSemaphore::IMMEDIATELY)) {
-			printf("CountingSemaphore::take() initial FAILED!\n");
+			printf("CountingSemaphore::take() 3 FAILED!\n");
 		} else if (!countingsemaphore.give()) {
-			printf("CountingSemaphore::give() FAILED!\n");
-		} else if (!countingsemaphore.take()) {
-			printf("CountingSemaphore::take() FAILED!\n");
+			printf("CountingSemaphore::give() 1 FAILED!\n");
+		} else if (!countingsemaphore.take(com::diag::amigo::CountingSemaphore::IMMEDIATELY)) {
+			printf("CountingSemaphore::take() 4 FAILED!\n");
+		} else if (!countingsemaphore.give()) {
+			printf("CountingSemaphore::give() 2 FAILED!\n");
+		} else if (!countingsemaphore.give()) {
+			printf("CountingSemaphore::give() 3 FAILED!\n");
+		} else if (countingsemaphore.give()) {
+			printf("CountingSemaphore::give() 4 FAILED!\n");
 		} else {
 			printf("CountingSemaphore Unit Test PASSED.\n");
 		}
@@ -148,7 +124,7 @@ static void unittestbody(com::diag::amigo::BinarySemaphore * binarysemaphorep) {
 		com::diag::amigo::MutexSemaphore mutexsemaphore;
 		if (!mutexsemaphore) {
 			printf("MutexSemaphore() FAILED!\n");
-		} else if (!mutexsemaphore.take()) {
+		} else if (!mutexsemaphore.take(com::diag::amigo::CountingSemaphore::IMMEDIATELY)) {
 			printf("MutexSemaphore::take() FAILED!\n");
 		} else if (!mutexsemaphore.give()) {
 			printf("MutexSemaphore::give() FAILED!\n");
@@ -174,12 +150,19 @@ static void unittestbody(com::diag::amigo::BinarySemaphore * binarysemaphorep) {
 #endif
 
 #if 1
-	printf("Serial Unit Test...\n");
+	printf("Serial Unit Test (type control-D to exit)...\n");
+	static const int CONTROL_D = 0x04;
+	int ch = ~CONTROL_D;
 	for (;;) {
 		while (serialp->available() > 0) {
-			serialp->write(serialp->read());
+			ch = serialp->read();
+			if (ch == CONTROL_D) { break; }
+			serialp->write(ch);
 		}
+		if (ch == CONTROL_D) { break; }
+		taskYIELD();
 	}
+	printf("\nSerial Unit Test PASSED\n");
 #endif
 
 	while (!0) { taskYIELD(); }
@@ -205,6 +188,15 @@ int main() {
 	com::diag::amigo::Console::instance().start().write(TASK).dump(&task, sizeof(task)).write('\r').write('\n').flush().stop();
 	com::diag::amigo::Console::instance().start().write(TASK, strlen(TASK)).dump(&task, sizeof(task)).write('\r').write('\n').flush().stop();
 	com::diag::amigo::Console::instance().start().write("Console Unit Test PASSED\r\n").flush().stop();
+#endif
+
+#if 1
+	{
+		com::diag::amigo::Console::instance().start().write("Morse Unit Test...\r\n").flush().stop();
+		com::diag::amigo::Morse telegraph(&DDRB, _BV(7));
+		telegraph.morse(" .. .- -. -- ");
+		com::diag::amigo::Console::instance().start().write("Morse Unit Test PASSED\r\n").flush().stop();
+	}
 #endif
 
 	sei();

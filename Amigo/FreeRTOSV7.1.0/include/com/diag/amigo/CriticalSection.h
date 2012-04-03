@@ -35,10 +35,10 @@ public:
 	 * task.
 	 * @param semaphore refers to the MutexSemaphore to give and take.
 	 */
-	CriticalSection(MutexSemaphore & semaphore)
-	: mutex(semaphore)
+	CriticalSection(MutexSemaphore & mutex)
+	: mutexp(&mutex)
 	{
-		success = mutex.take();
+		success = mutexp->take();
 	}
 
 	/**
@@ -46,7 +46,7 @@ public:
 	 */
 	~CriticalSection() {
 		if (success) {
-			mutex.give();
+			mutexp->give();
 		}
 	}
 
@@ -59,7 +59,7 @@ public:
 
 protected:
 
-	MutexSemaphore & mutex;
+	MutexSemaphore * mutexp;
 	bool success;
 
 private:

@@ -156,6 +156,7 @@ AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/unused.cpp
 AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/virtual.cpp
 
 AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/$(TARGET)/Console.cpp
+AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/$(TARGET)/Morse.cpp
 AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/$(TARGET)/Serial.cpp
 
 AMIGO_HDIRECTORIES+=$(FREERTOS_DIR)/include
@@ -197,9 +198,9 @@ CXXDIALECT=-fno-exceptions -ffunction-sections -fdata-sections -funsigned-char -
 CDEBUG=-g
 CWARN=-Wall
 CTUNING=-fno-exceptions -ffunction-sections -fdata-sections -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums# -mrelax
-CPPFLAGS=-DF_CPU=$(FREQUENCY) -DARDUINO=$(ARDUINO) $(INCLUDES)
-CFLAGS=$(CARCH) $(CDIALECT) $(CDEBUG) -O$(OPT) $(CWARN) $(CEXTRA)
-CXXFLAGS=$(CARCH) $(CXXDIALECT) $(CDEBUG) -O$(OPT) $(CWARN) $(CXXEXTRA)
+CPPFLAGS=$(CARCH) -DF_CPU=$(FREQUENCY) -DARDUINO=$(ARDUINO) $(INCLUDES)
+CFLAGS=$(CDIALECT) $(CDEBUG) -O$(OPT) $(CWARN) $(CEXTRA)
+CXXFLAGS=$(CXXDIALECT) $(CDEBUG) -O$(OPT) $(CWARN) $(CXXEXTRA)
 LDFLAGS=$(CARCH) -O$(OPT) -Wl,--gc-sections
 NMFLAGS=-n -o -a -A
 OBJDUMPFLAGS=-x -G -t -r
@@ -407,7 +408,7 @@ endif
 ################################################################################
 
 %.e:	%.cpp
-	$(CROSS_COMPILE)$(CXX)-E $(CPPFLAGS) -c $< > $*.e
+	$(CROSS_COMPILE)$(CXX) -E $(CPPFLAGS) -c $< > $*.e
 
 %.s:	%.cpp
 	$(CROSS_COMPILE)$(CXX) -S $(CPPFLAGS) $(CXXFLAGS) -o $@ -c $<
