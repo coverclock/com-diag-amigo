@@ -33,7 +33,7 @@ public:
 	 * Constructor. This object saves a pointer to the MutexSemaphore in an
 	 * instance variable. The MutexSemaphore is taken, blocking the allocating
 	 * task.
-	 * @param semaphore refers to the MutexSemaphore to give and take.
+	 * @param mutex refers to the MutexSemaphore to give and take.
 	 */
 	CriticalSection(MutexSemaphore & mutex)
 	: mutexp(&mutex)
