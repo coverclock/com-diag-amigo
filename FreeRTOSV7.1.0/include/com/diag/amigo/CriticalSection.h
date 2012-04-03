@@ -38,29 +38,29 @@ public:
 	CriticalSection(MutexSemaphore & mutex)
 	: mutexp(&mutex)
 	{
-		success = mutexp->take();
+		if (!mutexp->take()) {
+			mutexp = 0;
+		}
 	}
 
 	/**
 	 * Destructor. The MutexSemaphore is given, unblocking any waiting tasks.
 	 */
 	~CriticalSection() {
-		if (success) {
+		if (mutexp != 0) {
 			mutexp->give();
 		}
 	}
 
 	/**
-	 * Return true if construction was successful and the MutexSemaphore was
-	 * taken.
+	 * Return true if construction was successful.
 	 * @return true if construction was successful, false otherwise.
 	 */
-	operator bool() { return success; }
+	operator bool() { return (mutexp != 0); }
 
 protected:
 
 	MutexSemaphore * mutexp;
-	bool success;
 
 private:
 
