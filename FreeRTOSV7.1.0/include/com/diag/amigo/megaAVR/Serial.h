@@ -125,13 +125,14 @@ public:
 
 	/**
 	 * Defines the timeout value in Ticks that causes the application to never
-	 * block waiting for ring buffer space but instead be returned an error.
+	 * block waiting for ring buffer space or data, but instead be returned an
+	 * error.
 	 */
 	static const Ticks IMMEDIATELY = Queue::IMMEDIATELY;
 
 	/**
 	 * Defines the timeout value in Ticks that causes the application to block
-	 * indefinitely waiting for ring buffer space.
+	 * indefinitely waiting for ring buffer space or data.
 	 */
 	static const Ticks NEVER = Queue::NEVER;
 
@@ -241,7 +242,7 @@ public:
 	/**
 	 * Return the number of characters in the receive ring buffer available to
 	 * be read. This includes bad characters.
-	 * @param return the number of characters available to be read.
+	 * @param return the number of characters available or <0 if fail.
 	 */
 	int available() const;
 
@@ -260,7 +261,7 @@ public:
 	 * classes of parsers. I have always suspected it is the reason why UNIX
 	 * I/O streams implemented the ungetch() function.
 	 * @param timeout is the number of ticks to wait when the buffer is empty.
-	 * @return the first character in the receive ring buffer as an integer.
+	 * @return the first character or <0 if fail.
 	 */
 	int peek(Ticks timeout = NEVER);
 
@@ -268,7 +269,7 @@ public:
 	 * Return the first character in the receive ring buffer and remove it from
 	 * the buffer.
 	 * @param timeout is the number of ticks to wait when the buffer is empty.
-	 * @return the first character in the receive ring buffer as an integer.
+	 * @return the first character or <0 if fail.
 	 */
 	int read(Ticks timeout = NEVER);
 
@@ -319,8 +320,14 @@ protected:
 
 private:
 
+	/**
+	 * Implement the instance receive interrupt service routine.
+	 */
 	void receive();
 
+	/**
+	 * Implement the instance transmit interrupt service routine.
+	 */
 	void transmit();
 
     /**

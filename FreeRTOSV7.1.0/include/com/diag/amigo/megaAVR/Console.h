@@ -11,7 +11,7 @@
 
 #include "com/diag/amigo/types.h"
 #include "com/diag/amigo/cxxcapi.h"
-#include <avr/pgmspace.h>
+#include "com/diag/amigo/target/harvard.h"
 
 #if defined(__cplusplus)
 

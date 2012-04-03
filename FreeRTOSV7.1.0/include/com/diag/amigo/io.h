@@ -12,6 +12,13 @@
 #include "com/diag/amigo/types.h"
 #include "com/diag/amigo/cxxcapi.h"
 
+/**
+ * @def AMIGO_MMIO_8
+ *
+ * Generate the code for either a volatile R-value or L-value reference of a
+ * memory mapped I/O register whose location is represented as an offset from a
+ * base address.
+ */
 #define AMIGO_MMIO_8(_BASE_, _OFFSET_)  (*CXXCSTATICCAST(volatile uint8_t *,CXXCSTATICCAST(volatile uint8_t *, (_BASE_))  + (_OFFSET_)))
 
 #endif /* _COM_DIAG_AMIGO_IO_H_ */

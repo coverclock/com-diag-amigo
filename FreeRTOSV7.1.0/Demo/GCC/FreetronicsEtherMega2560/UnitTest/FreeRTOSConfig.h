@@ -78,7 +78,7 @@
     #define configCPU_CLOCK_HZ		( ( unsigned long ) F_CPU )		// Arduino Mega Rev3
     #define configTICK_RATE_HZ		( ( portTickType ) 500 )		// Use 500Hz for TIMER3
 
-    #define configTOTAL_HEAP_SIZE	( (size_t ) ( 4500 ) )			// used for heap_1.c and heap2.c only
+    #define configTOTAL_HEAP_SIZE	( (size_t ) ( 5500 ) )			// used for heap_1.c and heap2.c only
 																	// around 4500 works for standard memory
                                                                     // Should be 0xffff - 0x2200 = 56831 for heap in Extended RAM
 	#undef configEXT_RAM											// Use the Rugged Circuits External (512kByte) QuadRAM device, only one 56kByte bank.
@@ -161,7 +161,7 @@ to exclude the API function. */
 
 #define INCLUDE_vTaskPrioritySet		        0
 #define INCLUDE_uxTaskPriorityGet		        0
-#define INCLUDE_vTaskDelete			            0
+#define INCLUDE_vTaskDelete			            1
 #define INCLUDE_vTaskCleanUpResources		    0
 #define INCLUDE_vTaskSuspend			        1
 #define INCLUDE_vResumeFromISR                  1

@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
-#include <avr/pgmspace.h>
+#include "com/diag/amigo/target/harvard.h"
 #include "com/diag/amigo/Print.h"
 #include "com/diag/amigo/target/Serial.h"
 

@@ -18,41 +18,141 @@ namespace com {
 namespace diag {
 namespace amigo {
 
+/**
+ * Queue encapsulates a FreeRTOS queue, which implements a ring buffer. Queues
+ * are used as data channels between concurrent tasks, or between a task and an
+ * interrupt service routine. Elements sent to or received from a particular
+ * Queue are of a fixed size, and each Queue contains a fixed number of such
+ * elements.
+ */
 class Queue
 {
 
 public:
 
+	/**
+	 * Defines the timeout value in Ticks that causes the application to never
+	 * block waiting for ring buffer space or data, but instead be returned an
+	 * error.
+	 */
 	static const Ticks IMMEDIATELY = 0;
 
+	/**
+	 * Defines the timeout value in Ticks that causes the application to block
+	 * indefinitely waiting for ring buffer space or data.
+	 */
 	static const Ticks NEVER = portMAX_DELAY; // Nominally ~0.
 
-	explicit Queue(Count count, Size size = 1, const signed char * name = NULL);
+	/**
+	 * Constructor.
+	 * @param count is the maximum number of elements in the Queue.
+	 * @param size is the size of each element in the Queue in bytes.
+	 * @param name is the optional name of the Queue.
+	 */
+	explicit Queue(Count count, Size size = 1, const signed char * name = 0);
 
+	/**
+	 * Destructor.
+	 */
 	virtual ~Queue();
 
+	/**
+	 * Cast operator returns true if the construction of the Queue was
+	 * successful.
+	 * @return true if successful, false otherwise.
+	 */
 	operator bool() const { return (handle != 0); }
 
+	/**
+	 * Return true if the Queue is empty. Can only be called by an interrupt
+	 * service routine.
+	 * @param return true if empty, false otherwise.
+	 */
 	bool isEmptyFromISR() const;
 
+	/**
+	 * Return true if the Queue is full. Can only be called by an interrupt
+	 * service routine.
+	 * @param return true if full, false otherwise.
+	 */
 	bool isFullFromISR() const;
 
+	/**
+	 * Return the number of elements in the Queue.
+	 * @return the number of elements in the Queue.
+	 */
 	Count available() const;
 
+	/**
+	 * Return the number of elements in the Queue. Can only be called by an
+	 * interrupt service routine.
+	 * @return the number of elements in the Queue.
+	 */
 	Count availableFromISR() const;
 
+	/**
+	 * Return the first element in the Queue without removing it from the
+	 * Queue. This is vastly useful when implementing certain
+	 * classes of parsers. I have always suspected it is the reason why UNIX
+	 * I/O streams implemented the ungetch() function.
+	 * @param buffer points to the data memory into which the element is copied.
+	 * @param timeout is the duration in ticks to wait if the Queue is empty.
+	 * @return true if an element was copied into the buffer, false otherwise.
+	 */
 	bool peek(void * buffer, Ticks timeout = IMMEDIATELY);
 
+	/**
+	 * Return the first element in the Queue and remove it from the Queue.
+	 * @param buffer points to the data memory into which the element is copied.
+	 * @param timeout is the duration in ticks to wait if the Queue is empty.
+	 * @return true if an element was copied into the buffer, false otherwise.
+	 */
 	bool receive(void * buffer, Ticks timeout = NEVER);
 
+	/**
+	 * Return the first element in the Queue and remove it from the Queue. This
+	 * is guaranteed to be non-blocking and should only be called from an
+	 * interrupt service routine.
+	 * @param buffer points to the data memory into which the element is copied.
+	 * @param woken is returned true if this woke a higher priority task.
+	 * @return true if an element was copied into the buffer, false otherwise.
+	 */
 	bool receiveFromISR(void * buffer, bool & woken = unused.b);
 
+	/**
+	 * Append an element to the end of the Queue.
+	 * @param datum points to the data memory from which the element is copied.
+	 * @param timeout is the duration in ticks to wait if the Queue is full.
+	 * @return true if an element was copied from the datum, false otherwise.
+	 */
 	bool send(const void * datum, Ticks timeout = NEVER);
 
+	/**
+	 * Append an element to the end of the Queue. THis is guaranteed to be
+	 * non-blocking and should only be called from an interrupt service routine.
+	 * @param datum points to the data memory from which the element is copied.
+	 * @param woken is returned true if this woke a higher priority task.
+	 * @return true if an element was copied from the datum, false otherwise.
+	 */
 	bool sendFromISR(const void * datum, bool & woken = unused.b);
 
+	/**
+	 * Prepend an element to the beginning of the Queue. This can be used to
+	 * send a datum out of band.
+	 * @param datum points to the data memory from which the element is copied.
+	 * @param timeout is the duration in ticks to wait if the Queue is full.
+	 * @return true if an element was copied from the datum, false otherwise.
+	 */
 	bool express(const void * datum, Ticks timeout = NEVER);
 
+	/**
+	 * Prepend an element to the beginning of the Queue. This can be used to
+	 * send a datum out of band. This is guaranteed to be non-blocking and
+	 * should only be called from an interrupt service routine.
+	 * @param datum points to the data memory from which the element is copied.
+	 * @param woken is returned true if this woke a higher priority task.
+	 * @return true if an element was copied from the datum, false otherwise.
+	 */
 	bool expressFromISR(const void * datum, bool & woken = unused.b);
 
 protected:
