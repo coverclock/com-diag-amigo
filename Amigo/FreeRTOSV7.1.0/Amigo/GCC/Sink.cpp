@@ -7,8 +7,6 @@
  */
 
 #include "com/diag/amigo/Sink.h"
-#include <avr/pgmspace.h>
-#include <string.h>
 
 namespace com {
 namespace diag {
@@ -20,7 +18,16 @@ size_t Sink::write(const void * datum, size_t size) {
 		if (write(*here) != 1) { break; }
 		++here;
 	}
-	return (here - static_cast<const unsigned char *>(datum));
+	return (here - static_cast<const uint8_t *>(datum));
+}
+
+size_t Sink::write_P(PGM_VOID_P datum, size_t size) {
+	PGM_P here = static_cast<PGM_P>(datum);
+	while ((size--) > 0) {
+		if (write(pgm_read_byte(here)) != 1) { break; }
+		++here;
+	}
+	return (here - static_cast<PGM_P>(datum));
 }
 
 }

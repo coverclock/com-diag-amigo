@@ -16,26 +16,46 @@ namespace com {
 namespace diag {
 namespace amigo {
 
+/**
+ * CriticalSection implements a scoped critical section protected by the
+ * specified MutexSemaphore which provides mutual exclusion among concurrent
+ * tasks within the scope. CriticalSection takes the MutexSemaphore in its
+ * constructor, and gives the MutexSemaphore in its destructor.This allows
+ * scoped critical sections of code to be written, exploiting the
+ * "Resource Acquisition is Initialization" idiom.
+ */
 class CriticalSection
 {
 
 public:
 
+	/**
+	 * Constructor. This object saves a pointer to the MutexSemaphore in an
+	 * instance variable. The MutexSemaphore is taken, blocking the allocating
+	 * task.
+	 * @param semaphore refers to the MutexSemaphore to give and take.
+	 */
 	CriticalSection(MutexSemaphore & semaphore)
 	: mutex(semaphore)
 	{
 		success = mutex.take();
 	}
 
+	/**
+	 * Destructor. The MutexSemaphore is given, unblocking any waiting tasks.
+	 */
 	~CriticalSection() {
 		if (success) {
 			mutex.give();
 		}
 	}
 
-	bool operator bool() {
-		return success;
-	}
+	/**
+	 * Return true if construction was successful and the MutexSemaphore was
+	 * taken.
+	 * @return true if construction was successful, false otherwise.
+	 */
+	operator bool() { return success; }
 
 protected:
 

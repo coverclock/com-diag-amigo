@@ -49,10 +49,22 @@ namespace diag {
 namespace amigo {
 #endif
 
+/**
+ * Define the type used to hold time duration in units of Ticks.
+ */
 typedef portTickType Ticks;
 
+/**
+ * Define the type used to hold a cardinal value that is the count of something.
+ */
 typedef unsigned portBASE_TYPE Count;
 
+/**
+ * Define the type used to hold the cardinal value that is the size of something
+ * in bytes. Note that this is not the same as size_t. In this port, the
+ * FreeRTOS portBASE_TYPE is an int which is two bytes, while size_t is an
+ * unsigned long, which is four bytes.
+ */
 typedef unsigned portBASE_TYPE Size;
 
 #if defined(__cplusplus)

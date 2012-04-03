@@ -17,6 +17,11 @@ namespace com {
 namespace diag {
 namespace amigo {
 
+/**
+ * Defines a data structure that is a universal type so that a variable of this
+ * type can be used in a reference to serve as a bit bucket for unwanted
+ * value-return parameters in method and function calls.
+ */
 union Unused {
 	bool b;
 	char c;
@@ -37,6 +42,10 @@ union Unused {
 	uint64_t u64;
 };
 
+/**
+ * A universal variable that can be used in a reference to serve as a bit
+ * bucket for unwanted value-return parameters in value and function calls.
+ */
 extern Unused unused;
 
 }
