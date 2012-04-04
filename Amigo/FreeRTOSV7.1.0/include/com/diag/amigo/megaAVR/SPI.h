@@ -12,6 +12,7 @@
 #include <avr/io.h>
 #include "com/diag/amigo/types.h"
 #include "com/diag/amigo/TypedQueue.h"
+#include "com/diag/amigo/MutexSemaphore.h"
 
 namespace com {
 namespace diag {
@@ -31,11 +32,13 @@ namespace amigo {
  * happen concurrently. This is because SPI controllers in both masters and
  * slaves are little more than hardware shift registers. Because an SPI
  * controller is a hardware resource that may be shared among multiple devices,
- * access to it must be synchronized. SPI doesn't provide a MutexSemaphore
- * because the overhead of MutexSemaphore isn't small for a resource constrained
- * system, and if there is one SPI device synchronization isn't necessary.
+ * access to it must be serialized. This is done with a MutexSemaphore that is
+ * the base class from which SPI derives. This makes it easy to serialize use
+ * of the SPI, including the slave select for the slave SPI device (about which
+ * SPI knows nothing) by using SPI in a CriticalSection in the application.
  */
 class SPI
+: public MutexSemaphore
 {
 
 public:
@@ -165,15 +168,17 @@ public:
 	/**
 	 * Append a byte to the end of the transmit ring buffer and remove the byte
 	 * at the beginning of the receive ring buffer and return it. This is only
-	 * meaningful (I think) when asking as a master. All SPI I/O operations
+	 * meaningful (I think) when acting as a master. All SPI I/O operations
 	 * performed by a master are always a transmit of a byte coupled with a
 	 * receive of a byte, although the received byte may be ignored.
+	 * @param ch is the byte to append.
 	 * @param timeout is the number of ticks to wait when the buffer is full.
 	 * @return the first character or <0 if fail.
 	 */
-	int master(uint8_t ch, Ticks timeout = NEVER);
+	int master(uint8_t ch = 0, Ticks timeout = NEVER);
 
 	/**
+	 * UNTESTED!
 	 * Return the first character in the receive ring buffer and remove it from
 	 * the buffer. This is only meaningful (I think) when acting as a slave.
 	 * Transmits and receives are still coupled, but the slave SPI just
@@ -206,7 +211,6 @@ protected:
 	volatile void * gpiobase;
 	TypedQueue<uint8_t> received;
 	TypedQueue<uint8_t> transmitting;
-	bool busy;
 	Controller controller;
 	uint8_t ss;
 	uint8_t sck;
@@ -214,7 +218,7 @@ protected:
 	uint8_t miso;
 	uint8_t errors;
 
-	void enable();
+	void activate();
 
 private:
 
@@ -243,7 +247,7 @@ inline int SPI::master(uint8_t ch, Ticks timeout) {
 	if (!transmitting.send(&ch, timeout)) {
 		return -1;
 	} else {
-		enable();
+		activate();
 		if (!received.receive(&ch, timeout)) {
 			return -2;
 		} else {

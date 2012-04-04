@@ -47,7 +47,6 @@ SPI::SPI(Controller mycontroller, Count transmits, Count receives)
 , gpiobase(0)
 , received(receives)
 , transmitting(transmits)
-, busy(false)
 , controller(mycontroller)
 , ss(0)
 , sck(0)
@@ -81,23 +80,9 @@ SPI::SPI(Controller mycontroller, Count transmits, Count receives)
 }
 
 SPI::~SPI() {
-	stop();
-	spi[controller] = 0;
-}
-
-void SPI::enable() {
 	Uninterruptable uninterruptable;
-	uint8_t ch;
-	if ((SPICR & (_BV(SPIE) | _BV(SPE))) != (_BV(SPIE) | _BV(SPE))) {
-		// Do nothing: not started.
-	} else if (busy) {
-		// Do nothing: already transmitting.
-	} else if (!transmitting.receive(&ch, IMMEDIATELY)) {
-		// Do nothing: nothing to transmit.
-	} else {
-		busy = true;
-		SPIDR = ch;
-	}
+	SPICR &= ~(_BV(SPIE) | _BV(SPE));
+	spi[controller] = 0;
 }
 
 void SPI::start(Divisor divisor, Role role, Order order, Polarity polarity, Phase phase) {
@@ -207,7 +192,10 @@ void SPI::start(Divisor divisor, Role role, Order order, Polarity polarity, Phas
 
 	SPICR |= _BV(SPIE) | _BV(SPE);
 
-	enable();
+	uint8_t ch;
+	if (transmitting.receive(&ch, IMMEDIATELY)) {
+		SPIDR = ch;
+	}
 }
 
 void SPI::stop() const {
@@ -215,10 +203,21 @@ void SPI::stop() const {
 	SPICR &= ~(_BV(SPIE) | _BV(SPE));
 }
 
+void SPI::activate() {
+	Uninterruptable uninterruptable;
+	uint8_t ch;
+	if (transmitting.receive(&ch, IMMEDIATELY)) {
+		SPIDR = ch;
+	}
+}
+
 void SPI::restart() {
 	Uninterruptable uninterruptable;
 	SPICR |= _BV(SPIE) | _BV(SPE);
-	enable();
+	uint8_t ch;
+	if (transmitting.receive(&ch, IMMEDIATELY)) {
+		SPIDR = ch;
+	}
 }
 
 SPI & SPI::operator=(uint8_t value) {
@@ -229,14 +228,14 @@ SPI & SPI::operator=(uint8_t value) {
 }
 
 inline void SPI::complete(Controller controller) {
-	// Only called from an ISR hence implicitly uninterrutable.
+	// Only called from an ISR hence implicitly uninterruptable.
 	if (spi[controller] != 0) {
 		spi[controller]->complete();
 	}
 }
 
 void SPI::complete() {
-	// Only called from an ISR hence implicitly uninterrutable.
+	// Only called from an ISR hence implicitly uninterruptable.
 	if ((SPISR & _BV(WCOL)) == 0) {
 		// Do nothing.
 	} else if (errors < ~static_cast<uint8_t>(0)) {
@@ -255,8 +254,6 @@ void SPI::complete() {
 	}
 	if (transmitting.receiveFromISR(&ch)) {
 		SPIDR = ch;
-	} else {
-		busy = false;
 	}
 	if (woken) {
 		// Doing a context switch from inside an ISR seems wrong, both from an

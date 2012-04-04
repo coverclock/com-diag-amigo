@@ -85,7 +85,8 @@ Serial::Serial(Port myport, Count transmits, Count receives, uint8_t mybad)
 }
 
 Serial::~Serial() {
-	stop();
+	Uninterruptable uninterruptable;
+	UCSRB = 0;
 	serial[port] = 0;
 }
 
@@ -160,6 +161,10 @@ void Serial::start(uint32_t rate, Data data, Parity parity, Stop stop) {
 	UCSRC = databits | paritybits | stopbits;
 
 	UCSRB = _BV(RXCIE0) | _BV(RXEN0) | _BV(TXEN0);
+
+	if (transmitting.available() > 0) {
+		UCSRB |= _BV(UDRIE0);
+	}
 }
 
 void Serial::stop() {
@@ -167,7 +172,7 @@ void Serial::stop() {
 	UCSRB = 0;
 }
 
-void Serial::enable() {
+void Serial::activate() {
 	Uninterruptable uninterruptable;
 	UCSRB |= _BV(UDRIE0);
 }
@@ -194,14 +199,14 @@ Serial & Serial::operator=(uint8_t value) {
 }
 
 inline void Serial::receive(Port port) {
-	// Only called from an ISR hence implicitly uninterrutable;
+	// Only called from an ISR hence implicitly uninterruptable;
 	if (serial[port] != 0) {
 		serial[port]->receive();
 	}
 }
 
 void Serial::receive() {
-	// Only called from an ISR hence implicitly uninterrutable;
+	// Only called from an ISR hence implicitly uninterruptable;
 	bool success = true;
 	uint8_t ch;
 	if ((UCSRA & (_BV(FE0) | _BV(DOR0) | _BV(UPE0))) == 0) {
@@ -236,14 +241,14 @@ void Serial::receive() {
 }
 
 inline void Serial::transmit(Port port) {
-	// Only called from an ISR hence implicitly uninterrutable.
+	// Only called from an ISR hence implicitly uninterruptable.
 	if (serial[port] != 0) {
 		serial[port]->transmit();
 	}
 }
 
 void Serial::transmit() {
-	// Only called from an ISR hence implicitly uninterrutable.
+	// Only called from an ISR hence implicitly uninterruptable.
 	uint8_t ch;
 	if (transmitting.receiveFromISR(&ch)) {
 		UDR = ch;
