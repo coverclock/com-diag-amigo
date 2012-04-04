@@ -15,6 +15,7 @@
 #include "com/diag/amigo/types.h"
 #include "com/diag/amigo/target/Morse.h"
 #include "com/diag/amigo/target/Serial.h"
+#include "com/diag/amigo/target/SPI.h"
 #include "com/diag/amigo/target/Uninterruptable.h"
 #include "com/diag/amigo/SerialSink.h"
 #include "com/diag/amigo/Print.h"
@@ -25,14 +26,9 @@
 #include "com/diag/amigo/CriticalSection.h"
 #include "com/diag/amigo/MutexSemaphore.h"
 
-static com::diag::amigo::Serial * serialp;
-
 static volatile int takerstatus = 0;
 
 static void takerbody(com::diag::amigo::BinarySemaphore * binarysemaphorep) {
-	com::diag::amigo::SerialSink serialsink(*serialp);
-	com::diag::amigo::Print printf(serialsink);
-
 #if 1
 	if (!(*binarysemaphorep)) {
 		takerstatus = -1;
@@ -42,7 +38,6 @@ static void takerbody(com::diag::amigo::BinarySemaphore * binarysemaphorep) {
 		takerstatus = 1;
 	}
 #endif
-
 	while (!0) { taskYIELD(); }
 }
 
@@ -51,9 +46,31 @@ static void taker(void * parm) {
 	takerbody(static_cast<com::diag::amigo::BinarySemaphore *>(parm));
 }
 
+inline void w5100init() {
+	DDRB |= _BV(4);
+}
+
+inline void w5100set() {
+	PORTB &= ~_BV(4);
+}
+
+inline int w5100read(com::diag::amigo::SPI & spi, uint16_t address) {
+	spi.master(0x0f);
+	spi.master(address >> 8);
+	spi.master(address & 0xff);
+	return spi.master();
+}
+
+inline void w5100reset() {
+	PORTB |=  _BV(4);
+}
+
 static void unittestbody(com::diag::amigo::BinarySemaphore * binarysemaphorep) {
-	com::diag::amigo::SerialSink serialsink(*serialp);
+
+	com::diag::amigo::Serial serial;
+	com::diag::amigo::SerialSink serialsink(serial);
 	com::diag::amigo::Print printf(serialsink);
+	serial.start();
 
 #if 1
 	printf("Uninterruptable Unit Test...\n");
@@ -141,7 +158,7 @@ static void unittestbody(com::diag::amigo::BinarySemaphore * binarysemaphorep) {
 					if (!criticalsection2) {
 						printf("criticalsection2 FAILED!\n");
 					} else {
-						printf("CriticalSection Unit Test PASSED\n");
+						printf("CriticalSection Unit Test PASSED.\n");
 					}
 				}
 			}
@@ -150,19 +167,54 @@ static void unittestbody(com::diag::amigo::BinarySemaphore * binarysemaphorep) {
 #endif
 
 #if 1
+	{
+		printf("SPI Unit Test (specific to W5100 Ethernet controller)...\n");
+		com::diag::amigo::SPI spi;
+		spi.start();
+		{
+			com::diag::amigo::CriticalSection criticalsection(spi);
+			w5100init();
+			static const uint16_t RTR0 = 0x0017;
+			static const uint16_t RTR1 = 0x0018;
+			static const uint16_t RCR = 0x0019;
+			w5100set();
+			uint8_t rtr0 = w5100read(spi, RTR0);
+			w5100reset();
+			w5100set();
+			uint8_t rtr1 = w5100read(spi, RTR1);
+			w5100reset();
+			w5100set();
+			uint8_t rcr = w5100read(spi, RCR);
+			w5100reset();
+			// Reference: WIZnet, W5100 Datasheet, Version 1.2.4, 2011
+			if (rtr0 != 0x07) {
+				printf("rtr0 FAILED!\n");
+			} else if (rtr1 != 0xd0) {
+				printf("rtr1 FAILED!\n");
+			} else if (rcr != 0x08) {
+				printf("rcr FAILED!\n");
+			} else {
+				printf("SPI Unit Test PASSED.\n");
+			}
+		}
+		spi.stop();
+	}
+#endif
+
+#if 1
 	printf("Serial Unit Test (type control-D to exit)...\n");
 	static const int CONTROL_D = 0x04;
 	int ch = ~CONTROL_D;
 	for (;;) {
-		while (serialp->available() > 0) {
-			ch = serialp->read();
+		while (serial.available() > 0) {
+			ch = serial.read();
 			if (ch == CONTROL_D) { break; }
-			serialp->write(ch);
+			serial.write(ch);
 		}
 		if (ch == CONTROL_D) { break; }
 		taskYIELD();
 	}
-	printf("\nSerial Unit Test PASSED\n");
+	printf("\nSerial Unit Test PASSED.\n");
 #endif
 
 	while (!0) { taskYIELD(); }
@@ -177,6 +229,9 @@ int main() __attribute__((OS_main));
 int main() {
 
 	com::diag::amigo::Console::instance().start().write("starting\r\n").flush().stop();
+
+	// We test the busy waiting stuff in main before we create our tasks and
+	// start the scheduler.
 
 #if 1
 	com::diag::amigo::Console::instance().start().write("Console Unit Test...\r\n").flush().stop();
@@ -204,11 +259,7 @@ int main() {
 	// Variables allocated on the stack in this function will never go out of
 	// scope, since main never exits. So it is quite possible to allocate
 	// what are essentially permanent objects on main's stack that persist
-	// until the board is rebooted.
-
-	com::diag::amigo::Serial serial;
-	serialp = &serial;
-	serialp->start();
+	// until the board is rebooted. That's useful.
 
 	com::diag::amigo::BinarySemaphore binarysemaphore;
 
