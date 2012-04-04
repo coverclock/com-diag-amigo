@@ -15,8 +15,9 @@ namespace com {
 namespace diag {
 namespace amigo {
 
-#define DDR			AMIGO_MMIO_8(base, 0)
-#define PORT		AMIGO_MMIO_8(base, 1)
+#define PIN			AMIGO_MMIO_8(base, 0)
+#define DDR			AMIGO_MMIO_8(base, 1)
+#define PORT		AMIGO_MMIO_8(base, 2)
 
 // A dot ('.') is a short blink of about 125ms.
 // A dash ('-') is a long blink of three dots.
@@ -26,8 +27,8 @@ namespace amigo {
 
 void Morse::morse(const char * code) {
 	int count = 0;
-	DDR |= mask;
-	PORT &= ~mask;
+	DDR |= mask; // Output.
+	PORT &= ~mask; // Low.
 	if (*code != '\0') {
 		_delay_ms(LETTER);
 		while (*code != '\0') {

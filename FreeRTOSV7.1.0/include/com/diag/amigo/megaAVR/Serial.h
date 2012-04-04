@@ -210,7 +210,7 @@ public:
 	 * @param parity specifies the desired parity bits per character.
 	 * @param stop specifies the number of parity bits per character.
 	 */
-	void start(Baud baud = B115200, Data data = EIGHT, Parity parity = NONE, Stop stop = ONE) const;
+	void start(Baud baud = B115200, Data data = EIGHT, Parity parity = NONE, Stop stop = ONE);
 
 	/**
 	 * Initialize the USART and start interrupt driven I/O operations on it.
@@ -225,19 +225,19 @@ public:
 	 * @param parity specifies the desired parity bits per character.
 	 * @param stop specifies the number of parity bits per character.
 	 */
-	void start(uint32_t rate, Data data = EIGHT, Parity parity = NONE, Stop stop = ONE) const;
+	void start(uint32_t rate, Data data = EIGHT, Parity parity = NONE, Stop stop = ONE);
 
 	/**
 	 * The USART is disabled and all further interrupt driven I/O operations
 	 * cease.
 	 */
-	void stop() const;
+	void stop();
 
 	/**
 	 * Restart interrupt driven I/O operations after a stop() without
 	 * reinitializing the USART.
 	 */
-	void restart() const;
+	void restart();
 
 	/**
 	 * Return the number of characters in the receive ring buffer available to
@@ -253,7 +253,12 @@ public:
 	 * been transmitted. This interface exists to support Arduino, whose
 	 * generic Stream interface expects to have this functionality.
 	 */
-	void flush() const;
+	void flush();
+
+	/**
+	 * Clear all the data in the receive ring buffer, discarding it.
+	 */
+	void clear(Ticks timeout = IMMEDIATELY);
 
 	/**
 	 * Return the first character in the receive ring buffer without removing
@@ -318,7 +323,7 @@ protected:
 	uint8_t bad;
 	uint8_t errors;
 
-	void enable() const;
+	void enable();
 
 private:
 
@@ -352,6 +357,13 @@ inline int Serial::available() const {
 	return received.available();
 }
 
+inline void Serial::clear(Ticks timeout) {
+	uint8_t ch;
+	while (received.receive(&ch, timeout)) {
+		// Do nothing.
+	}
+}
+
 inline int Serial::peek(Ticks timeout) {
 	uint8_t ch;
 	return (received.peek(&ch, timeout) ? ch : -1);
@@ -379,6 +391,7 @@ inline size_t Serial::express(uint8_t ch, Ticks timeout) {
 		return 1;
 	}
 }
+
 
 }
 }

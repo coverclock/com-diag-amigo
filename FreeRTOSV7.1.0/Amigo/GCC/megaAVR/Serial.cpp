@@ -89,7 +89,7 @@ Serial::~Serial() {
 	serial[port] = 0;
 }
 
-void Serial::start(Baud baud, Data data, Parity parity, Stop stop) const {
+void Serial::start(Baud baud, Data data, Parity parity, Stop stop) {
 	uint32_t rate;
 	switch (baud) {
 	case B50:		rate = 50UL;		break;
@@ -121,7 +121,7 @@ void Serial::start(Baud baud, Data data, Parity parity, Stop stop) const {
 // use other form of start() whose Baud enumeration keeps you from coding a
 // baud rate that is not supported. However, the counter calculation quantizes
 // the result so that even incorrect rates will probably yield something useful.
-void Serial::start(uint32_t rate, Data data, Parity parity, Stop stop) const {
+void Serial::start(uint32_t rate, Data data, Parity parity, Stop stop) {
 	uint16_t counter = (((configCPU_CLOCK_HZ) + (4UL * rate)) / (8UL * rate)) - 1UL;
 
 	uint8_t databits;
@@ -162,17 +162,17 @@ void Serial::start(uint32_t rate, Data data, Parity parity, Stop stop) const {
 	UCSRB = _BV(RXCIE0) | _BV(RXEN0) | _BV(TXEN0);
 }
 
-void Serial::stop() const {
+void Serial::stop() {
 	Uninterruptable uninterruptable;
 	UCSRB = 0;
 }
 
-void Serial::enable() const {
+void Serial::enable() {
 	Uninterruptable uninterruptable;
 	UCSRB |= _BV(UDRIE0);
 }
 
-void Serial::restart() const {
+void Serial::restart() {
 	Uninterruptable uninterruptable;
 	UCSRB = _BV(RXCIE0) | _BV(RXEN0) | _BV(TXEN0);
 	if (transmitting.available() > 0) {
@@ -180,7 +180,7 @@ void Serial::restart() const {
 	}
 }
 
-void Serial::flush() const {
+void Serial::flush() {
 	while (transmitting.available() > 0) {
 		taskYIELD();
 	}
@@ -202,39 +202,48 @@ inline void Serial::receive(Port port) {
 
 void Serial::receive() {
 	// Only called from an ISR hence implicitly uninterrutable;
+	bool success = true;
 	uint8_t ch;
 	if ((UCSRA & (_BV(FE0) | _BV(DOR0) | _BV(UPE0))) == 0) {
 		ch = UDR;
 	} else {
 		ch = bad;
-		if (errors < ~static_cast<uint8_t>(0)) {
-			++errors;
-		}
+		success = false;
 	}
 	bool woken = false;
-	received.sendFromISR(&ch, woken);
-	// Doing a context switch from inside an ISR seems wrong, both from an
-	// architectural POV and a correctness POV. But that's what happens in
-	// other FreeRTOS code, and I understand the rationale for it. Careful
-	// perusal of the underlying code has _mostly_ convinced me that this
-	// works as intended. Interrupts will be re-enabled in the next task when
-	// its SREG is restored from the context frame on its stack. They will be
-	// reenabled in the new task when it is returned from this ISR. It still
-	// seems like a violation against the laws of Man and God.
-	if (woken) {
+	if (!received.sendFromISR(&ch, woken)) {
+		success = false;
+	} else if (woken) {
+		// Doing a context switch from inside an ISR seems wrong, both from an
+		// architectural POV and a correctness POV. But that's what happens in
+		// other FreeRTOS code, and I understand the rationale for it. Careful
+		// perusal of the underlying code has _mostly_ convinced me that this
+		// works as intended. Interrupts will be re-enabled in the next task
+		// when its SREG is restored from the context frame on its stack. They
+		// will be reenabled in the new task when it is returned from this ISR.
+		// It still seems like a violation against the laws of Man and God.
 		taskYIELD();
+	} else {
+		// Do nothing.
+	}
+	if (success) {
+		// Do nothing.
+	} else if (errors < ~static_cast<uint8_t>(0)) {
+		++errors;
+	} else {
+		// Do nothing.
 	}
 }
 
 inline void Serial::transmit(Port port) {
-	// Only called from an ISR hence implicitly uninterrutable;
+	// Only called from an ISR hence implicitly uninterrutable.
 	if (serial[port] != 0) {
 		serial[port]->transmit();
 	}
 }
 
 void Serial::transmit() {
-	// Only called from an ISR hence implicitly uninterrutable;
+	// Only called from an ISR hence implicitly uninterrutable.
 	uint8_t ch;
 	if (transmitting.receiveFromISR(&ch)) {
 		UDR = ch;
