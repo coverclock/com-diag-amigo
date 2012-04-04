@@ -193,7 +193,7 @@ int main() {
 #if 1
 	{
 		com::diag::amigo::Console::instance().start().write("Morse Unit Test...\r\n").flush().stop();
-		com::diag::amigo::Morse telegraph(&DDRB, _BV(7));
+		com::diag::amigo::Morse telegraph(&PINB, _BV(7));
 		telegraph.morse(" .. .- -. -- ");
 		com::diag::amigo::Console::instance().start().write("Morse Unit Test PASSED\r\n").flush().stop();
 	}

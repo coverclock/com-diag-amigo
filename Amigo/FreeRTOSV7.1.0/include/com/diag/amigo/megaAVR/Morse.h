@@ -37,7 +37,7 @@ public:
 	 * @param mybase points to the base address of the GPIO controller to use.
 	 * @param mymask is the bit mask for the GPIO bit to use.
 	 */
-	Morse(volatile uint8_t * mybase /* e.g. &DDRB */, uint8_t mymask /* e.g. _BV(7) */)
+	Morse(volatile uint8_t * mybase /* e.g. &PINB */, uint8_t mymask /* e.g. _BV(7) */)
 	: base(mybase)
 	, mask(mymask)
 	{}
