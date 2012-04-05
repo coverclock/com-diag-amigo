@@ -13,6 +13,8 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "com/diag/amigo/types.h"
+#include "com/diag/amigo/fatal.h"
+#include "com/diag/amigo/Task.h"
 #include "com/diag/amigo/target/Morse.h"
 #include "com/diag/amigo/target/Serial.h"
 #include "com/diag/amigo/target/SPI.h"
@@ -232,6 +234,12 @@ int main() {
 
 	// We test the busy waiting stuff in main before we create our tasks and
 	// start the scheduler.
+
+#if 0
+	com::diag::amigo::Console::instance().start().write("Fatal Unit Test...\r\n").flush().stop();
+	com::diag::amigo::fatal(__FILE__, __LINE__);
+	com::diag::amigo::Console::instance().start().write("Fatal Unit Test FAILED!\r\n").flush().stop();
+#endif
 
 #if 1
 	com::diag::amigo::Console::instance().start().write("Console Unit Test...\r\n").flush().stop();
