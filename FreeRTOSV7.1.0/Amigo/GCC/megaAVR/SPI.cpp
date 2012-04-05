@@ -13,6 +13,7 @@
 #include "com/diag/amigo/target/SPI.h"
 #include "com/diag/amigo/target/Uninterruptable.h"
 #include "com/diag/amigo/io.h"
+#include "com/diag/amigo/Task.h"
 
 namespace com {
 namespace diag {
@@ -264,7 +265,7 @@ void SPI::complete() {
 		// when its SREG is restored from the context frame on its stack. They
 		// will be reenabled in the new task when it is returned from this ISR.
 		// It still seems like a violation against the laws of Man and God.
-		taskYIELD();
+		Task::yield();
 	}
 }
 
