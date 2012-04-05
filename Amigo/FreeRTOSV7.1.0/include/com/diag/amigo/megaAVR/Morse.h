@@ -7,15 +7,36 @@
  * Licensed under the terms in README.h\n
  * Chip Overclock mailto:coverclock@diag.com\n
  * http://www.diag.com/navigation/downloads/Amigo.html\n
- * This code is specific to the Freetronics EtherMega 2560 board.
  */
 
+#include <avr/io.h>
 #include "com/diag/amigo/types.h"
 
 namespace com {
 namespace diag {
 namespace amigo {
 
+/*
+ * Morse blinks an LED according to a caller-specified pattern. It uses busy
+ * waiting, does not depend on FreeRTOS, and talks directly to the memory-mapped
+ * general purpose I/O (GPIO) registers. This is useful for debugging when
+ * absolutely nothing else is working. Ask me how I know this. Because it is so
+ * low level, and because it is using an LED wired to a GPIO pin, it depends not
+ * just on the underlying microcontroller model, but the specific board and
+ * hardware configuration on which it is being used. The constructor parameters
+ * default to the values appropriate for blinking the red LED on the Freetronics
+ * EtherMega 2560 board. Your mileage may vary.
+ *
+ * The basic timing follows the traditional Morse rules:
+ *
+ * A dot ('.') is a short blink of about 125ms.\n
+ * A dash ('-') is a long blink of three dots.\n
+ * An implicit pause between dots and dashes is one dot.\n
+ * An explicit pause (',') between letters is three dots.\n
+ * A explicit pause (' ') between words is seven dots.\n
+ *
+ * For example, the sequence " .. .- -. -- " counts from zero to three.
+*/
 class Morse {
 
 protected:
@@ -37,7 +58,7 @@ public:
 	 * @param mybase points to the base address of the GPIO controller to use.
 	 * @param mymask is the bit mask for the GPIO bit to use.
 	 */
-	Morse(volatile uint8_t * mybase /* e.g. &PINB */, uint8_t mymask /* e.g. _BV(7) */)
+	Morse(volatile uint8_t * mybase = &PINB, uint8_t mymask = _BV(7))
 	: base(mybase)
 	, mask(mymask)
 	{}
@@ -48,16 +69,7 @@ public:
 	~Morse() {}
 
 	/**
-	 * This method blinks an LED according to a caller-specified pattern. It
-	 * uses busy waiting, does not depend on FreeRTOS, and talks directly to
-	 * the memory-mapped GPIO registers. This is useful for debugging when
-	 * absolutely nothing else is working.
-	 * The basic timing follows the traditional Morse rules.
-	 * A dot ('.') is a short blink of about 125ms.
-	 * A dash ('-') is a long blink of three dots.
-	 * A pause between dots and dashes is one dot.
-	 * A pause ('_') between letters is three dots.
-	 * A pause (' ') between words is seven dots.
+	 * Blink an LED according to a caller-specified pattern.
 	 * @param code points to a string indicating the blink pattern.
 	 */
 	void morse(const char * code);

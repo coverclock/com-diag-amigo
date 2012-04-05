@@ -19,16 +19,10 @@ namespace amigo {
 #define DDR			AMIGO_MMIO_8(base, 1)
 #define PORT		AMIGO_MMIO_8(base, 2)
 
-// A dot ('.') is a short blink of about 125ms.
-// A dash ('-') is a long blink of three dots.
-// A pause between dots and dashes is one dot.
-// A pause ('_') between letters is three dots.
-// A pause (' ') between words is seven dots.
-
 void Morse::morse(const char * code) {
 	int count = 0;
 	DDR |= mask; // Output.
-	PORT &= ~mask; // Low.
+	PORT &= ~mask; // Off.
 	if (*code != '\0') {
 		_delay_ms(LETTER);
 		while (*code != '\0') {
@@ -44,13 +38,13 @@ void Morse::morse(const char * code) {
 				_delay_ms(DASH);
 				PORT &= ~mask;
 				break;
-			case '_':
+			case ',':
 				PORT |= mask;
 				_delay_ms(LETTER);
 				PORT &= ~mask;
 				break;
-			case ' ':
 			default:
+			case ' ':
 				_delay_ms(WORD);
 				break;
 			}

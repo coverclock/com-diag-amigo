@@ -7,6 +7,9 @@
  * Licensed under the terms in README.h\n
  * Chip Overclock mailto:coverclock@diag.com\n
  * http://www.diag.com/navigation/downloads/Amigo.html\n
+ * This code is gratefully inspired by <util/baud.h>, FreeRTOS lib_serial.
+ * and <http://feilipu.posterous.com/ethermega-arduino-mega-2560-and-freertos>.
+ * A special THANK YOU goes to Richard Barry and Phillip Stevens.
  */
 
 #include <avr/io.h>

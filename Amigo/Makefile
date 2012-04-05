@@ -21,7 +21,7 @@ PROJECT=amigo
 NAME=Amigo
 
 MAJOR=0
-MINOR=10
+MINOR=11
 BUILD=0
 
 HTTP_URL=http://www.diag.com/navigation/downloads/$(NAME).html

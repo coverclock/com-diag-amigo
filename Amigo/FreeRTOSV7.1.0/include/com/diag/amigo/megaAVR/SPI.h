@@ -7,6 +7,7 @@
  * Licensed under the terms in README.h\n
  * Chip Overclock mailto:coverclock@diag.com\n
  * http://www.diag.com/navigation/downloads/Amigo.html\n
+ * This code is gratefully inspired by FreeRTOS lib_spi and Arduino SPI.
  */
 
 #include <avr/io.h>
