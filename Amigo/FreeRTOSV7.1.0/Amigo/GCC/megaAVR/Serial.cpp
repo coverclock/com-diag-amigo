@@ -15,6 +15,7 @@
 #include "com/diag/amigo/target/Serial.h"
 #include "com/diag/amigo/target/Uninterruptable.h"
 #include "com/diag/amigo/io.h"
+#include "com/diag/amigo/Task.h"
 
 namespace com {
 namespace diag {
@@ -187,7 +188,7 @@ void Serial::restart() {
 
 void Serial::flush() {
 	while (transmitting.available() > 0) {
-		taskYIELD();
+		Task::yield();
 	}
 }
 
@@ -227,7 +228,7 @@ void Serial::receive() {
 		// when its SREG is restored from the context frame on its stack. They
 		// will be reenabled in the new task when it is returned from this ISR.
 		// It still seems like a violation against the laws of Man and God.
-		taskYIELD();
+		Task::yield();
 	} else {
 		// Do nothing.
 	}

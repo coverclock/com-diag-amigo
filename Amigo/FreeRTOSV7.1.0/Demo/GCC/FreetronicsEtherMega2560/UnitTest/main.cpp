@@ -238,7 +238,7 @@ static void * unittest(void * parameter) {
 			serial.write(ch);
 		}
 		if (ch == CONTROL_D) { break; }
-		taskYIELD();
+		com::diag::amigo::Task::yield();
 	}
 	printf("\nSerial Unit Test PASSED.\n");
 #endif
