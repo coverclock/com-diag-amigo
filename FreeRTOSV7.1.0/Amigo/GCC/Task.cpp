@@ -13,15 +13,22 @@ namespace com {
 namespace diag {
 namespace amigo {
 
-void Task::task(void * instance) {
+void Task::trampoline(void * instance) {
 	Task * that = static_cast<Task *>(instance);
 	that->result = that->task();
-	vTaskDelete(that->handle);
+	void * temporary = that->handle;
 	that->handle = 0;
+#if (INCLUDE_vTaskDelete == 1)
+	vTaskDelete(temporary);
+#else
+	(void)temporary;
+#endif
+	while (!0) { taskYIELD(); }
 }
 
-Task::Task(const char * name)
-: handle(0)
+Task::Task(const char * myname)
+: name(myname)
+, handle(0)
 , function(0)
 , parameter(0)
 , result(0)
@@ -33,8 +40,12 @@ Task::~Task() {
 	}
 }
 
-void Task::start(void * (*myfunction)(void *), void * myparameter) {
-
+void Task::start(void * (*myfunction)(void *), void * myparameter, unsigned short depth, unsigned char priority) {
+	function = myfunction;
+	parameter = myparameter;
+	if (xTaskCreate(trampoline, (const signed char *)name, depth, this, priority, &handle) != pdPASS) {
+		handle = 0;
+	}
 }
 
 void * Task::task() {

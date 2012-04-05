@@ -29,24 +29,54 @@ namespace amigo {
 class Task
 {
 
+public:
+
+	typedef void * (Function)(void *);
+
+	static const unsigned short DEPTH = 512;
+
+	static const unsigned char PRIORITY = 0;
+
+	static void begin();
+
+	static void yield();
+
 protected:
 
-	static COM_DIAG_AMIGO_TASK(task);
+	static COM_DIAG_AMIGO_TASK(trampoline);
 
 public:
 
-	explicit Task(const char * name = 0);
+	explicit Task(const char * myname = 0);
 
 	virtual ~Task();
 
-	void start(void * (*myfunction)(void *) = 0, void * myparameter = 0);
+	operator bool() const { return (handle != 0); }
+
+	void start(void * (*myfunction)(void *) = 0, void * myparameter = 0, unsigned short depth = DEPTH, unsigned char priority = PRIORITY);
+
+	void stop() { stopping = true; }
+
+	bool stopped() const { return stopping; }
+
+	const char * getName() const { return name; }
+
+	xTaskHandle getHandle() const { return handle; }
+
+	Function * getFunction() const { return function; }
+
+	void * getParameter() const { return parameter; }
+
+	void * getResult() const { return result; }
 
 protected:
 
+	const char * name;
 	xTaskHandle handle;
 	void * (*function)(void *);
 	void * parameter;
 	void * result;
+	bool stopping;
 
 	virtual void * task();
 
@@ -67,6 +97,14 @@ private:
 	Task& operator=(const Task& that);
 
 };
+
+inline void Task::begin() {
+	vTaskStartScheduler();
+}
+
+inline void Task::yield() {
+	taskYIELD();
+}
 
 }
 }

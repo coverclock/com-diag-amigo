@@ -326,7 +326,7 @@ protected:
 	uint8_t bad;
 	uint8_t errors;
 
-	void activate();
+	void begin();
 
 private:
 
@@ -381,7 +381,7 @@ inline size_t Serial::write(uint8_t ch, Ticks timeout) {
 	if (!transmitting.send(&ch, timeout)) {
 		return 0;
 	} else {
-		activate();
+		begin();
 		return 1;
 	}
 }
@@ -390,7 +390,7 @@ inline size_t Serial::express(uint8_t ch, Ticks timeout) {
 	if (!transmitting.express(&ch, timeout)) {
 		return 0;
 	} else {
-		activate();
+		begin();
 		return 1;
 	}
 }

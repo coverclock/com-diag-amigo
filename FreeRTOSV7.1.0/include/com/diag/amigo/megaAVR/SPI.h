@@ -219,7 +219,7 @@ protected:
 	uint8_t miso;
 	uint8_t errors;
 
-	void activate();
+	void begin();
 
 private:
 
@@ -248,7 +248,7 @@ inline int SPI::master(uint8_t ch, Ticks timeout) {
 	if (!transmitting.send(&ch, timeout)) {
 		return -1;
 	} else {
-		activate();
+		begin();
 		if (!received.receive(&ch, timeout)) {
 			return -2;
 		} else {

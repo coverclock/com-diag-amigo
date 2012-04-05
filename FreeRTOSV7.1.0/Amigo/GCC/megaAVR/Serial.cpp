@@ -172,7 +172,7 @@ void Serial::stop() {
 	UCSRB = 0;
 }
 
-void Serial::activate() {
+void Serial::begin() {
 	Uninterruptable uninterruptable;
 	UCSRB |= _BV(UDRIE0);
 }

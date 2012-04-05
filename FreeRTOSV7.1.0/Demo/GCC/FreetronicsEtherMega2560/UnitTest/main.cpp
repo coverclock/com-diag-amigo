@@ -28,24 +28,24 @@
 #include "com/diag/amigo/CriticalSection.h"
 #include "com/diag/amigo/MutexSemaphore.h"
 
-static volatile int takerstatus = 0;
+static com::diag::amigo::Task takertask("Taker");
+static com::diag::amigo::Task unittesttask("UnitTest");
 
-static void takerbody(com::diag::amigo::BinarySemaphore * binarysemaphorep) {
+static void * taker(void * parameter) {
+	com::diag::amigo::BinarySemaphore * binarysemaphorep = static_cast<com::diag::amigo::BinarySemaphore *>(parameter);
+	int result = 1;
+
 #if 1
 	if (!(*binarysemaphorep)) {
-		takerstatus = -1;
+		result = -1;
 	} else if (!binarysemaphorep->take()) {
-		takerstatus = -2;
+		result = -2;
 	} else {
-		takerstatus = 1;
+		// Do nothing.
 	}
 #endif
-	while (!0) { taskYIELD(); }
-}
 
-static void taker(void * parm) __attribute__((section(".lowtext")));
-static void taker(void * parm) {
-	takerbody(static_cast<com::diag::amigo::BinarySemaphore *>(parm));
+	return reinterpret_cast<void *>(result);
 }
 
 inline void w5100init() {
@@ -67,7 +67,9 @@ inline void w5100reset() {
 	PORTB |=  _BV(4);
 }
 
-static void unittestbody(com::diag::amigo::BinarySemaphore * binarysemaphorep) {
+static void * unittest(void * parameter) {
+	com::diag::amigo::BinarySemaphore * binarysemaphorep = static_cast<com::diag::amigo::BinarySemaphore *>(parameter);
+	int errors = 0;
 
 	com::diag::amigo::Serial serial;
 	com::diag::amigo::SerialSink serialsink(serial);
@@ -80,11 +82,13 @@ static void unittestbody(com::diag::amigo::BinarySemaphore * binarysemaphorep) {
 		com::diag::amigo::Uninterruptable uninterruptable1;
 		if (static_cast<int8_t>(uninterruptable1) > 0) {
 			printf("uninterruptable1 FAILED!\n");
+			++errors;
 		}
 		{
 			com::diag::amigo::Uninterruptable uninterruptable2;
 			if (static_cast<int8_t>(uninterruptable2) < 0) {
 				printf("uninterruptable2 FAILED!\n");
+				++errors;
 			} else {
 				printf("Uninterruptable Unit Test PASSED.\n");
 			}
@@ -94,15 +98,19 @@ static void unittestbody(com::diag::amigo::BinarySemaphore * binarysemaphorep) {
 
 #if 1
 	printf("BinarySemaphore Unit Test...\n");
-	taskYIELD();
+	com::diag::amigo::Task::yield();
 	if (!(*binarysemaphorep)) {
 		printf("BinarySemaphore() FAILED!\n");
+		++errors;
 	} else if (!binarysemaphorep->give()) {
 		printf("BinarySemaphore::give() FAILED!\n");
+		++errors;
 	} else {
-		taskYIELD();
-		if (takerstatus != 1) {
-			printf("takerstatus FAILED!\n");
+		com::diag::amigo::Task::yield();
+		int result = reinterpret_cast<int>(takertask.getResult());
+		if (result != 1) {
+			printf("takertask FAILED!\n");
+			++errors;
 		} else {
 			printf("BinarySemaphore Unit Test PASSED.\n");
 		}
@@ -114,23 +122,32 @@ static void unittestbody(com::diag::amigo::BinarySemaphore * binarysemaphorep) {
 	{
 		com::diag::amigo::CountingSemaphore countingsemaphore(2, 2);
 		if (!countingsemaphore) {
-			printf("CountingSemaphore() failed!\n");
+			printf("CountingSemaphore() FAILED!\n");
+			++errors;
 		} else if (!countingsemaphore.take(com::diag::amigo::CountingSemaphore::IMMEDIATELY)) {
 			printf("CountingSemaphore::take() 1 FAILED!\n");
+			++errors;
 		} else if (!countingsemaphore.take(com::diag::amigo::CountingSemaphore::IMMEDIATELY)) {
 			printf("CountingSemaphore::take() 2 FAILED!\n");
+			++errors;
 		} else if (countingsemaphore.take(com::diag::amigo::CountingSemaphore::IMMEDIATELY)) {
 			printf("CountingSemaphore::take() 3 FAILED!\n");
+			++errors;
 		} else if (!countingsemaphore.give()) {
 			printf("CountingSemaphore::give() 1 FAILED!\n");
+			++errors;
 		} else if (!countingsemaphore.take(com::diag::amigo::CountingSemaphore::IMMEDIATELY)) {
 			printf("CountingSemaphore::take() 4 FAILED!\n");
+			++errors;
 		} else if (!countingsemaphore.give()) {
 			printf("CountingSemaphore::give() 2 FAILED!\n");
+			++errors;
 		} else if (!countingsemaphore.give()) {
 			printf("CountingSemaphore::give() 3 FAILED!\n");
+			++errors;
 		} else if (countingsemaphore.give()) {
 			printf("CountingSemaphore::give() 4 FAILED!\n");
+			++errors;
 		} else {
 			printf("CountingSemaphore Unit Test PASSED.\n");
 		}
@@ -143,10 +160,13 @@ static void unittestbody(com::diag::amigo::BinarySemaphore * binarysemaphorep) {
 		com::diag::amigo::MutexSemaphore mutexsemaphore;
 		if (!mutexsemaphore) {
 			printf("MutexSemaphore() FAILED!\n");
+			++errors;
 		} else if (!mutexsemaphore.take(com::diag::amigo::CountingSemaphore::IMMEDIATELY)) {
 			printf("MutexSemaphore::take() FAILED!\n");
+			++errors;
 		} else if (!mutexsemaphore.give()) {
 			printf("MutexSemaphore::give() FAILED!\n");
+			++errors;
 		} else {
 			printf("MutexSemaphore Unit Test PASSED.\n");
 			printf("CriticalSection Unit Test...\n");
@@ -154,11 +174,12 @@ static void unittestbody(com::diag::amigo::BinarySemaphore * binarysemaphorep) {
 				com::diag::amigo::CriticalSection criticalsection1(mutexsemaphore);
 				if (!criticalsection1) {
 					printf("criticalsection1 FAILED!\n");
-				}
-				{
+					++errors;
+				} else {
 					com::diag::amigo::CriticalSection criticalsection2(mutexsemaphore);
 					if (!criticalsection2) {
 						printf("criticalsection2 FAILED!\n");
+						++errors;
 					} else {
 						printf("CriticalSection Unit Test PASSED.\n");
 					}
@@ -191,10 +212,13 @@ static void unittestbody(com::diag::amigo::BinarySemaphore * binarysemaphorep) {
 			// Reference: WIZnet, W5100 Datasheet, Version 1.2.4, 2011
 			if (rtr0 != 0x07) {
 				printf("rtr0 FAILED!\n");
+				++errors;
 			} else if (rtr1 != 0xd0) {
 				printf("rtr1 FAILED!\n");
+				++errors;
 			} else if (rcr != 0x08) {
 				printf("rcr FAILED!\n");
+				++errors;
 			} else {
 				printf("SPI Unit Test PASSED.\n");
 			}
@@ -219,12 +243,11 @@ static void unittestbody(com::diag::amigo::BinarySemaphore * binarysemaphorep) {
 	printf("\nSerial Unit Test PASSED.\n");
 #endif
 
-	while (!0) { taskYIELD(); }
-}
+	printf("errors=%d\n", errors);
 
-static void unittest(void * parm) __attribute__((section(".lowtext")));
-static void unittest(void * parm) {
-	unittestbody(static_cast<com::diag::amigo::BinarySemaphore *>(parm));
+	serial.flush();
+
+	return reinterpret_cast<void *>(errors);
 }
 
 int main() __attribute__((OS_main));
@@ -246,7 +269,7 @@ int main() {
 	static const char STARTING[] PROGMEM = "STARTING=0x";
 	com::diag::amigo::Console::instance().start().write_P(STARTING).dump_P(&STARTING, sizeof(STARTING)).write('\r').write('\n').flush().stop();
 	com::diag::amigo::Console::instance().start().write_P(STARTING, strlen_P(STARTING)).dump_P(&STARTING, sizeof(STARTING)).write('\r').write('\n').flush().stop();
-	void (*task)(void *) = unittest;
+	void * (*task)(void *) = unittest;
 	static const char TASK[] = "TASK=0x";
 	com::diag::amigo::Console::instance().start().write(TASK).dump(&task, sizeof(task)).write('\r').write('\n').flush().stop();
 	com::diag::amigo::Console::instance().start().write(TASK, strlen(TASK)).dump(&task, sizeof(task)).write('\r').write('\n').flush().stop();
@@ -269,15 +292,18 @@ int main() {
 	// what are essentially permanent objects on main's stack that persist
 	// until the board is rebooted. That's useful.
 
+	com::diag::amigo::Console::instance().start().write("Task Unit Test...\r\n").flush().stop();
 	com::diag::amigo::BinarySemaphore binarysemaphore;
-
-    xTaskHandle takerhandle;
-    xTaskCreate(taker, (const signed char *)"Taker", 512, &binarysemaphore, 3, &takerhandle);
-
-	xTaskHandle unittesthandle;
-    xTaskCreate(unittest, (const signed char *)"UnitTest", 512, &binarysemaphore, 3, &unittesthandle);
-
-	vTaskStartScheduler();
+	takertask.start(taker, &binarysemaphore);
+	unittesttask.start(unittest, &binarysemaphore);
+	if (takertask != true) {
+		com::diag::amigo::Console::instance().start().write("takertask.start() FAILED!\r\n").flush().stop();
+	} else if (unittesttask != true) {
+		com::diag::amigo::Console::instance().start().write("unittesttask.start() FAILED!\r\n").flush().stop();
+	} else {
+		com::diag::amigo::Console::instance().start().write("Task Unit Test PASSED.\r\n").flush().stop();
+		com::diag::amigo::Task::begin();
+	}
 
 	com::diag::amigo::Console::instance().start().write("exiting\r\n").flush().stop();
 
