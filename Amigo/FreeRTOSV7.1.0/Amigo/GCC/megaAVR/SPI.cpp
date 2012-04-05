@@ -203,7 +203,7 @@ void SPI::stop() const {
 	SPICR &= ~(_BV(SPIE) | _BV(SPE));
 }
 
-void SPI::activate() {
+void SPI::begin() {
 	Uninterruptable uninterruptable;
 	uint8_t ch;
 	if (transmitting.receive(&ch, IMMEDIATELY)) {
