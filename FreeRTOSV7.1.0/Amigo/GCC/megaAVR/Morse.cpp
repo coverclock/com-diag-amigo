@@ -15,9 +15,9 @@ namespace com {
 namespace diag {
 namespace amigo {
 
-#define PIN			AMIGO_MMIO_8(base, 0)
-#define DDR			AMIGO_MMIO_8(base, 1)
-#define PORT		AMIGO_MMIO_8(base, 2)
+#define PIN			COM_DIAG_AMIGO_MMIO_8(base, 0)
+#define DDR			COM_DIAG_AMIGO_MMIO_8(base, 1)
+#define PORT		COM_DIAG_AMIGO_MMIO_8(base, 2)
 
 void Morse::morse(const char * code) {
 	int count = 0;

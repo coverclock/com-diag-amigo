@@ -24,13 +24,13 @@ namespace amigo {
 // than one SPI controller, but I'm trying to follow the pattern set by
 // Serial.)
 
-#define SPICR		AMIGO_MMIO_8(spibase, 0)
-#define SPISR		AMIGO_MMIO_8(spibase, 1)
-#define SPIDR		AMIGO_MMIO_8(spibase, 2)
+#define SPICR		COM_DIAG_AMIGO_MMIO_8(spibase, 0)
+#define SPISR		COM_DIAG_AMIGO_MMIO_8(spibase, 1)
+#define SPIDR		COM_DIAG_AMIGO_MMIO_8(spibase, 2)
 
-#define PIN			AMIGO_MMIO_8(gpiobase, 0)
-#define DDR			AMIGO_MMIO_8(gpiobase, 1)
-#define PORT		AMIGO_MMIO_8(gpiobase, 2)
+#define PIN			COM_DIAG_AMIGO_MMIO_8(gpiobase, 0)
+#define DDR			COM_DIAG_AMIGO_MMIO_8(gpiobase, 1)
+#define PORT		COM_DIAG_AMIGO_MMIO_8(gpiobase, 2)
 
 /**
  * This table in SRAM will be filled in with the this pointer from a specific
