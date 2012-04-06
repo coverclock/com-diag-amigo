@@ -13,12 +13,6 @@
 #include "task.h"
 #include "com/diag/amigo/types.h"
 
-#if defined(__AVR_3_BYTE_PC__)
-#	define COM_DIAG_AMIGO_TASK(_NAME_) void _NAME_(void *) __attribute__((section(".lowtext")))
-#else
-#	define COM_DIAG_AMIGO_TASK(_NAME_) void _NAME_(void *)
-#endif
-
 namespace com {
 namespace diag {
 namespace amigo {
@@ -31,21 +25,27 @@ class Task
 
 public:
 
-	typedef void * (Function)(void *);
-
 	static const unsigned short DEPTH = 512;
 
 	static const unsigned char PRIORITY = 0;
+
+	static const Ticks MILLISECONDS_PER_TICK = portTICK_RATE_MS;
+
+	static void task(Task * that);
 
 	static void begin();
 
 	static void yield();
 
-protected:
+	static Ticks elapsed();
 
-	static COM_DIAG_AMIGO_TASK(trampoline);
+	static void delay(Ticks absolute);
 
-public:
+	static void delay(Ticks & since, Ticks relative);
+
+	static Ticks ticks(Ticks milliseconds) { return (milliseconds / MILLISECONDS_PER_TICK); }
+
+	static Ticks milliseconds(Ticks ticks) { return (ticks * MILLISECONDS_PER_TICK); }
 
 	explicit Task(const char * myname = 0);
 
@@ -53,7 +53,7 @@ public:
 
 	operator bool() const { return (handle != 0); }
 
-	void start(void * (*myfunction)(void *) = 0, void * myparameter = 0, unsigned short depth = DEPTH, unsigned char priority = PRIORITY);
+	void start(unsigned short depth = DEPTH, unsigned char priority = PRIORITY);
 
 	void stop() { stopping = true; }
 
@@ -63,22 +63,13 @@ public:
 
 	xTaskHandle getHandle() const { return handle; }
 
-	Function * getFunction() const { return function; }
-
-	void * getParameter() const { return parameter; }
-
-	void * getResult() const { return result; }
-
 protected:
 
 	const char * name;
 	xTaskHandle handle;
-	void * (*function)(void *);
-	void * parameter;
-	void * result;
 	bool stopping;
 
-	virtual void * task();
+	virtual void task();
 
 private:
 
@@ -104,6 +95,18 @@ inline void Task::begin() {
 
 inline void Task::yield() {
 	taskYIELD();
+}
+
+inline Ticks Task::elapsed() {
+	return xTaskGetTickCount();
+}
+
+inline void Task::delay(Ticks absolute) {
+	vTaskDelay(absolute);
+}
+
+inline void Task::delay(Ticks & since, Ticks relative) {
+	vTaskDelayUntil(&since, relative);
 }
 
 }
