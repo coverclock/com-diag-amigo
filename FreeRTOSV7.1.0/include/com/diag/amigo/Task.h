@@ -70,8 +70,8 @@ public:
 
 	/**
 	 * Start the task whose body is the task instance method.
-	 * @param depth is the stack depth for this task.
-	 * @param priority is the priority for this task.
+	 * @param mydepth is the stack depth for this task.
+	 * @param mypriority is the priority for this task.
 	 */
 	void start(unsigned int mydepth = DEPTH, unsigned int mypriority = PRIORITY);
 
