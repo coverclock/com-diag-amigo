@@ -26,7 +26,7 @@
 #include "com/diag/amigo/MutexSemaphore.h"
 
 /*******************************************************************************
- * UNIT TEST FRAMEWORK
+ * UNIT TEST FRAMEWORK (SUCH AS IT IS)
  ******************************************************************************/
 
 static const char UNITTEST_FAILED_AT_LINE[] PROGMEM = "FAILED at line %d!\n";
@@ -64,7 +64,7 @@ public:
 } static unittesttask("UnitTest");
 
 /*******************************************************************************
- * TAKER TASK
+ * TAKER TASK (FOR TESTING BINARYSEMAPHORE)
  ******************************************************************************/
 
 static com::diag::amigo::BinarySemaphore * binarysemaphorep = 0;
@@ -85,7 +85,7 @@ void TakerTask::task() {
 }
 
 /*******************************************************************************
- * WIZNET W5100 SPI FUNCTIONS
+ * WIZNET W5100 SPI FUNCTIONS (FOR TESTING SPI)
  ******************************************************************************/
 
 inline void w5100init() {
@@ -345,7 +345,7 @@ void UnitTestTask::task() {
 #endif
 
 #if 1
-	UNITTESTLN("Serial Unit Test (type control-D to exit)\n");
+	UNITTESTLN("Serial (type control-D to exit)");
 	static const int CONTROL_D = 0x04;
 	int ch = ~CONTROL_D;
 	for (;;) {
