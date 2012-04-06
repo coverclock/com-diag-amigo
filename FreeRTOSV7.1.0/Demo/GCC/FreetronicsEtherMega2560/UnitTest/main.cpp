@@ -30,10 +30,10 @@
  ******************************************************************************/
 
 static const char UNITTEST_FAILED_AT_LINE[] PROGMEM = "FAILED at line %d!\n";
-static const char UNITTEST_PASSED[] PROGMEM = "PASSED\n";
+static const char UNITTEST_PASSED[] PROGMEM = "PASSED.\n";
 static const char CUNITTEST_FAILED_AT_LINE[] PROGMEM = "FAILED at line 0x";
 static const char CUNITTEST_FAILED_EOL[] PROGMEM = "!\r\n";
-static const char CUNITTEST_PASSED[] PROGMEM = "PASSED\r\n";
+static const char CUNITTEST_PASSED[] PROGMEM = "PASSED.\r\n";
 
 #define UNITTEST(_NAME_) printf(PSTR("Unit Test " _NAME_ " "))
 #define UNITTESTLN(_NAME_) printf(PSTR("Unit Test " _NAME_ "\n"))
