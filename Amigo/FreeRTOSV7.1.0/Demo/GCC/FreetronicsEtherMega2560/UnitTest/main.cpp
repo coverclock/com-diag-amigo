@@ -20,6 +20,7 @@
 #include "com/diag/amigo/Source.h"
 #include "com/diag/amigo/Sink.h"
 #include "com/diag/amigo/Print.h"
+#include "com/diag/amigo/Dump.h"
 #include "com/diag/amigo/BinarySemaphore.h"
 #include "com/diag/amigo/CountingSemaphore.h"
 #include "com/diag/amigo/CriticalSection.h"
@@ -129,6 +130,7 @@ void UnitTestTask::task() {
 	SIZEOF(com::diag::amigo::Console);
 	SIZEOF(com::diag::amigo::CountingSemaphore);
 	SIZEOF(com::diag::amigo::CriticalSection);
+	SIZEOF(com::diag::amigo::Dump);
 	SIZEOF(com::diag::amigo::Morse);
 	SIZEOF(com::diag::amigo::MutexSemaphore);
 	SIZEOF(com::diag::amigo::Print);
@@ -168,6 +170,21 @@ void UnitTestTask::task() {
 			PASSED();
 		}
 	}
+#endif
+
+#if 1
+	UNITTESTLN("Dump");
+	{
+		static const uint8_t datamemory[] = { 0xde, 0xad, 0xbe, 0xef };
+		static const uint8_t programmemory[] PROGMEM = { 0xca, 0xfe, 0xba, 0xbe };
+		com::diag::amigo::Dump dump(serialsink);
+		com::diag::amigo::Dump dump_P(serialsink, true);
+		dump(datamemory, sizeof(datamemory));
+		printf(PSTR("\r\n"));
+		dump_P(programmemory, sizeof(programmemory));
+		printf(PSTR("\r\n"));
+	}
+	PASSED();
 #endif
 
 #if 1
@@ -360,7 +377,10 @@ void UnitTestTask::task() {
 	PASSED();
 #endif
 
-	printf(PSTR("Unit Test errors=%d\n"), errors);
+	// Just to make sure the regular data memory printf works.
+
+	com::diag::amigo::Print errorf(serialsink);
+	errorf("Unit Test errors=%d\n", errors);
 
 	serial.flush();
 }

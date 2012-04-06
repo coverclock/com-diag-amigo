@@ -148,7 +148,7 @@ public:
 	 * Initialize the SPI and start interrupt driven I/O operations on it.
 	 * @param divisor specifies the oscillator frequency divisor.
 	 * @param role specifies whether this SPI controller is Master or Slave.
-	 * @oaran order specifies Most or Least Significant Bit transmission order.
+	 * @param order specifies Most or Least Significant Bit transmission order.
 	 * @param polarity specifies Positive or Negative signal polarity.
 	 * @param phase specifies signal phase Leading or Trailing.
 	 */
