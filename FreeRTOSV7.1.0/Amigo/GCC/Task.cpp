@@ -43,7 +43,7 @@ Task::Task(const char * myname)
 
 Task::~Task() {
 	if (handle != 0) {
-		com::diag::amigo::fatal(__FILE__, __LINE__);
+		com::diag::amigo::fatal(PSTR(__FILE__), __LINE__);
 	}
 }
 
