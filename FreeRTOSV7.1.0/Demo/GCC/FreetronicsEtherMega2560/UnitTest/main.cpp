@@ -25,15 +25,29 @@
 #include "com/diag/amigo/CriticalSection.h"
 #include "com/diag/amigo/MutexSemaphore.h"
 
-#define UNITTEST(_NAME_) printf(PSTR("Unit Test " _NAME_))
-#define FAILED(_LINE_) printf(PSTR(" FAILED at line %d!\n"), _LINE_)
-#define PASSED() printf(PSTR(" PASSED\n"))
+/*******************************************************************************
+ * UNIT TEST FRAMEWORK
+ ******************************************************************************/
 
-#define CUNITTEST(_NAME_) com::diag::amigo::Console::instance().start().write_P(PSTR("Unit Test" _NAME_)).flush().stop()
-#define CFAILED(_LINE_) do { int line = com::diag::amigo::littleendian() ? (((_LINE_) >> 8) & 0xff) | (((_LINE_) & 0xff) << 8) : (_LINE_); com::diag::amigo::Console::instance().start().write_P(PSTR(" FAILED at line 0x")).dump(&line, sizeof(line)).write_P(PSTR("!\r\n")).flush().stop(); } while (0)
-#define CPASSED() com::diag::amigo::Console::instance().start().write_P(PSTR(" PASSED\r\n")).flush().stop()
+static const char UNITTEST_FAILED_AT_LINE[] PROGMEM = "FAILED at line %d!\n";
+static const char UNITTEST_PASSED[] PROGMEM = "PASSED\n";
+static const char CUNITTEST_FAILED_AT_LINE[] PROGMEM = "FAILED at line 0x";
+static const char CUNITTEST_FAILED_EOL[] PROGMEM = "!\r\n";
+static const char CUNITTEST_PASSED[] PROGMEM = "PASSED\r\n";
 
-static com::diag::amigo::BinarySemaphore * binarysemaphorep = 0;
+#define UNITTEST(_NAME_) printf(PSTR("Unit Test " _NAME_ " "))
+#define UNITTESTLN(_NAME_) printf(PSTR("Unit Test " _NAME_ "\n"))
+#define FAILED(_LINE_) printf(UNITTEST_FAILED_AT_LINE, _LINE_)
+#define PASSED() printf(UNITTEST_PASSED)
+
+#define CUNITTEST(_NAME_) com::diag::amigo::Console::instance().start().write_P(PSTR("Unit Test" _NAME_ " ")).flush().stop()
+#define CUNITTESTLN(_NAME_) com::diag::amigo::Console::instance().start().write_P(PSTR("Unit Test" _NAME_ "\r\n")).flush().stop()
+#define CFAILED(_LINE_) do { int line = com::diag::amigo::littleendian() ? (((_LINE_) >> 8) & 0xff) | (((_LINE_) & 0xff) << 8) : (_LINE_); com::diag::amigo::Console::instance().start().write_P(CUNITTEST_FAILED_AT_LINE).dump(&line, sizeof(line)).write_P(CUNITTEST_FAILED_EOL).flush().stop(); } while (0)
+#define CPASSED() com::diag::amigo::Console::instance().start().write_P(CUNITTEST_PASSED).flush().stop()
+
+/*******************************************************************************
+ * TASK DEFINITIONS
+ ******************************************************************************/
 
 class TakerTask : public com::diag::amigo::Task {
 public:
@@ -49,6 +63,12 @@ public:
 	int errors;
 } static unittesttask("UnitTest");
 
+/*******************************************************************************
+ * TAKER TASK
+ ******************************************************************************/
+
+static com::diag::amigo::BinarySemaphore * binarysemaphorep = 0;
+
 void TakerTask::task() {
 	++errors;
 	if (*binarysemaphorep == false) {
@@ -63,6 +83,10 @@ void TakerTask::task() {
 		yield();
 	}
 }
+
+/*******************************************************************************
+ * WIZNET W5100 SPI FUNCTIONS
+ ******************************************************************************/
 
 inline void w5100init() {
 	DDRB |= _BV(4);
@@ -83,6 +107,10 @@ inline void w5100reset() {
 	PORTB |=  _BV(4);
 }
 
+/*******************************************************************************
+ * UNIT TEST TASK
+ ******************************************************************************/
+
 void UnitTestTask::task() {
 	com::diag::amigo::Serial serial;
 	com::diag::amigo::SerialSink serialsink(serial);
@@ -90,7 +118,7 @@ void UnitTestTask::task() {
 	serial.start();
 
 #if 1
-	UNITTEST("sizeof\n");
+	UNITTESTLN("sizeof");
 #	define SIZEOF(_TYPE_) printf(PSTR("sizeof(" # _TYPE_ ")=%lu\n"), sizeof(_TYPE_));
 	SIZEOF(com::diag::amigo::BinarySemaphore);
 	SIZEOF(com::diag::amigo::Console);
@@ -233,7 +261,7 @@ void UnitTestTask::task() {
 			FAILED(__LINE__);
 			++errors;
 		} else {
-			FAILED(__LINE__);
+			PASSED();
 		}
 	}
 #endif
@@ -312,7 +340,7 @@ void UnitTestTask::task() {
 #endif
 
 #if 1
-	UNITTEST("Serial Unit Test (type control-D to exit)\n");
+	UNITTESTLN("Serial Unit Test (type control-D to exit)\n");
 	static const int CONTROL_D = 0x04;
 	int ch = ~CONTROL_D;
 	for (;;) {
@@ -332,9 +360,13 @@ void UnitTestTask::task() {
 	serial.flush();
 }
 
+/*******************************************************************************
+ * MAIN PROGRAM
+ ******************************************************************************/
+
 class Scope {
 public:
-	Scope() { com::diag::amigo::Console::instance().start().write("starting\r\n").flush().stop(); }
+	Scope() { com::diag::amigo::Console::instance().start().write_P(PSTR("\r\nstarting\r\n")).flush().stop(); }
 	~Scope() { com::diag::amigo::fatal(PSTR(__FILE__), __LINE__); }
 };
 
@@ -353,7 +385,7 @@ int main() {
 #endif
 
 #if 1
-	CUNITTEST("Console\r\n");
+	CUNITTESTLN("Console");
 	static const char STARTING[] PROGMEM = "STARTING";
 	static const char EQUALS[] PROGMEM = "=0x";
 	com::diag::amigo::Console::instance().start().write_P(STARTING, strlen_P(STARTING)).write_P(EQUALS).dump_P(&STARTING, sizeof(STARTING)).write('\r').write('\n').flush().stop();
