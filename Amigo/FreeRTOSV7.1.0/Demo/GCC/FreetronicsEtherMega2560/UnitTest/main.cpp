@@ -40,8 +40,8 @@ static const char CUNITTEST_PASSED[] PROGMEM = "PASSED\r\n";
 #define FAILED(_LINE_) printf(UNITTEST_FAILED_AT_LINE, _LINE_)
 #define PASSED() printf(UNITTEST_PASSED)
 
-#define CUNITTEST(_NAME_) com::diag::amigo::Console::instance().start().write_P(PSTR("Unit Test" _NAME_ " ")).flush().stop()
-#define CUNITTESTLN(_NAME_) com::diag::amigo::Console::instance().start().write_P(PSTR("Unit Test" _NAME_ "\r\n")).flush().stop()
+#define CUNITTEST(_NAME_) com::diag::amigo::Console::instance().start().write_P(PSTR("Unit Test " _NAME_ " ")).flush().stop()
+#define CUNITTESTLN(_NAME_) com::diag::amigo::Console::instance().start().write_P(PSTR("Unit Test " _NAME_ "\r\n")).flush().stop()
 #define CFAILED(_LINE_) do { int line = com::diag::amigo::littleendian() ? (((_LINE_) >> 8) & 0xff) | (((_LINE_) & 0xff) << 8) : (_LINE_); com::diag::amigo::Console::instance().start().write_P(CUNITTEST_FAILED_AT_LINE).dump(&line, sizeof(line)).write_P(CUNITTEST_FAILED_EOL).flush().stop(); } while (0)
 #define CPASSED() com::diag::amigo::Console::instance().start().write_P(CUNITTEST_PASSED).flush().stop()
 
@@ -119,7 +119,12 @@ void UnitTestTask::task() {
 
 #if 1
 	UNITTESTLN("sizeof");
-#	define SIZEOF(_TYPE_) printf(PSTR("sizeof(" # _TYPE_ ")=%lu\n"), sizeof(_TYPE_));
+	// The need to do this cast smells like a compiler bug to me, but I'd be
+	// glad to be proven wrong. Not doing the cast results in BIGNUMs being
+	// printed, regardless of the printf format, %u, %d, %lu, etc.
+#	define SIZEOF(_TYPE_) printf(PSTR("sizeof(" # _TYPE_ ")=%lu\n"), static_cast<unsigned long>(sizeof(_TYPE_)));
+	// Note how small many of these are. For some, it's just the two-byte
+	// virtual pointer overhead for the virtual destructor (when one exists).
 	SIZEOF(com::diag::amigo::BinarySemaphore);
 	SIZEOF(com::diag::amigo::Console);
 	SIZEOF(com::diag::amigo::CountingSemaphore);
@@ -355,7 +360,7 @@ void UnitTestTask::task() {
 	PASSED();
 #endif
 
-	printf(PSTR("errors=%d\n"), errors);
+	printf(PSTR("Unit Test errors=%d\n"), errors);
 
 	serial.flush();
 }
