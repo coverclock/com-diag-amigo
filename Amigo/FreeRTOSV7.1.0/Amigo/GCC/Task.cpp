@@ -47,8 +47,8 @@ Task::~Task() {
 	}
 }
 
-void Task::start(unsigned short depth, unsigned char priority) {
-	if (xTaskCreate(reinterpret_cast<void(*)(void*)>(amigo_task_trampoline), (const signed char *)name, depth, this, priority, &handle) != pdPASS) {
+void Task::start(unsigned int mydepth, unsigned int mypriority) {
+	if (xTaskCreate(reinterpret_cast<void(*)(void*)>(amigo_task_trampoline), (const signed char *)name, mydepth, this, mypriority, &handle) != pdPASS) {
 		handle = 0;
 	}
 }
