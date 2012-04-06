@@ -19,5 +19,5 @@
  * wackiness ensues.
  */
 CXXCAPI void __cxa_pure_virtual() {
-	com::diag::amigo::fatal(__FILE__, __LINE__);
+	com::diag::amigo::fatal(PSTR(__FILE__), __LINE__);
 }

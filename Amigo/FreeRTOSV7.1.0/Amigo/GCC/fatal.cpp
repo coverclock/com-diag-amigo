@@ -11,12 +11,12 @@
 #include "com/diag/amigo/target/Console.h"
 #include "com/diag/amigo/target/Uninterruptable.h"
 
-CXXCAPI void amigo_fatal(const char * file, int line) {
+CXXCAPI void amigo_fatal(PGM_P file, int line) {
 	com::diag::amigo::Uninterruptable uninterruptable;
 	if (com::diag::amigo::littleendian()) {
 		// This just makes the hexadecimal line number more obvious.
 		line = ((line >> 8) & 0xff) | ((line & 0xff) << 8);
 	}
-	com::diag::amigo::Console::instance().start().write("FATAL: ").write(file).write("@0x").dump(&line, sizeof(line)).write("!\r\n").flush().stop();
+	com::diag::amigo::Console::instance().start().write_P(PSTR("\r\nFATAL: ")).write_P(file).write_P(PSTR("@0x")).dump(&line, sizeof(line)).write_P(PSTR("!\r\n")).flush().stop();
 	while (!0) {}
 }

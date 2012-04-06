@@ -10,16 +10,17 @@
  */
 
 #include "com/diag/amigo/cxxcapi.h"
+#include "com/diag/amigo/target/harvard.h"
 
 /**
  * This is the function is that from which nothing ever returns. It disables
  * interrupts, takes over the console serial port, prints a message if it can
  * using busy waiting, and infinite loops. This version can be called from
  * either C or C++ translation units.
- * @param file points to a file name, typically the preprocessor's __FILE__.
- * @param line is a line number, typically the preprocessor's __LINE__.
+ * @param file points to a file name in program space, typically PSTR(__FILE__).
+ * @param line is a line number, typically __LINE__.
  */
-CXXCAPI void amigo_fatal(const char * file, int line);
+CXXCAPI void amigo_fatal(PGM_P file, int line);
 
 #if defined(__cplusplus)
 
@@ -31,10 +32,10 @@ namespace amigo {
  * This is the function is that from which nothing ever returns. It disables
  * interrupts, takes over the console serial port, prints a message if it can
  * using busy waiting, and infinite loops.
- * @param file points to a file name, typically the preprocessor's __FILE__.
- * @param line is a line number, typically the preprocessor's __LINE__.
+ * @param file points to a file name in program space, typically PSTR(__FILE__).
+ * @param line is a line number, typically __LINE__.
  */
-inline void fatal(const char * file, int line) {
+inline void fatal(PGM_P file, int line) {
 	amigo_fatal(file, line);
 }
 
