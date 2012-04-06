@@ -23,7 +23,11 @@ namespace amigo {
 /**
  * BinarySemaphore encapsulates a FreeRTOS binary semaphore. BinarySemaphores
  * are typically used to synchronize a task with an interrupt service routine
- * in a device driver, or synchronize two cooperative tasks.
+ * in a device driver, or synchronize two cooperative tasks. I can't quite
+ * grok this from the FreeRTOS documentation, but it seems like give() on
+ * a Binary semaphore isn't cumulative: that is, if someone is blocked on
+ * the semaphore they are unblocked, but otherwise the semaphore doesn't
+ * change state.
  */
 class BinarySemaphore
 {
