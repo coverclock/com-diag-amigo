@@ -6,46 +6,53 @@
  * http://www.diag.com/navigation/downloads/Amigo.html\n
  */
 
-#include <avr/io.h>
-#include <avr/interrupt.h>
-#include <math.h>
-#include <util/delay.h>
-#include "FreeRTOS.h"
-#include "task.h"
 #include "com/diag/amigo/types.h"
 #include "com/diag/amigo/fatal.h"
-#include "com/diag/amigo/Task.h"
+#include "com/diag/amigo/target/harvard.h"
 #include "com/diag/amigo/target/Morse.h"
 #include "com/diag/amigo/target/Serial.h"
 #include "com/diag/amigo/target/SPI.h"
 #include "com/diag/amigo/target/Uninterruptable.h"
-#include "com/diag/amigo/SerialSink.h"
-#include "com/diag/amigo/Print.h"
 #include "com/diag/amigo/target/Console.h"
-#include "com/diag/amigo/target/harvard.h"
+#include "com/diag/amigo/Task.h"
+#include "com/diag/amigo/SerialSink.h"
+#include "com/diag/amigo/Source.h"
+#include "com/diag/amigo/Sink.h"
+#include "com/diag/amigo/Print.h"
 #include "com/diag/amigo/BinarySemaphore.h"
 #include "com/diag/amigo/CountingSemaphore.h"
 #include "com/diag/amigo/CriticalSection.h"
 #include "com/diag/amigo/MutexSemaphore.h"
 
-static com::diag::amigo::Task takertask("Taker");
-static com::diag::amigo::Task unittesttask("UnitTest");
+static com::diag::amigo::BinarySemaphore * binarysemaphorep = 0;
 
-static void * taker(void * parameter) {
-	com::diag::amigo::BinarySemaphore * binarysemaphorep = static_cast<com::diag::amigo::BinarySemaphore *>(parameter);
-	int result = 1;
+class TakerTask : public com::diag::amigo::Task {
+public:
+	explicit TakerTask(const char * name) : Task(name), errors(0) {}
+	virtual void task();
+	int errors;
+} static takertask("Taker");
 
-#if 1
-	if (!(*binarysemaphorep)) {
-		result = -1;
+class UnitTestTask : public com::diag::amigo::Task {
+public:
+	explicit UnitTestTask(const char * name) : Task(name), errors(0) {}
+	virtual void task();
+	int errors;
+} static unittesttask("UnitTest");
+
+void TakerTask::task() {
+	++errors;
+	if (*binarysemaphorep == false) {
+		++errors;
 	} else if (!binarysemaphorep->take()) {
-		result = -2;
+		++errors;
 	} else {
 		// Do nothing.
 	}
-#endif
-
-	return reinterpret_cast<void *>(result);
+	--errors;
+	while (!stopped()) {
+		yield();
+	}
 }
 
 inline void w5100init() {
@@ -67,14 +74,58 @@ inline void w5100reset() {
 	PORTB |=  _BV(4);
 }
 
-static void * unittest(void * parameter) {
-	com::diag::amigo::BinarySemaphore * binarysemaphorep = static_cast<com::diag::amigo::BinarySemaphore *>(parameter);
-	int errors = 0;
-
+void UnitTestTask::task() {
 	com::diag::amigo::Serial serial;
 	com::diag::amigo::SerialSink serialsink(serial);
 	com::diag::amigo::Print printf(serialsink);
 	serial.start();
+
+#if 0
+	printf("sizeof Unit Test...\n");
+	SIZEOF(com::diag::amigo::BinarySemaphore);
+	SIZEOF(com::diag::amigo::Console);
+	SIZEOF(com::diag::amigo::CountingSemaphore);
+	SIZEOF(com::diag::amigo::CriticalSection);
+	SIZEOF(com::diag::amigo::Morse);
+	SIZEOF(com::diag::amigo::MutexSemaphore);
+	SIZEOF(com::diag::amigo::Print);
+	SIZEOF(com::diag::amigo::Queue);
+	SIZEOF(com::diag::amigo::Serial);
+	SIZEOF(com::diag::amigo::SerialSink);
+	SIZEOF(com::diag::amigo::Sink);
+	SIZEOF(com::diag::amigo::Source);
+	SIZEOF(com::diag::amigo::SPI);
+	SIZEOF(com::diag::amigo::Task);
+	SIZEOF(com::diag::amigo::Uninterruptable);
+	printf("sizeof Unit Test PASSED.\n");
+#endif
+
+#if 1
+	printf("Delay Unit Test...\n");
+	static const com::diag::amigo::Ticks W1 = 200;
+	static const com::diag::amigo::Ticks W2 = 500;
+	static const com::diag::amigo::Ticks PERCENT = 20;
+	com::diag::amigo::Ticks elapsed;
+	com::diag::amigo::Ticks t1 = milliseconds(com::diag::amigo::Task::elapsed());
+	delay(ticks(W1));
+	com::diag::amigo::Ticks t2 = milliseconds(com::diag::amigo::Task::elapsed());
+	elapsed = t2 - t1;
+	if (!((W1 <= elapsed) && (elapsed <= (W1 + (W1 / (100 / PERCENT)))))) {
+		printf("(t2-t1)=%u?%u FAILED!\n", elapsed, W1);
+		++errors;
+	} else {
+		com::diag::amigo::Ticks t4 = t1;
+		delay(t4, ticks(W2));
+		com::diag::amigo::Ticks t3 = milliseconds(com::diag::amigo::Task::elapsed());
+		elapsed = t3 - t1;
+		if (!((W2 <= elapsed) && (elapsed <= (W2 + (W2 / (100 / PERCENT)))))) {
+			printf("(t3-t1)=%u?%u FAILED!\n", elapsed, W2);
+			++errors;
+		} else {
+			printf("Delay Unit Test PASSED.\n");
+		}
+	}
+#endif
 
 #if 1
 	printf("Uninterruptable Unit Test...\n");
@@ -98,21 +149,44 @@ static void * unittest(void * parameter) {
 
 #if 1
 	printf("BinarySemaphore Unit Test...\n");
-	com::diag::amigo::Task::yield();
-	if (!(*binarysemaphorep)) {
+	yield();
+	if (takertask != true) {
+		printf("takertask.start() FAILED!\n");
+		++errors;
+	} else if (*binarysemaphorep == false) {
 		printf("BinarySemaphore() FAILED!\n");
 		++errors;
 	} else if (!binarysemaphorep->give()) {
 		printf("BinarySemaphore::give() FAILED!\n");
 		++errors;
 	} else {
-		com::diag::amigo::Task::yield();
-		int result = reinterpret_cast<int>(takertask.getResult());
-		if (result != 1) {
-			printf("takertask FAILED!\n");
+		yield();
+		if (takertask != true) {
+			printf("takertask yield FAILED!\n");
+			++errors;
+		} else if (takertask.stopped()) {
+			printf("takertask.stopped() 1 FAILED!\n");
 			++errors;
 		} else {
-			printf("BinarySemaphore Unit Test PASSED.\n");
+			takertask.stop();
+			if (!takertask.stopped()) {
+				printf("takertask.stopped() 2 FAILED!\n");
+				++errors;
+			} else {
+				for (int ii = 0; ii < 10; ++ii) {
+					yield();
+					if (false != takertask) { break; }
+				}
+				if (takertask != false) {
+					printf("takertask.stop() FAILED!\n");
+					++errors;
+				} else if (takertask.errors != 0) {
+					printf("takertask errors FAILED!\n");
+					errors += takertask.errors;
+				} else {
+					printf("BinarySemaphore Unit Test PASSED.\n");
+				}
+			}
 		}
 	}
 #endif
@@ -246,14 +320,17 @@ static void * unittest(void * parameter) {
 	printf("errors=%d\n", errors);
 
 	serial.flush();
-
-	return reinterpret_cast<void *>(errors);
 }
+
+class Scope {
+public:
+	Scope() { com::diag::amigo::Console::instance().start().write("starting\r\n").flush().stop(); }
+	~Scope() { com::diag::amigo::fatal(__FILE__, __LINE__); }
+};
 
 int main() __attribute__((OS_main));
 int main() {
-
-	com::diag::amigo::Console::instance().start().write("starting\r\n").flush().stop();
+	Scope scope;
 
 	// We test the busy waiting stuff in main before we create our tasks and
 	// start the scheduler.
@@ -266,14 +343,12 @@ int main() {
 
 #if 1
 	com::diag::amigo::Console::instance().start().write("Console Unit Test...\r\n").flush().stop();
-	static const char STARTING[] PROGMEM = "STARTING=0x";
-	com::diag::amigo::Console::instance().start().write_P(STARTING).dump_P(&STARTING, sizeof(STARTING)).write('\r').write('\n').flush().stop();
-	com::diag::amigo::Console::instance().start().write_P(STARTING, strlen_P(STARTING)).dump_P(&STARTING, sizeof(STARTING)).write('\r').write('\n').flush().stop();
-	void * (*task)(void *) = unittest;
-	static const char TASK[] = "TASK=0x";
-	com::diag::amigo::Console::instance().start().write(TASK).dump(&task, sizeof(task)).write('\r').write('\n').flush().stop();
-	com::diag::amigo::Console::instance().start().write(TASK, strlen(TASK)).dump(&task, sizeof(task)).write('\r').write('\n').flush().stop();
-	com::diag::amigo::Console::instance().start().write("Console Unit Test PASSED\r\n").flush().stop();
+	static const char STARTING[] PROGMEM = "STARTING";
+	static const char EQUALS[] PROGMEM = "=0x";
+	com::diag::amigo::Console::instance().start().write_P(STARTING, strlen_P(STARTING)).write_P(EQUALS).dump_P(&STARTING, sizeof(STARTING)).write('\r').write('\n').flush().stop();
+	static const char TASK[] = "unittesttask";
+	com::diag::amigo::Console::instance().start().write(TASK, strlen(TASK)).write("=0x").dump(&unittesttask, sizeof(unittesttask)).write('\r').write('\n').flush().stop();
+	com::diag::amigo::Console::instance().start().write("Console Unit Test PASSED.\r\n").flush().stop();
 #endif
 
 #if 1
@@ -281,31 +356,36 @@ int main() {
 		com::diag::amigo::Console::instance().start().write("Morse Unit Test...\r\n").flush().stop();
 		com::diag::amigo::Morse telegraph;
 		telegraph.morse(" .. .- -. -- ");
-		com::diag::amigo::Console::instance().start().write("Morse Unit Test PASSED\r\n").flush().stop();
+		com::diag::amigo::Console::instance().start().write("Morse Unit Test PASSED.\r\n").flush().stop();
 	}
 #endif
 
 	sei();
 
-	// Variables allocated on the stack in this function will never go out of
-	// scope, since main never exits. So it is quite possible to allocate
-	// what are essentially permanent objects on main's stack that persist
-	// until the board is rebooted. That's useful.
+	// The fact that main() never exits means local variables allocated on
+	// its stack in its outermost braces never go out of scope. That means we
+	// can take advantage of main to allocate objects on its stack that are
+	// persist until the system is rebooted and pass pointers to them to tasks.
+	// That's useful to know, especially in light of the fact that the memory
+	// allocated for main's stack is never otherwise recovered or used.
+
+	com::diag::amigo::BinarySemaphore binarysemaphore;
+	binarysemaphorep = &binarysemaphore;
 
 	com::diag::amigo::Console::instance().start().write("Task Unit Test...\r\n").flush().stop();
-	com::diag::amigo::BinarySemaphore binarysemaphore;
-	takertask.start(taker, &binarysemaphore);
-	unittesttask.start(unittest, &binarysemaphore);
+	takertask.start();
+	unittesttask.start();
 	if (takertask != true) {
-		com::diag::amigo::Console::instance().start().write("takertask.start() FAILED!\r\n").flush().stop();
+		com::diag::amigo::Console::instance().start().write("main takertask.start() FAILED!\r\n").flush().stop();
 	} else if (unittesttask != true) {
-		com::diag::amigo::Console::instance().start().write("unittesttask.start() FAILED!\r\n").flush().stop();
+		com::diag::amigo::Console::instance().start().write("main unittesttask.start() FAILED!\r\n").flush().stop();
 	} else {
 		com::diag::amigo::Console::instance().start().write("Task Unit Test PASSED.\r\n").flush().stop();
 		com::diag::amigo::Task::begin();
 	}
 
-	com::diag::amigo::Console::instance().start().write("exiting\r\n").flush().stop();
+	// Should never get here. Even if all our tasks here exit, the idle task
+	// continues to run.
 
-	while (!0);
+	com::diag::amigo::fatal(__FILE__, __LINE__);
 }
