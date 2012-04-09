@@ -178,14 +178,14 @@ public:
 	 * @param milliseconds is a value in milliseconds.
 	 * @return a value in ticks.
 	 */
-	static Ticks ticks(Ticks milliseconds) { return (milliseconds / PERIOD); }
+	static Ticks milliseconds2ticks(Ticks milliseconds) { return (milliseconds / PERIOD); }
 
 	/**
 	 * Convert ticks to milliseconds.
 	 * @param ticks is a value in ticks.
 	 * @return a value in milliseconds.
 	 */
-	static Ticks milliseconds(Ticks ticks) { return (ticks * PERIOD); }
+	static Ticks ticks2milliseconds(Ticks ticks) { return (ticks * PERIOD); }
 
 	/**
 	 * Return the number of FreeRTOS ticks that have elapsed since the FreeRTOS
