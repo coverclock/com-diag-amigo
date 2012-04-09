@@ -27,7 +27,47 @@ class Task
 {
 
 	/***************************************************************************
-	 * TASK CREATING, STARTING, AND STOPPING
+	 * TASK CREATING AND DELETING
+	 **************************************************************************/
+
+public:
+
+	/**
+	 * Constructor. The task is not started once construction is complete.
+	 * @param myname points to the name of the task. This is passed to
+	 * FreeRTOS when the task is started.
+	 * @param myname points to a C-string naming this task; this object keeps
+	 * a pointer to this C-string.
+	 */
+	explicit Task(const char * myname = "?");
+
+	/**
+	 * Constructor. This form of the constructor can be used to construct a
+	 * Task object for an existing FreeRTOS task. This constructs a proxy
+	 * Task object which may be deleted while the task is running. Proxy task
+	 * objects can be used to manipulate running tasks without having the
+	 * pointer to the original Task object (if it exists).
+	 * @param myhandle is the task handle for an existing FreeRTOS task.
+	 */
+	explicit Task(xTaskHandle myhandle);
+
+	/**
+	 * Constructor. This form of the constructor can be used to construct a
+	 * Task object for the current FreeRTOS task. This constructs a proxy
+	 * Task object which may be deleted while the task is running. Proxy task
+	 * objects can be used to manipulate running tasks without having the
+	 * pointer to the original Task object (if it exists).
+	 */
+	explicit Task();
+
+	/**
+	 * Destructor. Deleting the Task object of a running non-proxy task is a
+	 * fatal error.
+	 */
+	virtual ~Task();
+
+	/***************************************************************************
+	 * TASK STARTTING AND STOPPING
 	 **************************************************************************/
 
 public:
@@ -47,23 +87,9 @@ public:
 	static const unsigned int PRIORITY = 0;
 
 	/**
-	 * Constructor. The task is not started once construction is complete.
-	 * @param myname points to the name of the task. This is passed to
-	 * FreeRTOS when the task is started.
-	 * @param myname points to a C-string naming this task; this object keeps
-	 * a pointer to this C-string.
-	 */
-	explicit Task(const char * myname = "?");
-
-	/**
-	 * Destructor. Deleting the Task object of a running task is a FATAL error.
-	 */
-	virtual ~Task();
-
-	/**
 	 * Return true if the task is running, false otherwise. When the task
-	 * instance method returns, the FreeRTOS data structure is automatically
-	 * deleted and its task handle is zeroed out.
+	 * instance method returns, the FreeRTOS task automatically deleted and
+	 * its task handle in this object is zeroed out.
 	 * Return true if the task is running, false otherwise.
 	 */
 	operator bool() const { return (handle != 0); }
@@ -73,7 +99,7 @@ public:
 	 * @param mydepth is the stack depth for this task.
 	 * @param mypriority is the priority for this task.
 	 */
-	void start(unsigned int mydepth = DEPTH, unsigned int mypriority = PRIORITY);
+	void start(Count mydepth = DEPTH, Count mypriority = PRIORITY);
 
 	/**
 	 * Ask the task to stop. This is purely advisory and stopping is strictly
@@ -214,13 +240,6 @@ public:
 	static void yield();
 
 	/**
-	 * Suspend the calling task. This is the same as calling suspend() on the
-	 * Task object of the calling task, but relieves the calling task from
-	 * having to have a pointer to its own Task object.
-	 */
-	static void suspendSelf();
-
-	/**
 	 * Return the priority of this task.
 	 * @return the priorty of this task.
 	 */
@@ -231,6 +250,13 @@ public:
 	 * @param mypriority is the new priority for this task.
 	 */
 	void priority(unsigned int mypriority);
+
+	/**
+	 * Suspend the calling task. This is the same as calling suspend() on the
+	 * Task object of the calling task, but relieves the calling task from
+	 * having to have a pointer to its own Task object.
+	 */
+	static void suspendSelf();
 
 	/**
 	 * Suspend this task. It is okay for the current task to suspend itself and
@@ -312,9 +338,10 @@ public:
 
 protected:
 
-	const char * name;
 	xTaskHandle handle;
+	const char * name;
 	bool stopping;
+	bool proxy;
 
 private:
 

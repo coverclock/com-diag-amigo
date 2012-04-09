@@ -181,12 +181,11 @@ public:
 	int master(uint8_t ch = 0, Ticks timeout = NEVER);
 
 	/**
-	 * UNTESTED!
 	 * Return the first character in the receive ring buffer and remove it from
 	 * the buffer. This is only meaningful (I think) when acting as a slave.
 	 * Transmits and receives are still coupled, but the slave SPI just
 	 * transmits whatever is in the SPDR at the time a byte is received, and
-	 * the master just ignores it.
+	 * the master just ignores it. UNTESTED.
 	 * @param timeout is the number of ticks to wait when the buffer is empty.
 	 * @return the first character or <0 if fail.
 	 */
