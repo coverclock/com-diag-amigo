@@ -18,5 +18,7 @@ CXXCAPI void amigo_fatal(PGM_P file, int line) {
 		line = ((line >> 8) & 0xff) | ((line & 0xff) << 8);
 	}
 	com::diag::amigo::Console::instance().start().write_P(PSTR("\r\nFATAL: ")).write_P(file).write_P(PSTR("@0x")).dump(&line, sizeof(line)).write_P(PSTR("!\r\n")).flush().stop();
+	// This is a hard infinite loop with interrupts disabled. We aren't going
+	// anywhere once we get here.
 	while (!0) {}
 }

@@ -133,7 +133,17 @@ public:
 	 * This is the number of milliseconds per system tick. A system tick is
 	 * the basic timing and scheduling interval in FreeRTOS.
 	 */
-	static const Ticks MILLISECONDS_PER_TICK = portTICK_RATE_MS;
+	static const Ticks PERIOD = portTICK_RATE_MS;
+
+	/**
+	 * Defines the maximum delay value in Ticks. The actual delay depends on
+	 * the duration of a system tick, the width of the Ticks data type, and
+	 * any underlying scheduling latency. Forever may be as short as about 131
+	 * seconds given a two millisecond tick duration and a sixteen-bit Ticks
+	 * data type. If you really want to delay forever, you must put your
+	 * delay() in a loop.
+	 */
+	static const Ticks FOREVER = portMAX_DELAY; // Nominally ~0.
 
 	/**
 	 * Convert milliseconds to ticks. Fractional results are truncated. The
@@ -142,14 +152,14 @@ public:
 	 * @param milliseconds is a value in milliseconds.
 	 * @return a value in ticks.
 	 */
-	static Ticks ticks(Ticks milliseconds) { return (milliseconds / MILLISECONDS_PER_TICK); }
+	static Ticks ticks(Ticks milliseconds) { return (milliseconds / PERIOD); }
 
 	/**
 	 * Convert ticks to milliseconds.
 	 * @param ticks is a value in ticks.
 	 * @return a value in milliseconds.
 	 */
-	static Ticks milliseconds(Ticks ticks) { return (ticks * MILLISECONDS_PER_TICK); }
+	static Ticks milliseconds(Ticks ticks) { return (ticks * PERIOD); }
 
 	/**
 	 * Return the number of FreeRTOS ticks that have elapsed since the FreeRTOS
@@ -173,6 +183,7 @@ public:
 	/**
 	 * Block the calling task for the specified absolute number of ticks. Note
 	 * that this delay is approximate depending on scheduling latency.
+	 * Specifying zero is equivalent to yield().
 	 * @param absolute is the absolute delay value in ticks.
 	 */
 	static void delay(Ticks absolute);
@@ -204,10 +215,10 @@ public:
 
 	/**
 	 * Suspend the calling task. This is the same as calling suspend() on the
-	 * Task object of the calling task, and relieves the calling task from
+	 * Task object of the calling task, but relieves the calling task from
 	 * having to have a pointer to its own Task object.
 	 */
-	static void wait();
+	static void suspendSelf();
 
 	/**
 	 * Return the priority of this task.
@@ -223,7 +234,7 @@ public:
 
 	/**
 	 * Suspend this task. It is okay for the current task to suspend itself and
-	 * if it does so it is exactly the same as if it called wait(). Tasks
+	 * if it does so it is exactly the same as if it called suspendSelf(). Tasks
 	 * can be suspended only after start(). If they are suspended before
 	 * begin() they are initially suspended when task scheduling begins. Even
 	 * blocked tasks can be suspended.
@@ -280,8 +291,7 @@ public:
 	 * Call the instance task method when invoked by the Amigo trampoline
 	 * function. It must be public so that it can be called by the trampoline
 	 * function which has C-linkage. It is not part of the public API and you
-	 * should never call it. In fact, you can't call it: it is an inline
- 	 * function inside the Task implementation.
+	 * should never call it.
 	 * @param that points to the Task object for the starting task.
 	 */
 	static void task(Task * that);
@@ -376,7 +386,7 @@ inline void Task::suspend() {
 	vTaskSuspend(handle);
 }
 
-inline void Task::wait() {
+inline void Task::suspendSelf() {
 	vTaskSuspend(0);
 }
 

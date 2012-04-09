@@ -35,7 +35,12 @@ namespace amigo {
  * routines, but also provide forms of rate smoothing, traffic shaping, and
  * even traffic policing, depending on what the application does if and when
  * a ring buffer fills up (which should be generally considered to be a Bad
- * Thing).
+ * Thing). USART operations by this interrupt driven driver are handled
+ * asynchronously as a background activity while the caller is blocked.
+ * Concurrent tasks writing to the USART using this object can hence find their
+ * output or input interleaved. Access to this object can be serialized using a
+ * MutexSemaphore. This makes it easy to serialize use of the USART by using the
+ * MutexSemaphore in a CriticalSection in the application.
  */
 class Serial
 {
