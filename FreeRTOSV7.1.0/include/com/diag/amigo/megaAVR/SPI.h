@@ -13,7 +13,6 @@
 #include <avr/io.h>
 #include "com/diag/amigo/types.h"
 #include "com/diag/amigo/TypedQueue.h"
-#include "com/diag/amigo/MutexSemaphore.h"
 
 namespace com {
 namespace diag {
@@ -30,16 +29,19 @@ namespace amigo {
  * the transmit and receive ring buffers can be specified during construction.
  * Since SPI is always full duplex (you must transmit characters in order
  * to receive characters and vice versa), transmission and reception necessarily
- * happen concurrently. This is because SPI controllers in both masters and
- * slaves are little more than hardware shift registers. Because an SPI
- * controller is a hardware resource that may be shared among multiple devices,
- * access to it must be serialized. This is done with a MutexSemaphore that is
- * the base class from which SPI derives. This makes it easy to serialize use
- * of the SPI, including the slave select for the slave SPI device (about which
- * SPI knows nothing) by using SPI in a CriticalSection in the application.
+ * happen concurrently. This is because SPI controllers in both SPI master and
+ * slave devices are little more than hardware shift registers. SPI serial bus
+ * operations by this interrupt driven driver are handled asynchronously as
+ * a background activity while the caller is blocked. Because an SPI serial
+ * bus is a hardware resource that may be shared among multiple SPI slave
+ * devices, access not just to SPI but also to the individual slave select (SS)
+ * pin on each SPI slave device must be serialized so that concurrent tasks
+ * using SPI do not interfere with one another. This can be done with a
+ * MutexSemaphore. This makes it easy to serialize use of the SPI and the
+ * slave select pins (about which the SPI knows nothing) by using the
+ * MutexSemaphore in a CriticalSection in the application.
  */
 class SPI
-: public MutexSemaphore
 {
 
 public:
@@ -99,9 +101,8 @@ public:
 
 	/**
 	 * Defines the default receive ring buffer size in bytes. With the current
-	 * design this should never need to be anything other than one. But we
-	 * still need queues as a means to communicate and synchronize between
-	 * the application and the interrupt service routine.
+	 * design this should never need to be anything other than one for masters,
+	 * but might need to be larger for slaves.
 	 */
 	static const Count RECEIVES = 1;
 
@@ -109,7 +110,8 @@ public:
 	 * Defines the default transmit ring buffer size in bytes. All SPI transfers
 	 * involve a transmit coupled with a matching receive, so there should be
 	 * no reason why the size of the transmit and receive ring buffers aren't
-	 * exactly the same.
+	 * exactly the same for masters. In the current design,which hasn't been
+	 * tested for slaves, there is never a reason for this to be more than one.
 	 */
 	static const Count TRANSMITS = 1;
 

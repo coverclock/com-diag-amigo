@@ -1,5 +1,6 @@
 /**
  * @file
+ * AMIGO UNIT TEST SUITE
  * Copyright 2012 Digital Aggregates Corporation, Colorado, USA\n
  * Licensed under the terms in README.h\n
  * Chip Overclock mailto:coverclock@diag.com\n
@@ -47,8 +48,10 @@ static const char CUNITTEST_PASSED[] PROGMEM = "PASSED.\r\n";
 #define CPASSED() com::diag::amigo::Console::instance().start().write_P(CUNITTEST_PASSED).flush().stop()
 
 /*******************************************************************************
- * TASK DEFINITIONS
+ * TAKER TASK (FOR TESTING BINARYSEMAPHORE)
  ******************************************************************************/
+
+static com::diag::amigo::BinarySemaphore * binarysemaphorep = 0;
 
 class TakerTask : public com::diag::amigo::Task {
 public:
@@ -56,19 +59,6 @@ public:
 	virtual void task();
 	int errors;
 } static takertask("Taker");
-
-class UnitTestTask : public com::diag::amigo::Task {
-public:
-	explicit UnitTestTask(const char * name) : Task(name), errors(0) {}
-	virtual void task();
-	int errors;
-} static unittesttask("UnitTest");
-
-/*******************************************************************************
- * TAKER TASK (FOR TESTING BINARYSEMAPHORE)
- ******************************************************************************/
-
-static com::diag::amigo::BinarySemaphore * binarysemaphorep = 0;
 
 void TakerTask::task() {
 	++errors;
@@ -112,11 +102,27 @@ inline void w5100reset() {
  * UNIT TEST TASK
  ******************************************************************************/
 
+class UnitTestTask : public com::diag::amigo::Task {
+public:
+	explicit UnitTestTask(const char * name) : Task(name), errors(0) {}
+	virtual void task();
+	int errors;
+} static unittesttask("UnitTest");
+
 void UnitTestTask::task() {
 	com::diag::amigo::Serial serial;
 	com::diag::amigo::SerialSink serialsink(serial);
 	com::diag::amigo::Print printf(serialsink, true);
 	serial.start();
+
+#if 0
+	UNITTEST("delay");
+	// This delays about two minutes and eleven seconds so I don't normally
+	// run it. But it does verify that the FreeRTOS scheduler doesn't do
+	// something unexpected with the maximum possible Ticks value.
+	delay(FOREVER);
+	PASSED();
+#endif
 
 #if 1
 	UNITTESTLN("sizeof");
@@ -328,8 +334,9 @@ void UnitTestTask::task() {
 		UNITTEST("SPI (specific to W5100 Ethernet controller)");
 		com::diag::amigo::SPI spi;
 		spi.start();
+		com::diag::amigo::MutexSemaphore mutex;
 		{
-			com::diag::amigo::CriticalSection criticalsection(spi);
+			com::diag::amigo::CriticalSection criticalsection(mutex);
 			w5100init();
 			static const uint16_t RTR0 = 0x0017;
 			static const uint16_t RTR1 = 0x0018;

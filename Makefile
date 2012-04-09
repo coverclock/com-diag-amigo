@@ -6,12 +6,12 @@
 #
 # PRIMARY TARGETS
 #	depend			- generate dependencies
-#	all				- generate deliverables (default)
+#	all				- generate artifacts and deliverables (default)
 #	clean			- remove artifacts
 #	upload			- upload into target using Avrdude
 #
 # SECONDARY TARGETS
-#	full			- generate deliverables and collateral
+#	full			- generate artifacts, deliverables, and collateral
 #	pristine		- remove deliverables and collateral
 #	documentation	- generate documentation using Doxygen
 #
@@ -88,6 +88,7 @@ endif
 
 ifeq ($(BUILD_TARGET),ArduinoUno)
 ARCH=avr
+RELAX=
 CROSS_COMPILE=$(ARCH)-
 FAMILY=avr5
 CONTROLLER=atmega328p
@@ -110,6 +111,7 @@ endif
 
 ifeq ($(BUILD_TARGET),FreetronicsEtherMega2560)
 ARCH=avr
+RELAX=-mrelax
 CROSS_COMPILE=$(ARCH)-
 FAMILY=avr6
 CONTROLLER=atmega2560
@@ -217,7 +219,7 @@ CTUNING=-fno-exceptions -ffunction-sections -fdata-sections -funsigned-char -fun
 CPPFLAGS=$(CARCH) -DF_CPU=$(FREQUENCY) -DARDUINO=$(ARDUINO) $(INCLUDES)
 CFLAGS=$(CDIALECT) $(CDEBUG) -O$(OPT) $(CWARN) $(CEXTRA)
 CXXFLAGS=$(CXXDIALECT) $(CDEBUG) -O$(OPT) $(CWARN) $(CXXEXTRA)
-LDFLAGS=$(CARCH) -O$(OPT) -Wl,--gc-sections
+LDFLAGS=$(CARCH) $(RELAX) -O$(OPT) -Wl,--gc-sections
 NMFLAGS=-n -o -a -A
 OBJDUMPFLAGS=-x -G -t -r
 SIZEFLAGS=-C --mcu=$(CONTROLLER)

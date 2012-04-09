@@ -39,7 +39,10 @@ public:
 
 	/**
 	 * Defines the timeout value in Ticks that causes the application to block
-	 * indefinitely waiting for ring buffer space or data.
+	 * indefinitely waiting for ring buffer space or data. The FreeRTOS
+	 * timeout mechanism actually checks for this value specifically if task
+	 * suspension is enabled, so it does not just mean the maximum amount of
+	 * time that can be specified.
 	 */
 	static const Ticks NEVER = portMAX_DELAY; // Nominally ~0.
 

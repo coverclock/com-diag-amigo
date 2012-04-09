@@ -28,7 +28,7 @@ class TypedQueue
 public:
 
 	/**
-	 * Constructor. The size of each element on the TypedQueue is the sizeof
+	 * Constructor. The size of each element on the TypedQueue is the sizeof()
 	 * the _TYPE_ type.
 	 * @param count is the maximum number of elements in the Queue.
 	 * @param name is the optional name of the Queue.
