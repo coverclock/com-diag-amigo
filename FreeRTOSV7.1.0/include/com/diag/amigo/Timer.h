@@ -290,6 +290,9 @@ inline bool Timer::active() const {
 	return (xTimerIsTimerActive(handle) != pdFALSE);
 }
 
+/**
+ * PeriodicTimer extends Timer for just supporting periodic timers.
+ */
 class PeriodicTimer
 : public Timer
 {
@@ -312,6 +315,9 @@ public:
 
 };
 
+/**
+ * OneShotTimer extends Timer for just supporting one-shot timers.
+ */
 class OneShotTimer
 : public Timer
 {
