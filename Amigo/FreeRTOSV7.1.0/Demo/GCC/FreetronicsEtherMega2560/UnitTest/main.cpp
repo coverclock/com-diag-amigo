@@ -54,13 +54,13 @@ static const char CUNITTEST_PASSED[] PROGMEM = "PASSED.\r\n";
 
 class OneShotTimer : public com::diag::amigo::OneShotTimer {
 public:
-	explicit OneShotTimer(com::diag::amigo::Ticks duration) : com::diag::amigo::OneShotTimer(duration), counter(0) {}
+	explicit OneShotTimer(com::diag::amigo::Ticks duration) : com::diag::amigo::OneShotTimer(duration), now(0) {}
 	virtual void timer();
-	int counter;
+	com::diag::amigo::Ticks now;
 };
 
 void OneShotTimer::timer() {
-	++counter;
+	now = com::diag::amigo::Task::ticks2milliseconds(com::diag::amigo::Task::elapsed());
 }
 
 class PeriodicTimer : public com::diag::amigo::PeriodicTimer {
@@ -175,21 +175,21 @@ void UnitTestTask::task() {
 		static const com::diag::amigo::Ticks W1 = 200;
 		static const com::diag::amigo::Ticks W2 = 500;
 		static const com::diag::amigo::Ticks PERCENT = 20;
-		com::diag::amigo::Ticks elapsed;
-		com::diag::amigo::Ticks t1 = milliseconds(com::diag::amigo::Task::elapsed());
-		delay(ticks(W1));
-		com::diag::amigo::Ticks t2 = milliseconds(com::diag::amigo::Task::elapsed());
-		elapsed = t2 - t1;
-		if (!((W1 <= elapsed) && (elapsed <= (W1 + (W1 / (100 / PERCENT)))))) {
+		com::diag::amigo::Ticks milliseconds;
+		com::diag::amigo::Ticks t1 = ticks2milliseconds(elapsed());
+		delay(milliseconds2ticks(W1));
+		com::diag::amigo::Ticks t2 = ticks2milliseconds(elapsed());
+		milliseconds = t2 - t1;
+		if (!((W1 <= milliseconds) && (milliseconds <= (W1 + (W1 / (100 / PERCENT)))))) {
 			FAILED(__LINE__);
 			++errors;
 			break;
 		}
 		com::diag::amigo::Ticks t4 = t1;
-		delay(t4, ticks(W2));
-		com::diag::amigo::Ticks t3 = milliseconds(com::diag::amigo::Task::elapsed());
-		elapsed = t3 - t1;
-		if (!((W2 <= elapsed) && (elapsed <= (W2 + (W2 / (100 / PERCENT)))))) {
+		delay(t4, milliseconds2ticks(W2));
+		com::diag::amigo::Ticks t3 = ticks2milliseconds(com::diag::amigo::Task::elapsed());
+		milliseconds = t3 - t1;
+		if (!((W2 <= milliseconds) && (milliseconds <= (W2 + (W2 / (100 / PERCENT)))))) {
 			FAILED(__LINE__);
 			++errors;
 			break;
@@ -267,7 +267,8 @@ void UnitTestTask::task() {
 	UNITTEST("BinarySemaphore");
 	do {
 		// 0.5s should be enough for the takertask to initialize.
-		delay(ticks(500));
+		static const com::diag::amigo::Ticks MS = 500;
+		delay(milliseconds2ticks(MS));
 		if (takertask != true) {
 			FAILED(__LINE__);
 			++errors;
@@ -284,7 +285,7 @@ void UnitTestTask::task() {
 			break;
 		}
 		// 0.5s should be enough for the takertask to become ready.
-		delay(ticks(500));
+		delay(milliseconds2ticks(MS));
 		if (takertask != true) {
 			FAILED(__LINE__);
 			++errors;
@@ -302,7 +303,7 @@ void UnitTestTask::task() {
 			break;
 		}
 		// 0.5s should be enough for the takertask to terminate.
-		delay(ticks(500));
+		delay(milliseconds2ticks(MS));
 		if (takertask != false) {
 			FAILED(__LINE__);
 			++errors;
@@ -408,9 +409,154 @@ void UnitTestTask::task() {
 #endif
 
 #if 1
-	UNITTEST("Timer");
+	UNITTEST("PeriodicTimer");
 	do {
+		static const com::diag::amigo::Ticks T1 = 100;
+		static const com::diag::amigo::Ticks W1 = 500;
+		PeriodicTimer periodictimer(milliseconds2ticks(T1));
+		if (periodictimer != true) {
+			FAILED(__LINE__);
+			++errors;
+			break;
+		}
+		delay(milliseconds2ticks(W1));
+		if (periodictimer.counter != 0) {
+			FAILED(__LINE__);
+			++errors;
+			break;
+		}
+		if (!periodictimer.start()) {
+			FAILED(__LINE__);
+			++errors;
+			break;
+		}
+		delay(milliseconds2ticks(W1));
+		if (!periodictimer.stop()) {
+			FAILED(__LINE__);
+			++errors;
+			break;
+		}
+		if (!(((W1 / T1) <= periodictimer.counter) && (periodictimer.counter <= ((W1 / T1) + 1)))) {
+			FAILED(__LINE__);
+			++errors;
+			break;
+		}
+		delay(milliseconds2ticks(W1));
+		if (!(((W1 / T1) <= periodictimer.counter) && (periodictimer.counter <= ((W1 / T1) + 1)))) {
+			FAILED(__LINE__);
+			++errors;
+			break;
+		}
+		PASSED();
+	} while (false);
+#endif
 
+#if 1
+	UNITTEST("OneShotTimer");
+	do {
+		static const com::diag::amigo::Ticks T2 = 200;
+		static const com::diag::amigo::Ticks T3 = 300;
+		static const com::diag::amigo::Ticks W2 = 500;
+		static const com::diag::amigo::Ticks PERCENT = 20;
+		OneShotTimer oneshottimer(milliseconds2ticks(T2));
+		if (oneshottimer != true) {
+			FAILED(__LINE__);
+			++errors;
+			break;
+		}
+		delay(milliseconds2ticks(W2));
+		if (oneshottimer.now != 0) {
+			FAILED(__LINE__);
+			++errors;
+			break;
+		}
+		com::diag::amigo::Ticks t2 = ticks2milliseconds(elapsed());
+		if (!oneshottimer.start()) {
+			FAILED(__LINE__);
+			++errors;
+			break;
+		}
+		delay(milliseconds2ticks(W2));
+		if (oneshottimer.now == 0) {
+			FAILED(__LINE__);
+			++errors;
+			break;
+		}
+		com::diag::amigo::Ticks milliseconds = oneshottimer.now - t2;
+		if (!((T2 <= milliseconds) && (milliseconds <= (T2 + (T2 / (100 / PERCENT)))))) {
+			FAILED(__LINE__);
+			++errors;
+			break;
+		}
+		oneshottimer.now = 0;
+		if (!oneshottimer.start()) {
+			FAILED(__LINE__);
+			++errors;
+			break;
+		}
+		delay(milliseconds2ticks(T2 / 2));
+		com::diag::amigo::Ticks t3 = ticks2milliseconds(elapsed());
+		if (!oneshottimer.reset()) {
+			FAILED(__LINE__);
+			++errors;
+			break;
+		}
+		delay(milliseconds2ticks(W2));
+		if (oneshottimer.now == 0) {
+			FAILED(__LINE__);
+			++errors;
+			break;
+		}
+		milliseconds = oneshottimer.now - t3;
+		if (!((T2 <= milliseconds) && (milliseconds <= (T2 + (T2 / (100 / PERCENT)))))) {
+			FAILED(__LINE__);
+			++errors;
+			break;
+		}
+		oneshottimer.now = 0;
+		if (!oneshottimer.reset()) {
+			FAILED(__LINE__);
+			++errors;
+			break;
+		}
+		delay(milliseconds2ticks(T2 / 2));
+		com::diag::amigo::Ticks t4 = ticks2milliseconds(elapsed());
+		if (!oneshottimer.reschedule(milliseconds2ticks(T3))) {
+			FAILED(__LINE__);
+			++errors;
+			break;
+		}
+		delay(milliseconds2ticks(W2));
+		if (oneshottimer.now == 0) {
+			FAILED(__LINE__);
+			++errors;
+			break;
+		}
+		milliseconds = oneshottimer.now - t4;
+		if (!((T3 <= milliseconds) && (milliseconds <= (T3 + (T3 / (100 / PERCENT)))))) {
+			FAILED(__LINE__);
+			++errors;
+			break;
+		}
+		com::diag::amigo::Ticks t5 = ticks2milliseconds(elapsed());
+		if (!oneshottimer.reschedule(milliseconds2ticks(T3))) {
+			FAILED(__LINE__);
+			++errors;
+			break;
+		}
+		delay(milliseconds2ticks(W2));
+		if (oneshottimer.now == 0) {
+			FAILED(__LINE__);
+			++errors;
+			break;
+		}
+		milliseconds = oneshottimer.now - t5;
+		if (!((T3 <= milliseconds) && (milliseconds <= (T3 + (T3 / (100 / PERCENT)))))) {
+			FAILED(__LINE__);
+			++errors;
+			break;
+		}
+		PASSED();
 	} while (false);
 #endif
 
@@ -515,7 +661,9 @@ int main() {
 	CPASSED();
 #endif
 
-#if 1
+#if 0
+	// This takes long enough -- maybe ten seconds -- that I don't leave it
+	// enabled. But it should be tested once in a while.
 	do {
 		CUNITTEST("Morse");
 		com::diag::amigo::Morse telegraph;

@@ -291,7 +291,7 @@ inline bool Timer::active() const {
 }
 
 class PeriodicTimer
-: Timer
+: public Timer
 {
 
 public:
@@ -313,7 +313,7 @@ public:
 };
 
 class OneShotTimer
-: Timer
+: public Timer
 {
 
 public:
