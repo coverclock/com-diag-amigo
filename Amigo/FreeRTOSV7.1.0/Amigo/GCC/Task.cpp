@@ -42,18 +42,41 @@ extern "C" void amigo_task_trampoline(Task * that) {
 }
 
 Task::Task(const char * myname)
-: name(myname)
-, handle(0)
+: handle(0)
+, name(myname)
 , stopping(false)
+, proxy(false)
+{}
+
+Task::Task(xTaskHandle myhandle)
+: handle(myhandle)
+, name(reinterpret_cast<const char *>(pcTaskGetTaskName(handle))) // reinterpret_cast? Srsly?
+, stopping(false)
+, proxy(true)
+{}
+
+Task::Task()
+: handle(xTaskGetCurrentTaskHandle())
+, name(reinterpret_cast<const char *>(pcTaskGetTaskName(handle))) // reinterpret_cast? Srsly?
+, stopping(false)
+, proxy(true)
 {}
 
 Task::~Task() {
-	if (handle != 0) {
+	if (proxy) {
+		// Do nothing.
+	} else if (handle != 0) {
+		// It is a fatal error to delete the Task object of a running task.
 		com::diag::amigo::fatal(PSTR(__FILE__), __LINE__);
+	} else {
+		// Do nothing.
 	}
 }
 
-void Task::start(unsigned int mydepth, unsigned int mypriority) {
+void Task::start(Count mydepth, Count mypriority) {
+	// We don't check to see if the task is already started. Might be a good
+	// idea, but then we'd have to return a boolean since the handle value
+	// would not reflect the correct state.
 	// We cast the function pointer type here instead of casting the parameter
 	// pointer type in the trampoline function.
 	if (xTaskCreate(reinterpret_cast<void(*)(void*)>(amigo_task_trampoline), (const signed char *)name, mydepth, this, mypriority, &handle) != pdPASS) {

@@ -147,7 +147,7 @@
 #define configQUEUE_REGISTRY_SIZE	    0
 
 /* Timer definitions. */
-#define configUSE_TIMERS				0
+#define configUSE_TIMERS				1
 #define configTIMER_TASK_PRIORITY       ( ( unsigned portBASE_TYPE ) 7 )
 #define configTIMER_QUEUE_LENGTH        ( ( unsigned portBASE_TYPE ) 10 )
 #define configTIMER_TASK_STACK_DEPTH    configMINIMAL_STACK_SIZE
@@ -159,8 +159,8 @@
 /* Set the following definitions to 1 to include the API function, or zero
 to exclude the API function. */
 
-#define INCLUDE_vTaskPrioritySet		        0
-#define INCLUDE_uxTaskPriorityGet		        0
+#define INCLUDE_vTaskPrioritySet		        1
+#define INCLUDE_uxTaskPriorityGet		        1
 #define INCLUDE_vTaskDelete			            1
 #define INCLUDE_vTaskCleanUpResources		    0
 #define INCLUDE_vTaskSuspend			        1
@@ -168,7 +168,7 @@ to exclude the API function. */
 #define INCLUDE_vTaskDelayUntil			        1
 #define INCLUDE_vTaskDelay			            1
 #define INCLUDE_xTaskGetSchedulerState          0
-#define INCLUDE_xTaskGetCurrentTaskHandle       0
+#define INCLUDE_xTaskGetCurrentTaskHandle       1
 #define INCLUDE_uxTaskGetStackHighWaterMark     1
 
 

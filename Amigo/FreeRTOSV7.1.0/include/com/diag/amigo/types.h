@@ -37,8 +37,35 @@
 #	undef __BEOS__
 #endif
 
-#include <stdint.h>
+#if !defined(NULL)
+    /*
+     * I have recently been disabused of the notion that NULL is now
+     * a pre-defined symbol in later versions of the GCC compiler.
+     */
+#   if defined(__cplusplus)
+        /**
+         * @def NULL
+         *
+         * NULL is the value of the null pointer. The use of this manifest
+         * constant can be avoided in C++, but may be necessary when
+         * writing header files that may be included in either C or C++
+         * translation units.
+         */
+#       define NULL (0)
+#   else
+        /**
+         * @def NULL
+         *
+         * NULL is the value of the null pointer. The use of this manifest
+         * constant can be avoided in C++, but may be necessary when
+         * writing header files that may be included in either C or C++
+         * translation units.
+         */
+#       define NULL ((void*)0)
+#   endif
+#endif
 
+#include <stdint.h>
 #include "projdefs.h"
 #include "FreeRTOSConfig.h"
 #include "portable.h"

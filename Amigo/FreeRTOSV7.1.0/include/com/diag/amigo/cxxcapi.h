@@ -18,7 +18,7 @@
 #if !defined(NULL)
     /*
      * I have recently been disabused of the notion that NULL is now
-     * a pre-defined symbol in later versionz of the GCC compiler.
+     * a pre-defined symbol in later versions of the GCC compiler.
      */
 #   if defined(__cplusplus)
         /**
@@ -43,7 +43,6 @@
 #   endif
 #endif
 
-
 #if defined(__cplusplus)
     /**
      * @def CXXCAPI
@@ -62,7 +61,6 @@
      */
 #   define CXXCAPI extern
 #endif
-
 
 #if defined(__cplusplus)
     /**
@@ -101,7 +99,6 @@
 #	define CXXCINLINE static
 #endif
 
-
 /**
  * @def CXXCTOKEN
  *
@@ -131,7 +128,6 @@
  */
 #	define CXXCTYPE(_NAMESPACE_, _TYPE_) _TYPE_
 #endif
-
 
 #if defined(__cplusplus)
 /**
@@ -175,7 +171,6 @@
 #	define CXXCCONSTCAST(_TYPE_, _VARIABLE_) ((_TYPE_)(_VARIABLE_))
 #endif
 
-
 #if defined(__cplusplus)
 /**
  * @def CXXCNAMESPACEBEGIN
@@ -204,5 +199,4 @@
 #	define CXXCNAMESPACEEND
 #endif
 
-
-#endif
+#endif /* _COM_DIAG_AMIGO_CXXCAPI_H_ */
