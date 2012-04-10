@@ -1,19 +1,45 @@
 ################################################################################
 # Copyright 2012 by the Digital Aggregates Corporation, Colorado, USA
-# Licensed under the terms in README.h
+# Licensed under the terms in README.h (basically LGPL 2.1)
 # Chip Overclock <coverclock@diag.com>
 # http://www.diag.com/navigation/downloads/Amigo
 #
-# PRIMARY TARGETS
+# TYPICAL TARGETS
+#
 #	depend			- generate dependencies
 #	all				- generate artifacts and deliverables (default)
 #	clean			- remove artifacts
 #	upload			- upload into target using Avrdude
 #
-# SECONDARY TARGETS
+# ANCILLARY TARGETS
+#
 #	full			- generate artifacts, deliverables, and collateral
 #	pristine		- remove deliverables and collateral
 #	documentation	- generate documentation using Doxygen
+#
+# USUAL DISCLAIMERS
+#
+#	BECAUSE THE SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO
+#	WARRANTY FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE
+#	LAW.  EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT
+#	HOLDERS AND/OR OTHER PARTIES PROVIDE THE SOFTWARE "AS IS" WITHOUT
+#	WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING,
+#	BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+#	AND FITNESS FOR A PARTICULAR PURPOSE.  THE ENTIRE RISK AS TO THE
+#	QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH YOU.  SHOULD THE
+#	SOFTWARE PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL NECESSARY
+#	SERVICING, REPAIR OR CORRECTION.
+#	
+#	IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN
+#	WRITING WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY
+#	MODIFY AND/OR REDISTRIBUTE THE SOFTWARE AS PERMITTED ABOVE,
+#	BE LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL,
+#	INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR
+#	INABILITY TO USE THE SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS
+#	OF DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED
+#	BY YOU OR THIRD PARTIES OR A FAILURE OF THE LIBRARY TO OPERATE
+#	WITH ANY OTHER SOFTWARE), EVEN IF SUCH HOLDER OR OTHER PARTY
+#	HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
 #
 ################################################################################
 
@@ -21,11 +47,11 @@ PROJECT=amigo
 NAME=Amigo
 
 MAJOR=0
-MINOR=14
-BUILD=0
+MINOR=15
+FIX=0
 
 HTTP_URL=http://www.diag.com/navigation/downloads/$(NAME).html
-FTP_URL=http://www.diag.com/ftp/$(PROJECT)-$(MAJOR).$(MINOR).$(BUILD).tgz
+FTP_URL=http://www.diag.com/ftp/$(PROJECT)-$(MAJOR).$(MINOR).$(FIX).tgz
 SVN_URL=svn://graphite/$(PROJECT)/trunk/$(NAME)
 
 #BUILD_TARGET=ArduinoUno
@@ -290,12 +316,12 @@ depend:
 ################################################################################
 
 PHONY+=dist
-ARTIFACTS+=$(PROJECT)-$(MAJOR).$(MINOR).$(BUILD).tgz
+ARTIFACTS+=$(PROJECT)-$(MAJOR).$(MINOR).$(FIX).tgz
 
-dist $(PROJECT)-$(MAJOR).$(MINOR).$(BUILD).tgz:
+dist $(PROJECT)-$(MAJOR).$(MINOR).$(FIX).tgz:
 	TARDIR=$(shell mktemp -d $(TMP_DIR)/$(PROJECT).XXXXXXXXXX); \
-	svn export $(SVN_URL) $$TARDIR/$(PROJECT)-$(MAJOR).$(MINOR).$(BUILD); \
-	tar -C $$TARDIR -cvzf - $(PROJECT)-$(MAJOR).$(MINOR).$(BUILD) > $(PROJECT)-$(MAJOR).$(MINOR).$(BUILD).tgz; \
+	svn export $(SVN_URL) $$TARDIR/$(PROJECT)-$(MAJOR).$(MINOR).$(FIX); \
+	tar -C $$TARDIR -cvzf - $(PROJECT)-$(MAJOR).$(MINOR).$(FIX) > $(PROJECT)-$(MAJOR).$(MINOR).$(FIX).tgz; \
 	rm -rf $$TARDIR
 
 ################################################################################
@@ -315,7 +341,7 @@ PREREQUISITES+=$(DOC_DIR)
 
 documentation:
 	mkdir -p $(DOC_DIR)/latex $(DOC_DIR)/man $(DOC_DIR)/pdf
-	$(SED) -e "s/\\\$$Name.*\\\$$/$(MAJOR).$(MINOR).$(BUILD)/" < doxygen.cf > doxygen-local.cf
+	$(SED) -e "s/\\\$$Name.*\\\$$/$(MAJOR).$(MINOR).$(FIX)/" < doxygen.cf > doxygen-local.cf
 	$(DOXYGEN) doxygen-local.cf
 	( cd $(DOC_DIR)/latex; $(MAKE) refman.pdf; cp refman.pdf ../pdf )
 	cat $(DOC_DIR)/man/man3/*.3 | $(TROFF) -man -Tps - > $(DOC_DIR)/pdf/manpages.ps
