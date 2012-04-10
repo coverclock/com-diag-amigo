@@ -601,6 +601,21 @@ void UnitTestTask::task() {
 			++errors;
 			break;
 		}
+		if (com::diag::amigo::GPIO::base(static_cast<com::diag::amigo::GPIO::Pin>(~0)) != 0) {
+			FAILED(__LINE__);
+			++errors;
+			break;
+		}
+		if (com::diag::amigo::GPIO::offset(static_cast<com::diag::amigo::GPIO::Pin>(~0)) != static_cast<uint8_t>(~0)) {
+			FAILED(__LINE__);
+			++errors;
+			break;
+		}
+		if (com::diag::amigo::GPIO::mask(static_cast<com::diag::amigo::GPIO::Pin>(~0)) != 0) {
+			FAILED(__LINE__);
+			++errors;
+			break;
+		}
 		PASSED();
 	} while (false);
 #endif

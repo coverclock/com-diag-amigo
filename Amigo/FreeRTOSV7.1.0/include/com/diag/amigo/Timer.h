@@ -37,7 +37,7 @@ public:
 
 	/**
 	 * Constructor.
-	 * @param duration is the period of the timer in system ticks.
+	 * @param duration is the length of the timer in system ticks.
 	 * @param periodic if true causes the timer to automatically reschedule
 	 * itself for the same duration after it expires.
 	 * @param myname is a C-string that names the timer.
@@ -146,6 +146,7 @@ public:
 	 * Restart the timer. If the timer is not running, it is started with the
 	 * new duration. If it is running, it is rescheduled with the new duration
 	 * relative to now.
+	 * @param duration is the length of the timer in system ticks.
 	 * @param timeout is the duration in ticks to wait for the timer task.
 	 * @return true if the restart message was sent to the timer task.
 	 */
@@ -156,6 +157,7 @@ public:
 	 * new duration. If it is running, it is rescheduled with the new duration
 	 * relative to now. This method can be called from an interrupt service
 	 * routine.
+	 * @param duration is the length of the timer in system ticks.
 	 * @param woken is returned true if this woke a higher priority task.
 	 * @return true if the restart message was sent to the timer task.
 	 */

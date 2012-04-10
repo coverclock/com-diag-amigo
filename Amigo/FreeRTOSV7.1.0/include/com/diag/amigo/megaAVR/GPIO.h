@@ -157,41 +157,41 @@ public:
 	static bool map(uint8_t pin, volatile void * & mybase, uint8_t & myoffset);
 
 	/**
-	 * Map an absolute pin number into a volatile base address.
-	 * @param pin is an absolute pin number.
-	 * @return a volatile base address or NULL if invalid.
+	 * Map an absolute pin number into a base address.
+	 * @param pin is a Pin enumerated value.
+	 * @return a base address or NULL if invalid.
 	 */
-	static volatile void * base(uint8_t pin);
+	static volatile void * base(Pin pin);
 
 	/**
 	 * Map an absolute pin number into a bit offset that can be used as a left
 	 * shift value to generate a mask.
-	 * @param pin is an absolute pin number.
+	 * @param pin is a Pin enumerated value.
 	 * @return a bit offset or ~0 if invalid.
 	 */
-	static uint8_t offset(uint8_t pin);
+	static uint8_t offset(Pin pin);
 
 	/**
 	 * Map an absolute pin number to a eight-bit mask that is simply the offset
 	 * of the same pin applied to a left shift operator.
-	 * @param pin is an absolute pin number.
+	 * @param pin is a Pin enumerated value.
 	 * @return an eight-bit mask or zero if invalid.
 	 */
-	static uint8_t mask(uint8_t pin);
+	static uint8_t mask(Pin pin);
 
 };
 
-inline volatile void * GPIO::base(uint8_t pin) {
+inline volatile void * GPIO::base(Pin pin) {
 	volatile void * mybase;
 	return (map(pin, mybase, unused.u8) ? mybase : 0);
 }
 
-inline uint8_t GPIO::offset(uint8_t pin) {
+inline uint8_t GPIO::offset(Pin pin) {
 	uint8_t myoffset;
 	return (map(pin, unused.vvp, myoffset) ? myoffset : ~0);
 }
 
-inline uint8_t GPIO::mask(uint8_t pin) {
+inline uint8_t GPIO::mask(Pin pin) {
 	uint8_t myoffset;
 	return (map(pin, unused.vvp, myoffset) ? (1 << myoffset) : 0);
 }
