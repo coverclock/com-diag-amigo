@@ -14,6 +14,7 @@
 #include "com/diag/amigo/target/Morse.h"
 #include "com/diag/amigo/target/Serial.h"
 #include "com/diag/amigo/target/SPI.h"
+#include "com/diag/amigo/target/GPIO.h"
 #include "com/diag/amigo/target/Uninterruptable.h"
 #include "com/diag/amigo/target/Console.h"
 #include "com/diag/amigo/Task.h"
@@ -391,7 +392,7 @@ void UnitTestTask::task() {
 			break;
 		}
 		PASSED();
-		UNITTEST("CriticalSection Unit Test");
+		UNITTEST("CriticalSection");
 		com::diag::amigo::CriticalSection criticalsection1(mutexsemaphore);
 		if (!criticalsection1) {
 			FAILED(__LINE__);
@@ -561,6 +562,50 @@ void UnitTestTask::task() {
 #endif
 
 #if 1
+	UNITTEST("GPIO");
+	// This is not a very good unit test. But I'm surprised about how much
+	// variance there is among megaAVRs in GPIO port nomenclature. For example,
+	// the ATmega328P (used on the Arduino Uno) starts with GPIO B. I'm sure
+	// there's a rhyme or reason for it, but I clueless as to what it is. The
+	// pins I check for below are the ones used by the Freetronics EtherMega
+	// 2560 (ATmega2560) and the Arduino Uno (ATmega328p) respectively for
+	// their diagnostic LEDs, and hence would be the pins likely used by Morse.
+	do {
+		if (com::diag::amigo::GPIO::base(com::diag::amigo::GPIO::PIN_B7) != &PINB) {
+			FAILED(__LINE__);
+			++errors;
+			break;
+		}
+		if (com::diag::amigo::GPIO::offset(com::diag::amigo::GPIO::PIN_B7) != 7) {
+			FAILED(__LINE__);
+			++errors;
+			break;
+		}
+		if (com::diag::amigo::GPIO::mask(com::diag::amigo::GPIO::PIN_B7) != _BV(7)) {
+			FAILED(__LINE__);
+			++errors;
+			break;
+		}
+		if (com::diag::amigo::GPIO::base(com::diag::amigo::GPIO::PIN_B4) != &PINB) {
+			FAILED(__LINE__);
+			++errors;
+			break;
+		}
+		if (com::diag::amigo::GPIO::offset(com::diag::amigo::GPIO::PIN_B4) != 4) {
+			FAILED(__LINE__);
+			++errors;
+			break;
+		}
+		if (com::diag::amigo::GPIO::mask(com::diag::amigo::GPIO::PIN_B4) != _BV(4)) {
+			FAILED(__LINE__);
+			++errors;
+			break;
+		}
+		PASSED();
+	} while (false);
+#endif
+
+#if 1
 	UNITTEST("SPI (specific to W5100 Ethernet controller)");
 	do {
 		com::diag::amigo::SPI spi;
@@ -661,11 +706,9 @@ int main() {
 	CPASSED();
 #endif
 
-#if 0
-	// This takes long enough -- maybe ten seconds -- that I don't leave it
-	// enabled. But it should be tested once in a while.
+#if 1
+	CUNITTEST("Morse");
 	do {
-		CUNITTEST("Morse");
 		com::diag::amigo::Morse telegraph;
 		telegraph.morse(" .. .- -. -- ");
 		CPASSED();

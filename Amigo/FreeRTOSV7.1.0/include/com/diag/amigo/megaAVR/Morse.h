@@ -16,7 +16,7 @@ namespace com {
 namespace diag {
 namespace amigo {
 
-/*
+/**
  * Morse blinks an LED according to a caller-specified pattern. It uses busy
  * waiting, does not depend on FreeRTOS, and talks directly to the memory-mapped
  * general purpose I/O (GPIO) registers. This is useful for debugging when
@@ -36,7 +36,7 @@ namespace amigo {
  * A explicit pause (' ') between words is seven dots.\n
  *
  * For example, the sequence " .. .- -. -- " counts from zero to three.
-*/
+ */
 class Morse {
 
 protected:

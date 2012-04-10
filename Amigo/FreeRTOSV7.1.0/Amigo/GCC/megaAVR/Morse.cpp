@@ -7,7 +7,7 @@
  * This code is specific to the Freetronics EtherMega 2560 board.
  */
 
-#include <avr/delay.h>
+#include <util/delay.h>
 #include "com/diag/amigo/target/Morse.h"
 #include "com/diag/amigo/io.h"
 
