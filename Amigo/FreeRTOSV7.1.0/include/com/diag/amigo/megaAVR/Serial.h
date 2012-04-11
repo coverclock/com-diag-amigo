@@ -189,6 +189,14 @@ public:
 	 */
 	static void transmit(Port port);
 
+	/**
+	 * This class method exists just for debugging. It reinitializes all static
+	 * variables in this class back to their initial states. This is sometimes
+	 * useful when debugging a "jump to reset vector" bug, but should never be
+	 * necessary in practice.
+	 */
+	static void initialize();
+
 protected:
 
 	static Serial * serial[MAXUSART + 1];
