@@ -204,7 +204,7 @@ void SPI::start(Divisor divisor, Role role, Order order, Polarity polarity, Phas
 	}
 }
 
-void SPI::stop() const {
+void SPI::stop() {
 	Uninterruptable uninterruptable;
 	SPICR &= ~(_BV(SPIE) | _BV(SPE));
 }
