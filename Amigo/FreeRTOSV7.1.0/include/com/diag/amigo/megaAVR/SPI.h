@@ -168,7 +168,7 @@ public:
 	 * The SPI is disabled and all further interrupt driven I/O operations
 	 * cease.
 	 */
-	void stop() const;
+	void stop();
 
 	/**
 	 * Restart interrupt driven I/O operations after a stop() without

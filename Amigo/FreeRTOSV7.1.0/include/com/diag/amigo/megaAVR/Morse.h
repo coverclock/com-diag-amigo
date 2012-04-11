@@ -11,6 +11,7 @@
 
 #include <avr/io.h>
 #include "com/diag/amigo/types.h"
+#include "com/diag/amigo/target/GPIO.h"
 
 namespace com {
 namespace diag {
@@ -41,6 +42,8 @@ class Morse {
 
 protected:
 
+	static const GPIO::Pin LED = GPIO::PIN_B7;
+
 	static const double DOT = 125.0; // milliseconds
 
 	static const double DASH = 375.0; // milliseconds
@@ -58,7 +61,7 @@ public:
 	 * @param mybase points to the base address of the GPIO controller to use.
 	 * @param mymask is the bit mask for the GPIO bit to use.
 	 */
-	Morse(volatile uint8_t * mybase = &PINB, uint8_t mymask = _BV(7))
+	Morse(volatile void * mybase = GPIO::base(LED), uint8_t mymask = GPIO::mask(LED))
 	: base(mybase)
 	, mask(mymask)
 	{}
@@ -72,11 +75,11 @@ public:
 	 * Blink an LED according to a caller-specified pattern.
 	 * @param code points to a string indicating the blink pattern.
 	 */
-	void morse(const char * code);
+	void morse(const char * code) const;
 
 private:
 
-	volatile uint8_t * base;
+	volatile void * base;
 	uint8_t mask;
 
 };

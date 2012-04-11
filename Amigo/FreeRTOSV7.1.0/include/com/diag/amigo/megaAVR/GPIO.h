@@ -25,10 +25,13 @@ namespace diag {
 namespace amigo {
 
 /**
- * GPIO maps an abstract GPIO pin number to a base memory-mapped register base
- * address, an bit offset, or eight-bit mask. Note that this is a simple
- * sequential mapping. Arduino uses a much more complicated mapping that
- * bears little resemblance to this.
+ * GPIO implements basic configuration and operations on the general purpose
+ * I/O ports. There is very little error checking. Abstract GPIO pin numbers are
+ * mapped to a base memory-mapped register base address, an bit offset, and
+ * an eight-bit mask. Note that this is a simple sequential mapping. Arduino
+ * uses a much more complicated and user-friendly mapping that matches the pin
+ * numbers printed on the Arduino circuit boards. Any resemblance between that
+ * mapping and this one is purely coincidental.
  */
 class GPIO {
 
@@ -186,29 +189,87 @@ public:
 	 */
 	static uint8_t mask(Pin pin);
 
+	/**
+	 * Constructor.
+	 * @param mybase is the base address for the first GPIO register.
+	 */
 	explicit GPIO(volatile void * mybase);
 
+	/**
+	 * Destructor.
+	 */
 	virtual ~GPIO();
 
-	GPIO & input(uint8_t mymask);
+	/**
+	 * Set GPIO pins to inputs with no pull-ups enabled.
+	 * @param mymask indicates input pins with bits set to one.
+	 * @return a reference to this object.
+	 */
+	const GPIO & input(uint8_t mymask) const;
 
-	GPIO & pulledup(uint8_t mymask);
+	/**
+	 * Set GPIO pins to inputs with pull ups enabled.
+	 * @param mymask indicates input pins with bits set to one.
+	 * @return a reference to this object.
+	 */
+	const GPIO & pulledup(uint8_t mymask) const;
 
-	GPIO & output(uint8_t mymask);
+	/**
+	 * Set GPIO pins to outputs with no explicit initial values.
+	 * @param mymask indicates output pins with bits set to one.
+	 * @return a reference to this object.
+	 */
+	const GPIO & output(uint8_t mymask) const;
 
-	GPIO & output(uint8_t mymask, uint8_t initial);
+	/**
+	 * Set GPIO pins to outputs with explicit initial values.
+	 * @param mymask indicates input pins with bits set to one.
+	 * @param initial indicates initial values zero or one for selected pins.
+	 * @return a reference to this object.
+	 */
+	const GPIO & output(uint8_t mymask, uint8_t initial) const;
 
-	GPIO & set(uint8_t mymask);
+	/**
+	 * Set GPIO pins to one (high).
+	 * @param mymask indicates high pins with bits set to one.
+	 * @return a reference to this object.
+	 */
+	const GPIO & set(uint8_t mymask) const;
 
-	GPIO & clear(uint8_t mymask);
+	/**
+	 * Set GPIO pins to zero (low).
+	 * @param mymask indicates low pins with bits set to one.
+	 * @return a reference to this object.
+	 */
+	const GPIO & clear(uint8_t mymask) const;
 
-	GPIO & toggle(uint8_t mymask);
+	/**
+	 * Toggle GPIO pins.
+	 * @param mymask indicates toggled pins with bits set to one.
+	 * @return a reference to this object.
+	 */
+	const GPIO & toggle(uint8_t mymask) const;
 
-	GPIO & get(uint8_t mymask, uint8_t & result);
+	/**
+	 * Get the value of GPIO pins.
+	 * @param mymask indicates pins to be gotten with bits set to one.
+	 * @param result refers to a variable into which the result is returned.
+	 * @return a reference to this object.
+	 */
+	const GPIO & get(uint8_t mymask, uint8_t & result) const;
 
-	GPIO & delay(Ticks ticks);
+	/**
+	 * Delay the calling task for the specified number of ticks.
+	 * @return a reference to this object.
+	 */
+	const GPIO & delay(Ticks ticks) const;
 
-	uint8_t get(uint8_t mymask);
+	/**
+	 * Get the value of GPIO pins.
+	 * @param mymask indicates the pins to be gotten with bits set to one.
+	 * @return the value of the GPIO pins with ones indicating high.
+	 */
+	uint8_t get(uint8_t mymask) const;
 
 protected:
 
@@ -231,27 +292,27 @@ inline uint8_t GPIO::mask(Pin pin) {
 	return (map(pin, unused.vvp, myoffset) ? (1 << myoffset) : 0);
 }
 
-inline GPIO & GPIO::input(uint8_t mymask) {
+inline const GPIO & GPIO::input(uint8_t mymask) const {
 	Uninterruptable uninterruptable;
 	COM_DIAG_AMIGO_GPIO_DDR &= ~mymask;
 	COM_DIAG_AMIGO_GPIO_PORT &= ~mymask;
 	return *this;
 }
 
-inline GPIO & GPIO::pulledup(uint8_t mymask) {
+inline const GPIO & GPIO::pulledup(uint8_t mymask) const {
 	Uninterruptable uninterruptable;
 	COM_DIAG_AMIGO_GPIO_DDR &= ~mymask;
 	COM_DIAG_AMIGO_GPIO_PORT |= mymask;
 	return *this;
 }
 
-inline GPIO & GPIO::output(uint8_t mymask) {
+inline const GPIO & GPIO::output(uint8_t mymask) const {
 	Uninterruptable uninterruptable;
 	COM_DIAG_AMIGO_GPIO_DDR |= mymask;
 	return *this;
 }
 
-inline GPIO & GPIO::output(uint8_t mymask, uint8_t initial) {
+inline const GPIO & GPIO::output(uint8_t mymask, uint8_t initial) const {
 	Uninterruptable uninterruptable;
 	COM_DIAG_AMIGO_GPIO_DDR |= mymask;
 	COM_DIAG_AMIGO_GPIO_PORT |= (mymask & initial);
@@ -259,35 +320,35 @@ inline GPIO & GPIO::output(uint8_t mymask, uint8_t initial) {
 	return *this;
 }
 
-inline GPIO & GPIO::set(uint8_t mymask) {
+inline const GPIO & GPIO::set(uint8_t mymask) const {
 	Uninterruptable uninterruptable;
 	COM_DIAG_AMIGO_GPIO_PORT |= mymask;
 	return *this;
 }
 
-inline GPIO & GPIO::clear(uint8_t mymask) {
+inline const GPIO & GPIO::clear(uint8_t mymask) const {
 	Uninterruptable uninterruptable;
 	COM_DIAG_AMIGO_GPIO_PORT &= ~mymask;
 	return *this;
 }
 
-inline GPIO & GPIO::toggle(uint8_t mymask) {
+inline const GPIO & GPIO::toggle(uint8_t mymask) const {
 	Uninterruptable uninterruptable;
 	COM_DIAG_AMIGO_GPIO_PIN |= mymask;
 	return *this;
 }
 
-inline GPIO & GPIO::get(uint8_t mymask, uint8_t & result) {
+inline const GPIO & GPIO::get(uint8_t mymask, uint8_t & result) const {
 	result = COM_DIAG_AMIGO_GPIO_PIN & mymask;
 	return *this;
 }
 
-inline GPIO & GPIO::delay(Ticks ticks) {
+inline const GPIO & GPIO::delay(Ticks ticks) const {
 	Task::delay(ticks);
 	return *this;
 }
 
-inline uint8_t GPIO::get(uint8_t mymask) {
+inline uint8_t GPIO::get(uint8_t mymask) const {
 	uint8_t result;
 	get(mymask, result);
 	return result;
