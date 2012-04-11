@@ -4,10 +4,11 @@
 # Chip Overclock <coverclock@diag.com>
 # http://www.diag.com/navigation/downloads/Amigo
 #
-# TESTED CONFIGURATION
+# TESTED CONFIGURATIONS
 #
 #	BUILD_TARGET		FreetronicsEtherMega2560
 #	BUILD_HOST			Darwin (a.k.a. Mac OS X)
+#	BUILD_HOST			Linux (a.k.a. Ubuntu 10.04)
 #	BUILD_PLATFORM		UnitTest
 #
 # TYPICAL TARGETS
@@ -22,12 +23,6 @@
 #	full			- generate artifacts, deliverables, and collateral
 #	pristine		- remove deliverables and collateral
 #	documentation	- generate documentation using Doxygen
-#
-# BUILD ENVIRONMENTS
-#
-#	Mac OS X 10.6.8				AVR CrossPack		GCC 4.5.1		AVR libc 1.8.0		Works.
-#	Windows 7					AVR Studio 5.1		GCC 4.5.1		AVR libc 1.7.1		Works.
-#	Ubuntu 10.04 (2.6.32-40)	Synaptics			GCC 4.3.4		AVR libc 1.6.7		DOES NOT WORK!
 #
 # USUAL DISCLAIMERS
 #
@@ -59,7 +54,7 @@ PROJECT=amigo
 NAME=Amigo
 
 MAJOR=0
-MINOR=16
+MINOR=17
 FIX=0
 
 HTTP_URL=http://www.diag.com/navigation/downloads/$(NAME).html
