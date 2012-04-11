@@ -10,6 +10,7 @@
  */
 
 #include <avr/interrupt.h>
+#include <string.h>
 #include "FreeRTOS.h"
 #include "task.h"
 #include "com/diag/amigo/target/Serial.h"
@@ -51,6 +52,10 @@ Serial * Serial::serial[] = {
 #endif
 #endif
 };
+
+void Serial::initialize() {
+	memset(serial, 0, sizeof(serial));
+}
 
 Serial::Serial(Port myport, Count transmits, Count receives, uint8_t mybad)
 : base(0)

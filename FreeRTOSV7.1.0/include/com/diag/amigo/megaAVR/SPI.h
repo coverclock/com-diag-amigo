@@ -125,6 +125,14 @@ public:
 	 */
 	static void complete(Controller controller);
 
+	/**
+	 * This class method exists just for debugging. It reinitializes all static
+	 * variables in this class back to their initial states. This is sometimes
+	 * useful when debugging a "jump to reset vector" bug, but should never be
+	 * necessary in practice.
+	 */
+	static void initialize();
+
 protected:
 
 	static SPI * spi[MAXSPI + 1];

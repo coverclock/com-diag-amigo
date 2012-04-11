@@ -4,6 +4,12 @@
 # Chip Overclock <coverclock@diag.com>
 # http://www.diag.com/navigation/downloads/Amigo
 #
+# TESTED CONFIGURATION
+#
+#	BUILD_TARGET		FreetronicsEtherMega2560
+#	BUILD_HOST			Darwin (a.k.a. Mac OS X)
+#	BUILD_PLATFORM		UnitTest
+#
 # TYPICAL TARGETS
 #
 #	depend			- generate dependencies
@@ -16,6 +22,12 @@
 #	full			- generate artifacts, deliverables, and collateral
 #	pristine		- remove deliverables and collateral
 #	documentation	- generate documentation using Doxygen
+#
+# BUILD ENVIRONMENTS
+#
+#	Mac OS X 10.6.8				AVR CrossPack		GCC 4.5.1		AVR libc 1.8.0		Works.
+#	Windows 7					AVR Studio 5.1		GCC 4.5.1		AVR libc 1.7.1		Works.
+#	Ubuntu 10.04 (2.6.32-40)	Synaptics			GCC 4.3.4		AVR libc 1.6.7		DOES NOT WORK!
 #
 # USUAL DISCLAIMERS
 #
@@ -47,7 +59,7 @@ PROJECT=amigo
 NAME=Amigo
 
 MAJOR=0
-MINOR=15
+MINOR=16
 FIX=0
 
 HTTP_URL=http://www.diag.com/navigation/downloads/$(NAME).html
@@ -70,42 +82,43 @@ FORMAT=cs8
 # HOST
 ################################################################################
 
-# This option uses the tool chain provided with Arduino on my desktop.
-ifeq ($(BUILD_HOST), Unused)
-TMP_DIR=/tmp
-FREERTOS_DIR=FreeRTOSV7.1.0
-ARDUINO_DIR=/Applications/Arduino.app/Contents/Resources/Java
-BOOTLOADER_DIR=$(ARDUINO_DIR)/hardware/Arduino/bootloaders
-TOOLS_DIR=$(ARDUINO_DIR)/hardware/tools/avr
-AVRDUDE_CONF=$(TOOLS_DIR)/etc/avrdude.conf
-TOOLCHAIN_BIN=$(TOOLS_DIR)/bin
-TOOLCHAIN_DIR=$(TOOLS_DIR)/avr/include
-AVRSTUDIO_DIR=Amigo/Debug
-endif
+# Amigo has been tested with the following GCC tool chains and AVR C libaries.
+#
+# HOST			PACKAGE				GCC			LIBC
+# Mac OS X		AVR CrossPack		4.5.1		1.8.0
+# Windows 7		AVR Studio 5.1		4.5.1		1.7.1
+# Ubuntu 10.04	WrightFlyer Debian	4.5.1		1.8.0
 
-# This option uses the tool chain provided with the AVR CrossPack on my desktop.
+# This option uses the tool chain from the AVR CrossPack for my desktop Mac.
+# http://www.obdev.at/downloads/crosspack/CrossPack-AVR-20120217.dmg
 ifeq ($(BUILD_HOST), Darwin)
 TMP_DIR=/tmp
 FREERTOS_DIR=FreeRTOSV7.1.0
 ARDUINO_DIR=/Applications/Arduino.app/Contents/Resources/Java
 BOOTLOADER_DIR=$(ARDUINO_DIR)/hardware/Arduino/bootloaders
-CROSSPACK_DIR=/usr/local/CrossPack-AVR
-AVRDUDE_CONF=$(CROSSPACK_DIR)/etc/avrdude.conf
-TOOLCHAIN_BIN=$(CROSSPACK_DIR)/bin
-TOOLCHAIN_DIR=$(CROSSPACK_DIR)/avr/include
+TOOLCHAIN_ROOT=/usr/local/CrossPack-AVR
+AVRDUDE_CONF=$(TOOLCHAIN_ROOT)/etc/avrdude.conf
+TOOLCHAIN_BIN=$(TOOLCHAIN_ROOT)/bin
+TOOLCHAIN_DIR=$(TOOLCHAIN_ROOT)/avr/include
 AVRSTUDIO_DIR=Amigo/Debug
+SIZEFORMAT=-C --mcu=$(CONTROLLER)
 endif
 
-# This option uses the tool chain provided via AVR packages installed on my server.
+# This option uses the tool chain from the WrightFlyer debian package for Linux/GNU.
+# http://www.wrightflyer.co.uk/avr-gcc/avr-gcc-4.5.1-avrfreaks-2011-dec-29-u10.04.i386.deb
+# dpkg -i avr-gcc-4.5.1-avrfreaks-2011-dec-29-u10.04.i386.deb
+# The standard Ubuntu packages available via Synaptics ARE TOO OLD AND WILL NOT WORK!
 ifeq ($(BUILD_HOST), Linux)
 TMP_DIR=/tmp
 FREERTOS_DIR=FreeRTOSV7.1.0
 ARDUINO_DIR=$(HOME)/src/arduino-1.0-linux
 BOOTLOADER_DIR=$(ARDUINO_DIR)/hardware/arduino/bootloaders
-AVRDUDE_CONF=/etc/avrdude.conf
-TOOLCHAIN_BIN=/usr/bin
-TOOLCHAIN_DIR=/usr/lib/avr/include
+TOOLCHAIN_ROOT=/usr/local/avr
+AVRDUDE_CONF=$(TOOLCHAIN_ROOT)/etc/avrdude.conf
+TOOLCHAIN_BIN=$(TOOLCHAIN_ROOT)/bin
+TOOLCHAIN_DIR=$(TOOLCHAIN_ROOT)/avr/include
 AVRSTUDIO_DIR=Amigo/Debug
+SIZEFORMAT=-C --mcu=$(CONTROLLER)
 endif
 
 ################################################################################
@@ -189,6 +202,7 @@ AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/Dump.cpp
 AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/fatal.cpp
 AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/heap.cpp
 AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/MutexSemaphore.cpp
+AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/overflow.cpp
 AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/Print.cpp
 AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/Queue.cpp
 AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/SerialSink.cpp
@@ -250,7 +264,7 @@ CXXFLAGS=$(CXXDIALECT) $(CDEBUG) -O$(OPT) $(CWARN) $(CXXEXTRA)
 LDFLAGS=$(CARCH) $(RELAX) -O$(OPT) -Wl,--gc-sections
 NMFLAGS=-n -o -a -A
 OBJDUMPFLAGS=-x -G -t -r
-SIZEFLAGS=-C --mcu=$(CONTROLLER)
+SIZEFLAGS=$(SIZEFORMAT)
 OBJDISASSEMBLYFLAGS=-d
 OBJCOPYEEPFLAGS=-O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 
 OBJCOPYHEXFLAGS=-O ihex -R .eeprom
@@ -300,12 +314,12 @@ depend:
 	cp /dev/null $(BUILD_PLATFORM).mk
 	for F in $(CFILES); do \
 		D=`dirname $$F`; \
-		B=`basename -s .c $$F`; \
+		B=`basename $$F | sed 's/\..*$$//'`; \
 		$(CROSS_COMPILE)$(CC) $(CPPFLAGS) -MM -MT $$D/$$B.o -MG $$F >> $(BUILD_PLATFORM).mk; \
 	done
 	for F in $(CXXFILES); do \
 		D=`dirname $$F`; \
-		B=`basename -s .cpp $$F`; \
+		B=`basename $$F | sed 's/\..*$$//'`; \
 		$(CROSS_COMPILE)$(CXX) $(CPPFLAGS) -MM -MT $$D/$$B.o -MG $$F >> $(BUILD_PLATFORM).mk; \
 	done
 
@@ -424,6 +438,11 @@ screen:
 upload:	$(BUILD_PLATFORM).hex
 	stty -f $(SERIAL) hupcl
 	$(AVRDUDE) -v -C$(AVRDUDE_CONF) -p$(PART) -c$(CONFIG) -P$(SERIAL) -b$(BAUD) -D -Uflash:w:$<:i
+
+# This is just like upload but does not rebuild the application.
+upload2:
+	stty -f $(SERIAL) hupcl
+	$(AVRDUDE) -v -C$(AVRDUDE_CONF) -p$(PART) -c$(CONFIG) -P$(SERIAL) -b$(BAUD) -D -Uflash:w:$(BUILD_PLATFORM).hex:i
 
 # This uses the bootloader to load the debug image produced by AVR Studio 5.1.
 debug:	$(AVRSTUDIO_DIR)/$(NAME).hex

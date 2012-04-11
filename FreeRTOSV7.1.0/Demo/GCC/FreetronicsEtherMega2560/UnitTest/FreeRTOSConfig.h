@@ -75,12 +75,16 @@
 #if defined(__AVR_ATmega640__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega1281__) || defined(__AVR_ATmega2560__) || defined(__AVR_ATmega2561__)
 /* v coverclock@diag.com 2012-03-11 */
 	#define portUSE_TIMER3											// portUSE_TIMER3 to use 16 bit Timer3
+/* ^ coverclock@diag.com 2012-03-11 */
     #define configCPU_CLOCK_HZ		( ( unsigned long ) F_CPU )		// Arduino Mega Rev3
     #define configTICK_RATE_HZ		( ( portTickType ) 500 )		// Use 500Hz for TIMER3
 
+/* v coverclock@diag.com 2012-04-10 */
     #define configTOTAL_HEAP_SIZE	( (size_t ) ( 5500 ) )			// used for heap_1.c and heap2.c only
+/* v coverclock@diag.com 2012-04-10 */
 																	// around 4500 works for standard memory
                                                                     // Should be 0xffff - 0x2200 = 56831 for heap in Extended RAM
+/* v coverclock@diag.com 2012-03-11 */
 	#undef configEXT_RAM											// Use the Rugged Circuits External (512kByte) QuadRAM device, only one 56kByte bank.
     #undef configEXT_RAM_8_BANK										// Memory is available as 8 banks of 56kByte.
 /* ^ coverclock@diag.com 2012-03-11 */
@@ -134,7 +138,9 @@
 #define configUSE_IDLE_HOOK		        0
 #define configUSE_TICK_HOOK		        0
 #define configMAX_PRIORITIES		    ( ( unsigned portBASE_TYPE ) 4 )
-#define configMINIMAL_STACK_SIZE	    ( ( unsigned short ) 85 )
+/* v coverclock@diag.com 2012-04-10 */
+#define configMINIMAL_STACK_SIZE	    ( ( unsigned short ) 128 )
+/* ^ coverclock@diag.com 2012-04-10 */
 #define configMAX_TASK_NAME_LEN		    ( 16 )
 #define configUSE_TRACE_FACILITY	    0
 #define configUSE_16_BIT_TICKS		    1
@@ -143,14 +149,16 @@
 #define configUSE_RECURSIVE_MUTEXES     1
 #define configUSE_COUNTING_SEMAPHORES   1
 #define configUSE_ALTERNATIVE_API       0
-#define configCHECK_FOR_STACK_OVERFLOW  0
+#define configCHECK_FOR_STACK_OVERFLOW  1
 #define configQUEUE_REGISTRY_SIZE	    0
 
 /* Timer definitions. */
 #define configUSE_TIMERS				1
 #define configTIMER_TASK_PRIORITY       ( ( unsigned portBASE_TYPE ) 7 )
 #define configTIMER_QUEUE_LENGTH        ( ( unsigned portBASE_TYPE ) 10 )
-#define configTIMER_TASK_STACK_DEPTH    configMINIMAL_STACK_SIZE
+/* v coverclock@diag.com 2012-04-10 */
+#define configTIMER_TASK_STACK_DEPTH    ( ( unsigned short ) 512 )
+/* ^ coverclock@diag.com 2012-04-10 */
 
 /* Co-routine definitions. */
 #define configUSE_CO_ROUTINES 		    0

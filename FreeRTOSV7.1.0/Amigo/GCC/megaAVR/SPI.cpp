@@ -8,6 +8,7 @@
  */
 
 #include <avr/interrupt.h>
+#include <string.h>
 #include "FreeRTOS.h"
 #include "task.h"
 #include "com/diag/amigo/target/SPI.h"
@@ -42,6 +43,10 @@ namespace amigo {
 SPI * SPI::spi[] = {
 	0
 };
+
+void SPI::initialize() {
+	memset(spi, 0, sizeof(spi));
+}
 
 SPI::SPI(Controller mycontroller, Count transmits, Count receives)
 : spibase(0)

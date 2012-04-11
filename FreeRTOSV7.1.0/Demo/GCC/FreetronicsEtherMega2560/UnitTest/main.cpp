@@ -7,6 +7,7 @@
  * http://www.diag.com/navigation/downloads/Amigo.html\n
  */
 
+#include <avr/interrupt.h>
 #include "com/diag/amigo/types.h"
 #include "com/diag/amigo/fatal.h"
 #include "com/diag/amigo/littleendian.h"
@@ -29,20 +30,24 @@
 #include "com/diag/amigo/MutexSemaphore.h"
 #include "com/diag/amigo/Timer.h"
 
+extern "C" void vApplicationStackOverflowHook(xTaskHandle pxTask, signed char * pcTaskName);
+
 /*******************************************************************************
  * UNIT TEST FRAMEWORK (SUCH AS IT IS)
  ******************************************************************************/
 
 static const char UNITTEST_FAILED_AT_LINE[] PROGMEM = "FAILED at line %d!\n";
 static const char UNITTEST_PASSED[] PROGMEM = "PASSED.\n";
+static const char UNITTEST_TRACE[] PROGMEM = "TRACE at line %d; ";
 static const char CUNITTEST_FAILED_AT_LINE[] PROGMEM = "FAILED at line 0x";
 static const char CUNITTEST_FAILED_EOL[] PROGMEM = "!\r\n";
 static const char CUNITTEST_PASSED[] PROGMEM = "PASSED.\r\n";
 
-#define UNITTEST(_NAME_) printf(PSTR("Unit Test " _NAME_ " "))
-#define UNITTESTLN(_NAME_) printf(PSTR("Unit Test " _NAME_ "\n"))
-#define FAILED(_LINE_) printf(UNITTEST_FAILED_AT_LINE, _LINE_)
-#define PASSED() printf(UNITTEST_PASSED)
+#define UNITTEST(_NAME_) do { printf(PSTR("Unit Test " _NAME_ " ")); serial.flush(); } while (false)
+#define UNITTESTLN(_NAME_) do { printf(PSTR("Unit Test " _NAME_ "\n")); serial.flush(); } while (false)
+#define FAILED(_LINE_) do { printf(UNITTEST_FAILED_AT_LINE, _LINE_); serial.flush(); ++errors; } while (false)
+#define PASSED() do { printf(UNITTEST_PASSED); serial.flush(); } while (false)
+#define TRACE(_LINE_) do { printf(UNITTEST_TRACE, _LINE_); serial.flush(); } while (false)
 
 #define CUNITTEST(_NAME_) com::diag::amigo::Console::instance().start().write_P(PSTR("Unit Test " _NAME_ " ")).flush().stop()
 #define CUNITTESTLN(_NAME_) com::diag::amigo::Console::instance().start().write_P(PSTR("Unit Test " _NAME_ "\r\n")).flush().stop()
@@ -183,7 +188,6 @@ void UnitTestTask::task() {
 		milliseconds = t2 - t1;
 		if (!((W1 <= milliseconds) && (milliseconds <= (W1 + (W1 / (100 / PERCENT)))))) {
 			FAILED(__LINE__);
-			++errors;
 			break;
 		}
 		com::diag::amigo::Ticks t4 = t1;
@@ -192,7 +196,6 @@ void UnitTestTask::task() {
 		milliseconds = t3 - t1;
 		if (!((W2 <= milliseconds) && (milliseconds <= (W2 + (W2 / (100 / PERCENT)))))) {
 			FAILED(__LINE__);
-			++errors;
 			break;
 		}
 		PASSED();
@@ -229,35 +232,29 @@ void UnitTestTask::task() {
 		{
 			if ((SREG & _BV(SREG_I)) == 0) {
 				FAILED(__LINE__);
-				++errors;
 				break;
 			}
 			com::diag::amigo::Uninterruptable uninterruptable1;
 			if (static_cast<int8_t>(uninterruptable1) >= 0) {
 				FAILED(__LINE__);
-				++errors;
 				break;
 			}
 			if ((SREG & _BV(SREG_I)) != 0) {
 				FAILED(__LINE__);
-				++errors;
 				break;
 			}
 			com::diag::amigo::Uninterruptable uninterruptable2;
 			if (static_cast<int8_t>(uninterruptable2) < 0) {
 				FAILED(__LINE__);
-				++errors;
 				break;
 			}
 			if ((SREG & _BV(SREG_I)) != 0) {
 				FAILED(__LINE__);
-				++errors;
 				break;
 			}
 		}
 		if ((SREG & _BV(SREG_I)) == 0) {
 			FAILED(__LINE__);
-			++errors;
 			break;
 		}
 		PASSED();
@@ -272,47 +269,39 @@ void UnitTestTask::task() {
 		delay(milliseconds2ticks(MS));
 		if (takertask != true) {
 			FAILED(__LINE__);
-			++errors;
 			break;
 		}
 		if (*binarysemaphorep == false) {
 			FAILED(__LINE__);
-			++errors;
 			break;
 		}
 		if (!binarysemaphorep->give()) {
 			FAILED(__LINE__);
-			++errors;
 			break;
 		}
 		// 0.5s should be enough for the takertask to become ready.
 		delay(milliseconds2ticks(MS));
 		if (takertask != true) {
 			FAILED(__LINE__);
-			++errors;
 			break;
 		}
 		if (takertask.stopped()) {
 			FAILED(__LINE__);
-			++errors;
 			break;
 		}
 		takertask.stop();
 		if (!takertask.stopped()) {
 			FAILED(__LINE__);
-			++errors;
 			break;
 		}
 		// 0.5s should be enough for the takertask to terminate.
 		delay(milliseconds2ticks(MS));
 		if (takertask != false) {
 			FAILED(__LINE__);
-			++errors;
 			break;
 		}
 		if (takertask.errors != 0) {
 			FAILED(__LINE__);
-			errors += takertask.errors;
 			break;
 		}
 		PASSED();
@@ -325,47 +314,38 @@ void UnitTestTask::task() {
 		com::diag::amigo::CountingSemaphore countingsemaphore(2, 2);
 		if (!countingsemaphore) {
 			FAILED(__LINE__);
-			++errors;
 			break;
 		}
 		if (!countingsemaphore.take(com::diag::amigo::CountingSemaphore::IMMEDIATELY)) {
 			FAILED(__LINE__);
-			++errors;
 			break;
 		}
 		if (!countingsemaphore.take(com::diag::amigo::CountingSemaphore::IMMEDIATELY)) {
 			FAILED(__LINE__);
-			++errors;
 			break;
 		}
 		if (countingsemaphore.take(com::diag::amigo::CountingSemaphore::IMMEDIATELY)) {
 			FAILED(__LINE__);
-			++errors;
 			break;
 		}
 		if (!countingsemaphore.give()) {
 			FAILED(__LINE__);
-			++errors;
 			break;
 		}
 		if (!countingsemaphore.take(com::diag::amigo::CountingSemaphore::IMMEDIATELY)) {
 			FAILED(__LINE__);
-			++errors;
 			break;
 		}
 		if (!countingsemaphore.give()) {
 			FAILED(__LINE__);
-			++errors;
 			break;
 		}
 		if (!countingsemaphore.give()) {
 			FAILED(__LINE__);
-			++errors;
 			break;
 		}
 		if (countingsemaphore.give()) {
 			FAILED(__LINE__);
-			++errors;
 			break;
 		}
 		PASSED();
@@ -378,17 +358,14 @@ void UnitTestTask::task() {
 		com::diag::amigo::MutexSemaphore mutexsemaphore;
 		if (!mutexsemaphore) {
 			FAILED(__LINE__);
-			++errors;
 			break;
 		}
-		if (!mutexsemaphore.take(com::diag::amigo::CountingSemaphore::IMMEDIATELY)) {
+		if (!mutexsemaphore.take(com::diag::amigo::MutexSemaphore::IMMEDIATELY)) {
 			FAILED(__LINE__);
-			++errors;
 			break;
 		}
 		if (!mutexsemaphore.give()) {
 			FAILED(__LINE__);
-			++errors;
 			break;
 		}
 		PASSED();
@@ -396,13 +373,11 @@ void UnitTestTask::task() {
 		com::diag::amigo::CriticalSection criticalsection1(mutexsemaphore);
 		if (!criticalsection1) {
 			FAILED(__LINE__);
-			++errors;
 			break;
 		}
 		com::diag::amigo::CriticalSection criticalsection2(mutexsemaphore);
 		if (!criticalsection2) {
 			FAILED(__LINE__);
-			++errors;
 			break;
 		}
 		PASSED();
@@ -411,154 +386,144 @@ void UnitTestTask::task() {
 
 #if 1
 	UNITTEST("PeriodicTimer");
-	do {
+	{
 		static const com::diag::amigo::Ticks T1 = 100;
 		static const com::diag::amigo::Ticks W1 = 500;
 		PeriodicTimer periodictimer(milliseconds2ticks(T1));
-		if (periodictimer != true) {
-			FAILED(__LINE__);
-			++errors;
-			break;
-		}
+		do {
+			if (periodictimer != true) {
+				FAILED(__LINE__);
+				break;
+			}
+			delay(milliseconds2ticks(W1));
+			if (periodictimer.counter != 0) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (!periodictimer.start()) {
+				FAILED(__LINE__);
+				break;
+			}
+			delay(milliseconds2ticks(W1));
+			if (!periodictimer.stop()) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (!(((W1 / T1) <= periodictimer.counter) && (periodictimer.counter <= ((W1 / T1) + 1)))) {
+				FAILED(__LINE__);
+				break;
+			}
+			delay(milliseconds2ticks(W1));
+			if (!(((W1 / T1) <= periodictimer.counter) && (periodictimer.counter <= ((W1 / T1) + 1)))) {
+				FAILED(__LINE__);
+				break;
+			}
+			PASSED();
+		} while (false);
+		// Try to avoid taking a fatal() because the timer task hasn't stopped
+		// the timer yet.
+		periodictimer.stop();
 		delay(milliseconds2ticks(W1));
-		if (periodictimer.counter != 0) {
-			FAILED(__LINE__);
-			++errors;
-			break;
-		}
-		if (!periodictimer.start()) {
-			FAILED(__LINE__);
-			++errors;
-			break;
-		}
-		delay(milliseconds2ticks(W1));
-		if (!periodictimer.stop()) {
-			FAILED(__LINE__);
-			++errors;
-			break;
-		}
-		if (!(((W1 / T1) <= periodictimer.counter) && (periodictimer.counter <= ((W1 / T1) + 1)))) {
-			FAILED(__LINE__);
-			++errors;
-			break;
-		}
-		delay(milliseconds2ticks(W1));
-		if (!(((W1 / T1) <= periodictimer.counter) && (periodictimer.counter <= ((W1 / T1) + 1)))) {
-			FAILED(__LINE__);
-			++errors;
-			break;
-		}
-		PASSED();
-	} while (false);
+	}
 #endif
 
 #if 1
 	UNITTEST("OneShotTimer");
-	do {
+	{
 		static const com::diag::amigo::Ticks T2 = 200;
 		static const com::diag::amigo::Ticks T3 = 300;
 		static const com::diag::amigo::Ticks W2 = 500;
 		static const com::diag::amigo::Ticks PERCENT = 20;
 		OneShotTimer oneshottimer(milliseconds2ticks(T2));
-		if (oneshottimer != true) {
-			FAILED(__LINE__);
-			++errors;
-			break;
-		}
+		do {
+			if (oneshottimer != true) {
+				FAILED(__LINE__);
+				break;
+			}
+			delay(milliseconds2ticks(W2));
+			if (oneshottimer.now != 0) {
+				FAILED(__LINE__);
+				break;
+			}
+			com::diag::amigo::Ticks t2 = ticks2milliseconds(elapsed());
+			if (!oneshottimer.start()) {
+				FAILED(__LINE__);
+				break;
+			}
+			delay(milliseconds2ticks(W2));
+			if (oneshottimer.now == 0) {
+				FAILED(__LINE__);
+				break;
+			}
+			com::diag::amigo::Ticks milliseconds = oneshottimer.now - t2;
+			if (!((T2 <= milliseconds) && (milliseconds <= (T2 + (T2 / (100 / PERCENT)))))) {
+				FAILED(__LINE__);
+				break;
+			}
+			oneshottimer.now = 0;
+			if (!oneshottimer.start()) {
+				FAILED(__LINE__);
+				break;
+			}
+			delay(milliseconds2ticks(T2 / 2));
+			com::diag::amigo::Ticks t3 = ticks2milliseconds(elapsed());
+			if (!oneshottimer.reset()) {
+				FAILED(__LINE__);
+				break;
+			}
+			delay(milliseconds2ticks(W2));
+			if (oneshottimer.now == 0) {
+				FAILED(__LINE__);
+				break;
+			}
+			milliseconds = oneshottimer.now - t3;
+			if (!((T2 <= milliseconds) && (milliseconds <= (T2 + (T2 / (100 / PERCENT)))))) {
+				FAILED(__LINE__);
+				break;
+			}
+			oneshottimer.now = 0;
+			if (!oneshottimer.reset()) {
+				FAILED(__LINE__);
+				break;
+			}
+			delay(milliseconds2ticks(T2 / 2));
+			com::diag::amigo::Ticks t4 = ticks2milliseconds(elapsed());
+			if (!oneshottimer.reschedule(milliseconds2ticks(T3))) {
+				FAILED(__LINE__);
+				break;
+			}
+			delay(milliseconds2ticks(W2));
+			if (oneshottimer.now == 0) {
+				FAILED(__LINE__);
+				break;
+			}
+			milliseconds = oneshottimer.now - t4;
+			if (!((T3 <= milliseconds) && (milliseconds <= (T3 + (T3 / (100 / PERCENT)))))) {
+				FAILED(__LINE__);
+				break;
+			}
+			com::diag::amigo::Ticks t5 = ticks2milliseconds(elapsed());
+			if (!oneshottimer.reschedule(milliseconds2ticks(T3))) {
+				FAILED(__LINE__);
+				break;
+			}
+			delay(milliseconds2ticks(W2));
+			if (oneshottimer.now == 0) {
+				FAILED(__LINE__);
+				break;
+			}
+			milliseconds = oneshottimer.now - t5;
+			if (!((T3 <= milliseconds) && (milliseconds <= (T3 + (T3 / (100 / PERCENT)))))) {
+				FAILED(__LINE__);
+				break;
+			}
+			PASSED();
+		} while (false);
+		// Try to avoid taking a fatal() because the timer task hasn't stopped
+		// the timer yet.
+		oneshottimer.stop();
 		delay(milliseconds2ticks(W2));
-		if (oneshottimer.now != 0) {
-			FAILED(__LINE__);
-			++errors;
-			break;
-		}
-		com::diag::amigo::Ticks t2 = ticks2milliseconds(elapsed());
-		if (!oneshottimer.start()) {
-			FAILED(__LINE__);
-			++errors;
-			break;
-		}
-		delay(milliseconds2ticks(W2));
-		if (oneshottimer.now == 0) {
-			FAILED(__LINE__);
-			++errors;
-			break;
-		}
-		com::diag::amigo::Ticks milliseconds = oneshottimer.now - t2;
-		if (!((T2 <= milliseconds) && (milliseconds <= (T2 + (T2 / (100 / PERCENT)))))) {
-			FAILED(__LINE__);
-			++errors;
-			break;
-		}
-		oneshottimer.now = 0;
-		if (!oneshottimer.start()) {
-			FAILED(__LINE__);
-			++errors;
-			break;
-		}
-		delay(milliseconds2ticks(T2 / 2));
-		com::diag::amigo::Ticks t3 = ticks2milliseconds(elapsed());
-		if (!oneshottimer.reset()) {
-			FAILED(__LINE__);
-			++errors;
-			break;
-		}
-		delay(milliseconds2ticks(W2));
-		if (oneshottimer.now == 0) {
-			FAILED(__LINE__);
-			++errors;
-			break;
-		}
-		milliseconds = oneshottimer.now - t3;
-		if (!((T2 <= milliseconds) && (milliseconds <= (T2 + (T2 / (100 / PERCENT)))))) {
-			FAILED(__LINE__);
-			++errors;
-			break;
-		}
-		oneshottimer.now = 0;
-		if (!oneshottimer.reset()) {
-			FAILED(__LINE__);
-			++errors;
-			break;
-		}
-		delay(milliseconds2ticks(T2 / 2));
-		com::diag::amigo::Ticks t4 = ticks2milliseconds(elapsed());
-		if (!oneshottimer.reschedule(milliseconds2ticks(T3))) {
-			FAILED(__LINE__);
-			++errors;
-			break;
-		}
-		delay(milliseconds2ticks(W2));
-		if (oneshottimer.now == 0) {
-			FAILED(__LINE__);
-			++errors;
-			break;
-		}
-		milliseconds = oneshottimer.now - t4;
-		if (!((T3 <= milliseconds) && (milliseconds <= (T3 + (T3 / (100 / PERCENT)))))) {
-			FAILED(__LINE__);
-			++errors;
-			break;
-		}
-		com::diag::amigo::Ticks t5 = ticks2milliseconds(elapsed());
-		if (!oneshottimer.reschedule(milliseconds2ticks(T3))) {
-			FAILED(__LINE__);
-			++errors;
-			break;
-		}
-		delay(milliseconds2ticks(W2));
-		if (oneshottimer.now == 0) {
-			FAILED(__LINE__);
-			++errors;
-			break;
-		}
-		milliseconds = oneshottimer.now - t5;
-		if (!((T3 <= milliseconds) && (milliseconds <= (T3 + (T3 / (100 / PERCENT)))))) {
-			FAILED(__LINE__);
-			++errors;
-			break;
-		}
-		PASSED();
-	} while (false);
+	}
 #endif
 
 #if 1
@@ -573,47 +538,38 @@ void UnitTestTask::task() {
 	do {
 		if (com::diag::amigo::GPIO::base(com::diag::amigo::GPIO::PIN_B7) != &PINB) {
 			FAILED(__LINE__);
-			++errors;
 			break;
 		}
 		if (com::diag::amigo::GPIO::offset(com::diag::amigo::GPIO::PIN_B7) != 7) {
 			FAILED(__LINE__);
-			++errors;
 			break;
 		}
 		if (com::diag::amigo::GPIO::mask(com::diag::amigo::GPIO::PIN_B7) != _BV(7)) {
 			FAILED(__LINE__);
-			++errors;
 			break;
 		}
 		if (com::diag::amigo::GPIO::base(com::diag::amigo::GPIO::PIN_B4) != &PINB) {
 			FAILED(__LINE__);
-			++errors;
 			break;
 		}
 		if (com::diag::amigo::GPIO::offset(com::diag::amigo::GPIO::PIN_B4) != 4) {
 			FAILED(__LINE__);
-			++errors;
 			break;
 		}
 		if (com::diag::amigo::GPIO::mask(com::diag::amigo::GPIO::PIN_B4) != _BV(4)) {
 			FAILED(__LINE__);
-			++errors;
 			break;
 		}
 		if (com::diag::amigo::GPIO::base(static_cast<com::diag::amigo::GPIO::Pin>(~0)) != 0) {
 			FAILED(__LINE__);
-			++errors;
 			break;
 		}
 		if (com::diag::amigo::GPIO::offset(static_cast<com::diag::amigo::GPIO::Pin>(~0)) != static_cast<uint8_t>(~0)) {
 			FAILED(__LINE__);
-			++errors;
 			break;
 		}
 		if (com::diag::amigo::GPIO::mask(static_cast<com::diag::amigo::GPIO::Pin>(~0)) != 0) {
 			FAILED(__LINE__);
-			++errors;
 			break;
 		}
 		PASSED();
@@ -644,17 +600,14 @@ void UnitTestTask::task() {
 			// Reference: WIZnet, W5100 Datasheet, Version 1.2.4, 2011
 			if (rtr0 != 0x07) {
 				FAILED(__LINE__);
-				++errors;
 				break;
 			}
 			if (rtr1 != 0xd0) {
 				FAILED(__LINE__);
-				++errors;
 				break;
 			}
 			if (rcr != 0x08) {
 				FAILED(__LINE__);
-				++errors;
 				break;
 			}
 			PASSED();
@@ -721,6 +674,14 @@ int main() {
 	CPASSED();
 #endif
 
+#if 0
+	CUNITTESTLN("Overflow");
+	{
+		vApplicationStackOverflowHook(0, (signed char *)"OVERFLOW");
+		CPASSED();
+	}
+#endif
+
 #if 1
 	CUNITTEST("Morse");
 	do {
@@ -728,6 +689,17 @@ int main() {
 		telegraph.morse(" .. .- -. -- ");
 		CPASSED();
 	} while (false);
+#endif
+
+#if 1
+	CUNITTEST("initialize");
+	com::diag::amigo::Serial::initialize();
+	com::diag::amigo::SPI::initialize();
+	{
+		com::diag::amigo::Serial serial;
+		com::diag::amigo::SPI spi;
+	}
+	CPASSED();
 #endif
 
 	sei();
