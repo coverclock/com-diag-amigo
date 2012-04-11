@@ -90,6 +90,12 @@ bool GPIO::map(uint8_t pin, volatile void * & mybase, uint8_t & myoffset) {
 	return (base != 0);
 }
 
+GPIO::GPIO(volatile void * mybase)
+: gpiobase(mybase)
+{}
+
+GPIO::~GPIO() {}
+
 }
 }
 }
