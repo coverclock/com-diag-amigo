@@ -55,7 +55,7 @@ static const char CUNITTEST_PASSED[] PROGMEM = "PASSED.\r\n";
 #define CPASSED() com::diag::amigo::Console::instance().start().write_P(CUNITTEST_PASSED).flush().stop()
 
 /*******************************************************************************
- * Timers
+ * TIMERS
  ******************************************************************************/
 
 class OneShotTimer : public com::diag::amigo::OneShotTimer {
@@ -79,6 +79,34 @@ public:
 void PeriodicTimer::timer() {
 	++counter;
 }
+
+/*******************************************************************************
+ * WIZNET W5100 (FOR TESTING SPI AND ALSO GPIO)
+ ******************************************************************************/
+
+class W5100 {
+public:
+	explicit W5100(com::diag::amigo::GPIO::Pin myss, com::diag::amigo::SPI & myspi)
+	: gpio(com::diag::amigo::GPIO::base(myss))
+	, mask(com::diag::amigo::GPIO::mask(myss))
+	, spi(&myspi)
+	{
+		gpio.output(mask, mask);
+	}
+	int read(uint16_t address) {
+		gpio.clear(mask);
+		spi->master(0x0f);
+		spi->master(address >> 8);
+		spi->master(address & 0xff);
+		int datum = spi->master();
+		gpio.set(mask);
+		return datum;
+	}
+private:
+	com::diag::amigo::GPIO gpio;
+	com::diag::amigo::SPI * spi;
+	uint8_t mask;
+};
 
 /*******************************************************************************
  * TAKER TASK (FOR TESTING BINARYSEMAPHORE)
@@ -106,29 +134,6 @@ void TakerTask::task() {
 	while (!stopped()) {
 		yield();
 	}
-}
-
-/*******************************************************************************
- * WIZNET W5100 SPI FUNCTIONS (FOR TESTING SPI)
- ******************************************************************************/
-
-inline void w5100init() {
-	DDRB |= _BV(4);
-}
-
-inline void w5100set() {
-	PORTB &= ~_BV(4);
-}
-
-inline int w5100read(com::diag::amigo::SPI & spi, uint16_t address) {
-	spi.master(0x0f);
-	spi.master(address >> 8);
-	spi.master(address & 0xff);
-	return spi.master();
-}
-
-inline void w5100reset() {
-	PORTB |=  _BV(4);
 }
 
 /*******************************************************************************
@@ -572,31 +577,31 @@ void UnitTestTask::task() {
 			FAILED(__LINE__);
 			break;
 		}
+		com::diag::amigo::GPIO::Pin pin = com::diag::amigo::GPIO::PIN_B7;
+		volatile void * base = com::diag::amigo::GPIO::base(pin);
+		uint8_t mask = com::diag::amigo::GPIO::mask(pin);
+		com::diag::amigo::Ticks ticks = com::diag::amigo::Task::milliseconds2ticks(500);
+		com::diag::amigo::GPIO gpio(base);
+		gpio.output(mask).set(mask).delay(ticks).clear(mask).delay(ticks).set(mask).delay(ticks).clear(mask).delay(ticks).set(mask).delay(ticks).clear(mask).delay(ticks).set(mask).delay(ticks).clear(mask).delay(ticks).set(mask).delay(ticks).clear(mask);
 		PASSED();
 	} while (false);
 #endif
 
 #if 1
-	UNITTEST("SPI (specific to W5100 Ethernet controller)");
+	UNITTEST("SPI (specific to EtherMega W5100)");
 	do {
 		com::diag::amigo::SPI spi;
 		spi.start();
 		com::diag::amigo::MutexSemaphore mutex;
 		do {
 			com::diag::amigo::CriticalSection criticalsection(mutex);
-			w5100init();
+			W5100 w5100(com::diag::amigo::GPIO::PIN_B4, spi);
 			static const uint16_t RTR0 = 0x0017;
 			static const uint16_t RTR1 = 0x0018;
 			static const uint16_t RCR = 0x0019;
-			w5100set();
-			uint8_t rtr0 = w5100read(spi, RTR0);
-			w5100reset();
-			w5100set();
-			uint8_t rtr1 = w5100read(spi, RTR1);
-			w5100reset();
-			w5100set();
-			uint8_t rcr = w5100read(spi, RCR);
-			w5100reset();
+			uint8_t rtr0 = w5100.read(RTR0);
+			uint8_t rtr1 = w5100.read(RTR1);
+			uint8_t rcr = w5100.read(RCR);
 			// Reference: WIZnet, W5100 Datasheet, Version 1.2.4, 2011
 			if (rtr0 != 0x07) {
 				FAILED(__LINE__);

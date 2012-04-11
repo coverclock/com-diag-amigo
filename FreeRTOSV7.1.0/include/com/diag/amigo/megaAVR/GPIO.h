@@ -12,6 +12,13 @@
 #include <avr/io.h>
 #include "com/diag/amigo/types.h"
 #include "com/diag/amigo/unused.h"
+#include "com/diag/amigo/io.h"
+#include "com/diag/amigo/Task.h"
+#include "com/diag/amigo/target/Uninterruptable.h"
+
+#define COM_DIAG_AMIGO_GPIO_PIN			COM_DIAG_AMIGO_MMIO_8(gpiobase, 0)
+#define COM_DIAG_AMIGO_GPIO_DDR			COM_DIAG_AMIGO_MMIO_8(gpiobase, 1)
+#define COM_DIAG_AMIGO_GPIO_PORT		COM_DIAG_AMIGO_MMIO_8(gpiobase, 2)
 
 namespace com {
 namespace diag {
@@ -179,6 +186,34 @@ public:
 	 */
 	static uint8_t mask(Pin pin);
 
+	explicit GPIO(volatile void * mybase);
+
+	virtual ~GPIO();
+
+	GPIO & input(uint8_t mymask);
+
+	GPIO & pulledup(uint8_t mymask);
+
+	GPIO & output(uint8_t mymask);
+
+	GPIO & output(uint8_t mymask, uint8_t initial);
+
+	GPIO & set(uint8_t mymask);
+
+	GPIO & clear(uint8_t mymask);
+
+	GPIO & toggle(uint8_t mymask);
+
+	GPIO & get(uint8_t mymask, uint8_t & result);
+
+	GPIO & delay(Ticks ticks);
+
+	uint8_t get(uint8_t mymask);
+
+protected:
+
+	volatile void * gpiobase;
+
 };
 
 inline volatile void * GPIO::base(Pin pin) {
@@ -194,6 +229,68 @@ inline uint8_t GPIO::offset(Pin pin) {
 inline uint8_t GPIO::mask(Pin pin) {
 	uint8_t myoffset;
 	return (map(pin, unused.vvp, myoffset) ? (1 << myoffset) : 0);
+}
+
+inline GPIO & GPIO::input(uint8_t mymask) {
+	Uninterruptable uninterruptable;
+	COM_DIAG_AMIGO_GPIO_DDR &= ~mymask;
+	COM_DIAG_AMIGO_GPIO_PORT &= ~mymask;
+	return *this;
+}
+
+inline GPIO & GPIO::pulledup(uint8_t mymask) {
+	Uninterruptable uninterruptable;
+	COM_DIAG_AMIGO_GPIO_DDR &= ~mymask;
+	COM_DIAG_AMIGO_GPIO_PORT |= mymask;
+	return *this;
+}
+
+inline GPIO & GPIO::output(uint8_t mymask) {
+	Uninterruptable uninterruptable;
+	COM_DIAG_AMIGO_GPIO_DDR |= mymask;
+	return *this;
+}
+
+inline GPIO & GPIO::output(uint8_t mymask, uint8_t initial) {
+	Uninterruptable uninterruptable;
+	COM_DIAG_AMIGO_GPIO_DDR |= mymask;
+	COM_DIAG_AMIGO_GPIO_PORT |= (mymask & initial);
+	COM_DIAG_AMIGO_GPIO_PORT &= ~(mymask & initial);
+	return *this;
+}
+
+inline GPIO & GPIO::set(uint8_t mymask) {
+	Uninterruptable uninterruptable;
+	COM_DIAG_AMIGO_GPIO_PORT |= mymask;
+	return *this;
+}
+
+inline GPIO & GPIO::clear(uint8_t mymask) {
+	Uninterruptable uninterruptable;
+	COM_DIAG_AMIGO_GPIO_PORT &= ~mymask;
+	return *this;
+}
+
+inline GPIO & GPIO::toggle(uint8_t mymask) {
+	Uninterruptable uninterruptable;
+	COM_DIAG_AMIGO_GPIO_PIN |= mymask;
+	return *this;
+}
+
+inline GPIO & GPIO::get(uint8_t mymask, uint8_t & result) {
+	result = COM_DIAG_AMIGO_GPIO_PIN & mymask;
+	return *this;
+}
+
+inline GPIO & GPIO::delay(Ticks ticks) {
+	Task::delay(ticks);
+	return *this;
+}
+
+inline uint8_t GPIO::get(uint8_t mymask) {
+	uint8_t result;
+	get(mymask, result);
+	return result;
 }
 
 }
