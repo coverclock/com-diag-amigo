@@ -7,7 +7,10 @@
 # TESTED CONFIGURATIONS
 #
 #	BUILD_TARGET		FreetronicsEtherMega2560
-#	BUILD_HOST			Darwin (a.k.a. Mac OS X)
+#	BUILD_HOST			Darwin (a.k.a. Mac OS X 10.6.8)
+#	BUILD_PLATFORM		UnitTest
+#
+#	BUILD_TARGET		FreetronicsEtherMega2560
 #	BUILD_HOST			Linux (a.k.a. Ubuntu 10.04)
 #	BUILD_PLATFORM		UnitTest
 #
@@ -48,13 +51,25 @@
 #	WITH ANY OTHER SOFTWARE), EVEN IF SUCH HOLDER OR OTHER PARTY
 #	HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
 #
+# IMPORTANT SAFETY TIP
+#
+#	Amigo has been tested with the following GCC tool chains and AVR C libaries.
+#
+#		HOST			PACKAGE				GCC			LIBC
+#		Mac OS X		AVR CrossPack		4.5.1		1.8.0
+#		Windows 7		AVR Studio 5.1		4.5.1		1.7.1
+#		Ubuntu 10.04	WrightFlyer Debian	4.5.1		1.8.0
+#
+#	The standard Ubuntu AVR packages available via Synaptics are too old (GCC
+#	4.3.4, LIBC 1.6.7) and WILL NOT WORK!
+#
 ################################################################################
 
 PROJECT=amigo
 NAME=Amigo
 
 MAJOR=0
-MINOR=17
+MINOR=18
 FIX=0
 
 HTTP_URL=http://www.diag.com/navigation/downloads/$(NAME).html
@@ -66,7 +81,7 @@ BUILD_TARGET=FreetronicsEtherMega2560
 BUILD_HOST=$(shell uname -s)
 BUILD_PLATFORM=UnitTest
 
-# SERIAL will depend on, for example, into which port you plub your USB cable.
+# SERIAL will depend on, for example, into which port you plug your USB cable.
 #SERIAL=/dev/tty.usbmodem26421
 #SERIAL=/dev/tty.usbmodem411
 SERIAL=/dev/tty.usbmodem441
@@ -76,13 +91,6 @@ FORMAT=cs8
 ################################################################################
 # HOST
 ################################################################################
-
-# Amigo has been tested with the following GCC tool chains and AVR C libaries.
-#
-# HOST			PACKAGE				GCC			LIBC
-# Mac OS X		AVR CrossPack		4.5.1		1.8.0
-# Windows 7		AVR Studio 5.1		4.5.1		1.7.1
-# Ubuntu 10.04	WrightFlyer Debian	4.5.1		1.8.0
 
 # This option uses the tool chain from the AVR CrossPack for my desktop Mac.
 # http://www.obdev.at/downloads/crosspack/CrossPack-AVR-20120217.dmg
@@ -102,7 +110,6 @@ endif
 # This option uses the tool chain from the WrightFlyer debian package for Linux/GNU.
 # http://www.wrightflyer.co.uk/avr-gcc/avr-gcc-4.5.1-avrfreaks-2011-dec-29-u10.04.i386.deb
 # dpkg -i avr-gcc-4.5.1-avrfreaks-2011-dec-29-u10.04.i386.deb
-# The standard Ubuntu packages available via Synaptics ARE TOO OLD AND WILL NOT WORK!
 ifeq ($(BUILD_HOST), Linux)
 TMP_DIR=/tmp
 FREERTOS_DIR=FreeRTOSV7.1.0
@@ -533,23 +540,16 @@ pristine:	clean
 
 .PHONY:	$(PHONY)
 
-# Cribbed from verbose output of Arduino build for the Uno to use as a working reference design.
+# Cribbed from verbose output of Arduino 1.0 build for the Uno to use as a working reference design.
 # avr-g++ -c -g -Os -Wall -fno-exceptions -ffunction-sections -fdata-sections -mmcu=atmega328p -DF_CPU=16000000L -DARDUINO=100 -Iarduino -Istandard PWM.cpp -oPWM.cpp.o 
 # avr-gcc -Os -Wl,--gc-sections -mmcu=atmega328p -o PWM.cpp.elf PWM.cpp.o core.a -Lbuild373539219298904089.tmp -lm 
 # avr-objcopy -O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 PWM.cpp.elf PWM.cpp.eep 
 # avr-objcopy -O ihex -R .eeprom PWM.cpp.elf PWM.cpp.hex 
 # avrdude -Cavrdude.conf -v -v -v -v -patmega328p -carduino -P/dev/tty.usbmodem26431 -b115200 -D -Uflash:w:PWM.cpp.hex:i 
 
-# Cribbed from verbose output of Arduino build for the Mega 2560 to use as a working reference design.
+# Cribbed from verbose output of Arduino 1.0 build for the Mega 2560 to use as a working reference design.
 # avr-g++ -c -g -Os -Wall -fno-exceptions -ffunction-sections -fdata-sections -mmcu=atmega2560 -DF_CPU=16000000L -DARDUINO=100 -Iarduino -Imega Empty.cpp -oEmpty.cpp.o 
 # avr-gcc -Os -Wl,--gc-sections -mmcu=atmega2560 -o Empty.cpp.elf Empty.cpp.o core.a -Lbuild7537680787165628439.tmp -lm 
 # avr-objcopy -O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 Empty.cpp.elf Empty.cpp.eep 
 # avr-objcopy -O ihex -R .eeprom Empty.cpp.elf Empty.cpp.hex 
 # avrdude -Cavrdude.conf -v -v -v -v -patmega2560 -cstk500v2 -P/dev/tty.usbmodem26421 -b115200 -D -Uflash:w:Empty.cpp.hex:i
-
-# These directories were relevant to our interests when using the GNU GCC AVR tool chain.
-# /usr/lib/avr/include
-# /usr/lib/gcc/avr/4.3.4/include
-# /usr/lib/gcc/avr/4.3.4/include-fixed
-# /usr/lib/gcc/avr/4.3.4/install-tools/include
-# /usr/lib/ldscripts
