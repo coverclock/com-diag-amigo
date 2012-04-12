@@ -1,5 +1,5 @@
-#ifndef _COM_DIAG_AMIGO_MEGAAVR_UNINTERRUPTABLE_H_
-#define _COM_DIAG_AMIGO_MEGAAVR_UNINTERRUPTABLE_H_
+#ifndef _COM_DIAG_AMIGO_MEGAAVR_UNINTERRUPTIBLE_H_
+#define _COM_DIAG_AMIGO_MEGAAVR_UNINTERRUPTIBLE_H_
 
 /**
  * @file
@@ -19,7 +19,7 @@
  * function can be called from either C or C++ translation units.
  * @return the prior SREG value before interrupts were disabled.
  */
-CXXCINLINE uint8_t amigo_uninterruptable_begin() {
+CXXCINLINE uint8_t amigo_uninterruptible_begin() {
 	uint8_t sreg = SREG;
 	cli();
 	return sreg;
@@ -31,7 +31,7 @@ CXXCINLINE uint8_t amigo_uninterruptable_begin() {
  * called from either C or C++ translation units.
  * @param sreg is the new SREG value.
  */
-CXXCINLINE void amigo_uninterruptable_end(uint8_t sreg) {
+CXXCINLINE void amigo_uninterruptible_end(uint8_t sreg) {
 	SREG = sreg;
 }
 
@@ -42,12 +42,12 @@ namespace diag {
 namespace amigo {
 
 /**
- * Uninterruptable saves the value of SREG and disables interrupts in its
+ * Uninterruptible saves the value of SREG and disables interrupts in its
  * constructor, and restores the value of SREG in its destructor. This allows
- * scoped uninterruptable sections of code to be written, exploiting the
+ * scoped uninterruptible sections of code to be written, exploiting the
  * "Resource Acquisition is Initialization" idiom.
  */
-class Uninterruptable
+class Uninterruptible
 {
 
 public:
@@ -56,19 +56,19 @@ public:
 	 * Constructor. The value of SREG is saved in an instance variable and
 	 * interrupts are disabled.
 	 */
-	Uninterruptable()
+	Uninterruptible()
 	{
-		sreg = amigo_uninterruptable_begin();
+		sreg = amigo_uninterruptible_begin();
 	}
 
 	/**
 	 * Destructor. The saved value of SREG is restored from an instance
 	 * variable. The interrupt state in the saved SREG value (which could
-	 * have been enabled, or in the case of nested Uninterruptable scopes,
+	 * have been enabled, or in the case of nested Uninterruptible scopes,
 	 * disabled) is restored.
 	 */
-	~Uninterruptable() {
-		amigo_uninterruptable_end(sreg);
+	~Uninterruptible() {
+		amigo_uninterruptible_end(sreg);
 	}
 
 	/**
@@ -90,14 +90,14 @@ private:
      *
      *  @param that refers to an R-value object of this type.
      */
-	Uninterruptable(const Uninterruptable & that);
+	Uninterruptible(const Uninterruptible & that);
 
     /**
      *  Assignment operator. POISONED.
      *
      *  @param that refers to an R-value object of this type.
      */
-	Uninterruptable & operator=(const Uninterruptable & that);
+	Uninterruptible & operator=(const Uninterruptible & that);
 
 };
 
@@ -107,4 +107,4 @@ private:
 
 #endif /* defined(__cplusplus) */
 
-#endif /* _COM_DIAG_AMIGO_MEGAAVR_UNINTERRUPTABLE_H_ */
+#endif /* _COM_DIAG_AMIGO_MEGAAVR_UNINTERRUPTIBLE_H_ */

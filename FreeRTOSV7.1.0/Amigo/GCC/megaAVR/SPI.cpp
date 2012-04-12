@@ -12,7 +12,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "com/diag/amigo/target/SPI.h"
-#include "com/diag/amigo/target/Uninterruptable.h"
+#include "com/diag/amigo/target/Uninterruptible.h"
 #include "com/diag/amigo/io.h"
 #include "com/diag/amigo/Task.h"
 
@@ -86,7 +86,7 @@ SPI::SPI(Controller mycontroller, Count transmits, Count receives)
 }
 
 SPI::~SPI() {
-	Uninterruptable uninterruptable;
+	Uninterruptible uninterruptible;
 	SPICR &= ~(_BV(SPIE) | _BV(SPE));
 	spi[controller] = 0;
 }
@@ -173,7 +173,7 @@ void SPI::start(Divisor divisor, Role role, Order order, Polarity polarity, Phas
 		break;
 	}
 
-	Uninterruptable uninterruptable;
+	Uninterruptible uninterruptible;
 
 	uint8_t mstr;
 	switch (role) {
@@ -205,12 +205,12 @@ void SPI::start(Divisor divisor, Role role, Order order, Polarity polarity, Phas
 }
 
 void SPI::stop() {
-	Uninterruptable uninterruptable;
+	Uninterruptible uninterruptible;
 	SPICR &= ~(_BV(SPIE) | _BV(SPE));
 }
 
 void SPI::begin() {
-	Uninterruptable uninterruptable;
+	Uninterruptible uninterruptible;
 	uint8_t ch;
 	if (transmitting.receive(&ch, IMMEDIATELY)) {
 		SPIDR = ch;
@@ -218,7 +218,7 @@ void SPI::begin() {
 }
 
 void SPI::restart() {
-	Uninterruptable uninterruptable;
+	Uninterruptible uninterruptible;
 	SPICR |= _BV(SPIE) | _BV(SPE);
 	uint8_t ch;
 	if (transmitting.receive(&ch, IMMEDIATELY)) {
@@ -227,21 +227,21 @@ void SPI::restart() {
 }
 
 SPI & SPI::operator=(uint8_t value) {
-	// It is fun to think about why this has to be uninterruptable.
-	Uninterruptable uninterruptable;
+	// It is fun to think about why this has to be uninterruptible.
+	Uninterruptible uninterruptible;
 	errors = value;
 	return *this;
 }
 
 inline void SPI::complete(Controller controller) {
-	// Only called from an ISR hence implicitly uninterruptable.
+	// Only called from an ISR hence implicitly uninterruptible.
 	if (spi[controller] != 0) {
 		spi[controller]->complete();
 	}
 }
 
 void SPI::complete() {
-	// Only called from an ISR hence implicitly uninterruptable.
+	// Only called from an ISR hence implicitly uninterruptible.
 	if ((SPISR & _BV(WCOL)) == 0) {
 		// Do nothing.
 	} else if (errors < ~static_cast<uint8_t>(0)) {

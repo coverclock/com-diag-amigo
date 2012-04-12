@@ -14,7 +14,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "com/diag/amigo/target/Serial.h"
-#include "com/diag/amigo/target/Uninterruptable.h"
+#include "com/diag/amigo/target/Uninterruptible.h"
 #include "com/diag/amigo/io.h"
 #include "com/diag/amigo/Task.h"
 
@@ -91,7 +91,7 @@ Serial::Serial(Port myport, Count transmits, Count receives, uint8_t mybad)
 }
 
 Serial::~Serial() {
-	Uninterruptable uninterruptable;
+	Uninterruptible uninterruptible;
 	UCSRB = 0;
 	serial[port] = 0;
 }
@@ -155,7 +155,7 @@ void Serial::start(uint32_t rate, Data data, Parity parity, Stop stop) {
 	case TWO:	stopbits = _BV(USBS0);	break;
 	}
 
-	Uninterruptable uninterruptable;
+	Uninterruptible uninterruptible;
 
 	UCSRB = 0;
 
@@ -174,17 +174,17 @@ void Serial::start(uint32_t rate, Data data, Parity parity, Stop stop) {
 }
 
 void Serial::stop() {
-	Uninterruptable uninterruptable;
+	Uninterruptible uninterruptible;
 	UCSRB = 0;
 }
 
 void Serial::begin() {
-	Uninterruptable uninterruptable;
+	Uninterruptible uninterruptible;
 	UCSRB |= _BV(UDRIE0);
 }
 
 void Serial::restart() {
-	Uninterruptable uninterruptable;
+	Uninterruptible uninterruptible;
 	UCSRB = _BV(RXCIE0) | _BV(RXEN0) | _BV(TXEN0);
 	if (transmitting.available() > 0) {
 		UCSRB |= _BV(UDRIE0);
@@ -198,21 +198,21 @@ void Serial::flush() {
 }
 
 Serial & Serial::operator=(uint8_t value) {
-	// It is fun to think about why this has to be uninterruptable.
-	Uninterruptable uninterruptable;
+	// It is fun to think about why this has to be uninterruptible.
+	Uninterruptible uninterruptible;
 	errors = value;
 	return *this;
 }
 
 inline void Serial::receive(Port port) {
-	// Only called from an ISR hence implicitly uninterruptable;
+	// Only called from an ISR hence implicitly uninterruptible;
 	if (serial[port] != 0) {
 		serial[port]->receive();
 	}
 }
 
 void Serial::receive() {
-	// Only called from an ISR hence implicitly uninterruptable;
+	// Only called from an ISR hence implicitly uninterruptible;
 	bool success = true;
 	uint8_t ch;
 	if ((UCSRA & (_BV(FE0) | _BV(DOR0) | _BV(UPE0))) == 0) {
@@ -247,14 +247,14 @@ void Serial::receive() {
 }
 
 inline void Serial::transmit(Port port) {
-	// Only called from an ISR hence implicitly uninterruptable.
+	// Only called from an ISR hence implicitly uninterruptible.
 	if (serial[port] != 0) {
 		serial[port]->transmit();
 	}
 }
 
 void Serial::transmit() {
-	// Only called from an ISR hence implicitly uninterruptable.
+	// Only called from an ISR hence implicitly uninterruptible.
 	uint8_t ch;
 	if (transmitting.receiveFromISR(&ch)) {
 		UDR = ch;

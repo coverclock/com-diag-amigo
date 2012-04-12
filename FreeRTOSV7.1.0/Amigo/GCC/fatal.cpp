@@ -9,10 +9,10 @@
 #include "com/diag/amigo/fatal.h"
 #include "com/diag/amigo/littleendian.h"
 #include "com/diag/amigo/target/Console.h"
-#include "com/diag/amigo/target/Uninterruptable.h"
+#include "com/diag/amigo/target/Uninterruptible.h"
 
 CXXCAPI void amigo_fatal(PGM_P file, int line) {
-	com::diag::amigo::Uninterruptable uninterruptable;
+	com::diag::amigo::Uninterruptible uninterruptible;
 	if (com::diag::amigo::littleendian()) {
 		// This just makes the hexadecimal line number more obvious.
 		line = ((line >> 8) & 0xff) | ((line & 0xff) << 8);

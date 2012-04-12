@@ -16,7 +16,7 @@
 #include "com/diag/amigo/target/Serial.h"
 #include "com/diag/amigo/target/SPI.h"
 #include "com/diag/amigo/target/GPIO.h"
-#include "com/diag/amigo/target/Uninterruptable.h"
+#include "com/diag/amigo/target/Uninterruptible.h"
 #include "com/diag/amigo/target/Console.h"
 #include "com/diag/amigo/Task.h"
 #include "com/diag/amigo/SerialSink.h"
@@ -209,17 +209,22 @@ void UnitTestTask::task() {
 	SIZEOF(com::diag::amigo::CountingSemaphore);
 	SIZEOF(com::diag::amigo::CriticalSection);
 	SIZEOF(com::diag::amigo::Dump);
+	SIZEOF(com::diag::amigo::GPIO);
 	SIZEOF(com::diag::amigo::Morse);
 	SIZEOF(com::diag::amigo::MutexSemaphore);
+	SIZEOF(com::diag::amigo::PeriodicTimer);
+	SIZEOF(com::diag::amigo::OneShotTimer);
 	SIZEOF(com::diag::amigo::Print);
 	SIZEOF(com::diag::amigo::Queue);
 	SIZEOF(com::diag::amigo::Serial);
 	SIZEOF(com::diag::amigo::SerialSink);
+	SIZEOF(com::diag::amigo::SerialSource);
 	SIZEOF(com::diag::amigo::Sink);
 	SIZEOF(com::diag::amigo::Source);
 	SIZEOF(com::diag::amigo::SPI);
 	SIZEOF(com::diag::amigo::Task);
-	SIZEOF(com::diag::amigo::Uninterruptable);
+	SIZEOF(com::diag::amigo::Timer);
+	SIZEOF(com::diag::amigo::Uninterruptible);
 	PASSED();
 #endif
 
@@ -275,15 +280,15 @@ void UnitTestTask::task() {
 #endif
 
 #if 1
-	UNITTEST("Uninterruptable");
+	UNITTEST("Uninterruptible");
 	do {
 		{
 			if ((SREG & _BV(SREG_I)) == 0) {
 				FAILED(__LINE__);
 				break;
 			}
-			com::diag::amigo::Uninterruptable uninterruptable1;
-			if (static_cast<int8_t>(uninterruptable1) >= 0) {
+			com::diag::amigo::Uninterruptible uninterruptible1;
+			if (static_cast<int8_t>(uninterruptible1) >= 0) {
 				FAILED(__LINE__);
 				break;
 			}
@@ -291,8 +296,8 @@ void UnitTestTask::task() {
 				FAILED(__LINE__);
 				break;
 			}
-			com::diag::amigo::Uninterruptable uninterruptable2;
-			if (static_cast<int8_t>(uninterruptable2) < 0) {
+			com::diag::amigo::Uninterruptible uninterruptible2;
+			if (static_cast<int8_t>(uninterruptible2) < 0) {
 				FAILED(__LINE__);
 				break;
 			}
