@@ -14,7 +14,7 @@
 #include "com/diag/amigo/unused.h"
 #include "com/diag/amigo/io.h"
 #include "com/diag/amigo/Task.h"
-#include "com/diag/amigo/target/Uninterruptable.h"
+#include "com/diag/amigo/target/Uninterruptible.h"
 
 #define COM_DIAG_AMIGO_GPIO_PIN			COM_DIAG_AMIGO_MMIO_8(gpiobase, 0)
 #define COM_DIAG_AMIGO_GPIO_DDR			COM_DIAG_AMIGO_MMIO_8(gpiobase, 1)
@@ -295,27 +295,27 @@ inline uint8_t GPIO::mask(Pin pin) {
 }
 
 inline const GPIO & GPIO::input(uint8_t mymask) const {
-	Uninterruptable uninterruptable;
+	Uninterruptible uninterruptible;
 	COM_DIAG_AMIGO_GPIO_DDR &= ~mymask;
 	COM_DIAG_AMIGO_GPIO_PORT &= ~mymask;
 	return *this;
 }
 
 inline const GPIO & GPIO::pulledup(uint8_t mymask) const {
-	Uninterruptable uninterruptable;
+	Uninterruptible uninterruptible;
 	COM_DIAG_AMIGO_GPIO_DDR &= ~mymask;
 	COM_DIAG_AMIGO_GPIO_PORT |= mymask;
 	return *this;
 }
 
 inline const GPIO & GPIO::output(uint8_t mymask) const {
-	Uninterruptable uninterruptable;
+	Uninterruptible uninterruptible;
 	COM_DIAG_AMIGO_GPIO_DDR |= mymask;
 	return *this;
 }
 
 inline const GPIO & GPIO::output(uint8_t mymask, uint8_t initial) const {
-	Uninterruptable uninterruptable;
+	Uninterruptible uninterruptible;
 	COM_DIAG_AMIGO_GPIO_DDR |= mymask;
 	COM_DIAG_AMIGO_GPIO_PORT |= (mymask & initial);
 	COM_DIAG_AMIGO_GPIO_PORT &= ~(mymask & initial);
@@ -323,19 +323,19 @@ inline const GPIO & GPIO::output(uint8_t mymask, uint8_t initial) const {
 }
 
 inline const GPIO & GPIO::set(uint8_t mymask) const {
-	Uninterruptable uninterruptable;
+	Uninterruptible uninterruptible;
 	COM_DIAG_AMIGO_GPIO_PORT |= mymask;
 	return *this;
 }
 
 inline const GPIO & GPIO::clear(uint8_t mymask) const {
-	Uninterruptable uninterruptable;
+	Uninterruptible uninterruptible;
 	COM_DIAG_AMIGO_GPIO_PORT &= ~mymask;
 	return *this;
 }
 
 inline const GPIO & GPIO::toggle(uint8_t mymask) const {
-	Uninterruptable uninterruptable;
+	Uninterruptible uninterruptible;
 	COM_DIAG_AMIGO_GPIO_PIN |= mymask;
 	return *this;
 }
