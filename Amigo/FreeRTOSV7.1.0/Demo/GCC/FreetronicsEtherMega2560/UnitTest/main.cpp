@@ -7,7 +7,7 @@
  * http://www.diag.com/navigation/downloads/Amigo.html\n
  */
 
-#include <avr/interrupt.h>
+#include <string.h>
 #include "com/diag/amigo/types.h"
 #include "com/diag/amigo/fatal.h"
 #include "com/diag/amigo/littleendian.h"
@@ -20,6 +20,7 @@
 #include "com/diag/amigo/target/Console.h"
 #include "com/diag/amigo/Task.h"
 #include "com/diag/amigo/SerialSink.h"
+#include "com/diag/amigo/SerialSource.h"
 #include "com/diag/amigo/Source.h"
 #include "com/diag/amigo/Sink.h"
 #include "com/diag/amigo/Print.h"
@@ -81,7 +82,7 @@ void PeriodicTimer::timer() {
 }
 
 /*******************************************************************************
- * WIZNET W5100 (FOR TESTING SPI AND ALSO GPIO)
+ * WIZNET W5100 TEST FIXTURE (FOR TESTING SPI AND ALSO GPIO)
  ******************************************************************************/
 
 class W5100 {
@@ -137,6 +138,47 @@ void TakerTask::task() {
 }
 
 /*******************************************************************************
+ * SOURCE TO SINK COPY
+ ******************************************************************************/
+
+static bool source2sink(com::diag::amigo::Source & source, com::diag::amigo::Sink & sink) {
+	static const int CONTROL_D = 0x04;
+	char buffer[20];
+	int have;
+	size_t in;
+	size_t out;
+	char * controld;
+	bool eof = false;
+	while (!eof) {
+		com::diag::amigo::Task::yield();
+		while ((have = source.available()) > 0) {
+			if (have > (sizeof(buffer) - 1)) {
+				have = sizeof(buffer) - 1;
+			}
+			in = source.read(buffer, have);
+			if (in != have) {
+				return false;
+			}
+			buffer[in] = '\0';
+			if ((controld = strchr(buffer, CONTROL_D)) != 0) {
+				*controld = '\0';
+				in = controld - buffer;
+				eof = true;
+				if (in == 0) {
+					break;
+				}
+			}
+			out = sink.write(buffer, in);
+			if (out != in) {
+				return false;
+			}
+		}
+	}
+	sink.flush();
+	return true;
+}
+
+/*******************************************************************************
  * UNIT TEST TASK
  ******************************************************************************/
 
@@ -150,6 +192,7 @@ public:
 void UnitTestTask::task() {
 	com::diag::amigo::Serial serial;
 	com::diag::amigo::SerialSink serialsink(serial);
+	com::diag::amigo::SerialSource serialsource(serial);
 	com::diag::amigo::Print printf(serialsink, true);
 	serial.start();
 
@@ -622,19 +665,12 @@ void UnitTestTask::task() {
 #endif
 
 #if 1
-	UNITTESTLN("Serial (type control-D to exit)");
-	static const int CONTROL_D = 0x04;
-	int ch = ~CONTROL_D;
-	for (;;) {
-		while (serial.available() > 0) {
-			ch = serial.read();
-			if (ch == CONTROL_D) { break; }
-			serial.write(ch);
-		}
-		if (ch == CONTROL_D) { break; }
-		com::diag::amigo::Task::yield();
+	UNITTESTLN("Source and Sink (type control-D to exit)");
+	if (!source2sink(serialsource, serialsink)) {
+		FAILED(__LINE__);
+	} else {
+		PASSED();
 	}
-	PASSED();
 #endif
 
 	// Just to make sure the regular data memory printf() works.
@@ -707,8 +743,6 @@ int main() {
 	CPASSED();
 #endif
 
-	sei();
-
 	// The fact that main() never exits means local variables allocated on
 	// its stack in its outermost braces never go out of scope. That means we
 	// can take advantage of main to allocate objects on its stack that are
@@ -732,6 +766,7 @@ int main() {
 			break;
 		}
 		CPASSED();
+		com::diag::amigo::Task::enable();
 		com::diag::amigo::Task::begin();
 	} while (false);
 

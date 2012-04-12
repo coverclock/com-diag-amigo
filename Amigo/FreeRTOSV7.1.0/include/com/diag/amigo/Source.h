@@ -16,8 +16,8 @@ namespace diag {
 namespace amigo {
 
 /**
- * Sink is an abstract type that can produce data a character at a time. The
- * deriving class defines available() and read() operations. Source defines
+ * Sink is a partly abstract type that can produce data a character at a time.
+ * The deriving class defines available() and read() operations. Source defines
  * a read(void *, size_t) operation on top of those provided by the deriving
  * class.
  */
@@ -25,6 +25,16 @@ class Source
 {
 
 public:
+
+	/**
+	 * Constructor.
+	 */
+	explicit Source() {}
+
+	/**
+	 * Destructor.
+	 */
+	virtual ~Source();
 
 	/**
 	 * Return the number of bytes available from the underlying source

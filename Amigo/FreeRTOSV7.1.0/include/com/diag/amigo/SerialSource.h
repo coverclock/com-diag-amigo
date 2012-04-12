@@ -1,5 +1,5 @@
-#ifndef _COM_DIAG_SERIALSINK_H_
-#define _COM_DIAG_SERIALSINK_H_
+#ifndef _COM_DIAG_SERIALSOURCE_H_
+#define _COM_DIAG_SERIALSOURCE_H_
 
 /**
  * @file
@@ -10,7 +10,7 @@
  */
 
 #include "com/diag/amigo/types.h"
-#include "com/diag/amigo/Sink.h"
+#include "com/diag/amigo/Source.h"
 
 namespace com {
 namespace diag {
@@ -19,12 +19,12 @@ namespace amigo {
 class Serial;
 
 /**
- * SerialSink implements a Sink interface for a Serial object. This allows
+ * SerialSource implements a Source interface for a Serial object. This allows
  * a Serial object to be used in any application that expects a Sink. Print
  * is an example of such an application.
  */
-class SerialSink
-: public Sink
+class SerialSource
+: public Source
 {
 
 public:
@@ -33,28 +33,28 @@ public:
 	 * Constructor.
 	 * @param myserial refers to the Serial object.
 	 */
-	explicit SerialSink(Serial & myserial)
+	explicit SerialSource(Serial & myserial)
 	: serial(&myserial)
 	{}
 
 	/**
 	 * Destructor.
 	 */
-	virtual ~SerialSink();
+	virtual ~SerialSource();
 
 	/**
-	 * Implement the Sink write method for the Serial object.
-	 * @param ch is the byte to write.
-	 * @return the number of byte written (nominally one) or zero for fail.
+	 * Implement the Source available method for the Serial object.
+	 * @return the number of characters available or <0 if fail.
 	 */
-	virtual size_t write(uint8_t ch);
+	virtual int available();
 
 	/**
-	 * Implement the Sink flush method for the Serial object.
+	 * Implement the Source read method for the Serial object.
+	 * @return the next character or <0 if fail.
 	 */
-	virtual void flush();
+	virtual int read();
 
-	using Sink::write;
+	using Source::read;
 
 protected:
 
@@ -66,4 +66,4 @@ protected:
 }
 }
 
-#endif /* _COM_DIAG_SERIALSINK_H_ */
+#endif /* _COM_DIAG_SERIALSOURCE_H_ */

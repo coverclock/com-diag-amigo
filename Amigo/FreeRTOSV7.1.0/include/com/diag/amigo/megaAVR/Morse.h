@@ -58,10 +58,19 @@ public:
 
 	/**
 	 * Constructor.
+	 * @param pin is the GPIO pen to use to control the LED.
+	 */
+	Morse(GPIO::Pin pin = LED)
+	: base(GPIO::base(pin))
+	, mask(GPIO::mask(pin))
+	{}
+
+	/**
+	 * Constructor.
 	 * @param mybase points to the base address of the GPIO controller to use.
 	 * @param mymask is the bit mask for the GPIO bit to use.
 	 */
-	Morse(volatile void * mybase = GPIO::base(LED), uint8_t mymask = GPIO::mask(LED))
+	Morse(volatile void * mybase, uint8_t mymask)
 	: base(mybase)
 	, mask(mymask)
 	{}

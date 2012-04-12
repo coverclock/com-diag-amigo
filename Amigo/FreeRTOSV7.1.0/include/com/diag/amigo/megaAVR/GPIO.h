@@ -193,12 +193,14 @@ public:
 	 * Constructor.
 	 * @param mybase is the base address for the first GPIO register.
 	 */
-	explicit GPIO(volatile void * mybase);
+	explicit GPIO(volatile void * mybase)
+	: gpiobase(mybase)
+	{}
 
 	/**
 	 * Destructor.
 	 */
-	virtual ~GPIO();
+	~GPIO() {}
 
 	/**
 	 * Set GPIO pins to inputs with no pull-ups enabled.
