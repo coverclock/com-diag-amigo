@@ -12,6 +12,8 @@ namespace com {
 namespace diag {
 namespace amigo {
 
+Sink::~Sink() {}
+
 size_t Sink::write(const void * datum, size_t size) {
 	const uint8_t * here = static_cast<const uint8_t *>(datum);
 	while ((size--) > 0) {

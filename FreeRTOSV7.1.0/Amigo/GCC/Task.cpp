@@ -6,6 +6,7 @@
  * http://www.diag.com/navigation/downloads/Amigo.html\n
  */
 
+#include <avr/interrupt.h>
 #include "com/diag/amigo/Task.h"
 #include "com/diag/amigo/fatal.h"
 
@@ -17,6 +18,9 @@ namespace amigo {
 // compiler outlined it, and did not issue a warning that it had done so. I
 // can rationalize this by saying this conforms the definition of a class
 // (static) method. But this is not the behavior I have seen in GCC elsewhere.
+// I also note that when I enabled -mrelax on the linker the call to this
+// class method was reduced to a jump from the trampoline. It's kind of a cheap
+// form of tail recursion optimization. So: not so much overhead.
 inline void Task::task(Task * that) {
 	that->task();
 #if (INCLUDE_vTaskDelete == 1)
@@ -39,6 +43,10 @@ extern "C" void amigo_task_trampoline(Task * that);
 
 extern "C" void amigo_task_trampoline(Task * that) {
 	Task::task(that);
+}
+
+void Task::enable() {
+	sei();
 }
 
 Task::Task(const char * myname)

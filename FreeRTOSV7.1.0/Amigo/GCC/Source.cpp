@@ -12,6 +12,8 @@ namespace com {
 namespace diag {
 namespace amigo {
 
+Source::~Source() {}
+
 size_t Source::read(void * buffer, size_t size) {
 	uint8_t * here = static_cast<uint8_t *>(buffer);
 	int ch;

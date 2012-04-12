@@ -18,15 +18,25 @@ namespace diag {
 namespace amigo {
 
 /**
- * Sink is an abstract type that can consume data a character at a time. The
- * deriving class defines write(uint8_t) and flush() operations. Sink defines
- * write(const void *, size_t) and write(const char *) operations on top of
- * those provided by the deriving class.
+ * Sink is a partly abstract type that can consume data a character at a time.
+ * The deriving class defines write(uint8_t) and flush() operations. Sink
+ * defines write(const void *, size_t) and write(const char *) operations on
+ * top of those provided by the deriving class.
  */
 class Sink
 {
 
 public:
+
+	/**
+	 * Constructor.
+	 */
+	explicit Sink() {}
+
+	/**
+	 * Destructor.
+	 */
+	virtual ~Sink();
 
 	/**
 	 * Write a single byte to the underlying implementation.
