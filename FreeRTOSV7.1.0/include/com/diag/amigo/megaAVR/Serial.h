@@ -336,6 +336,7 @@ protected:
 	TypedQueue<uint8_t> received;
 	TypedQueue<uint8_t> transmitting;
 	Port port;
+	double microseconds;
 	uint8_t bad;
 	uint8_t errors;
 

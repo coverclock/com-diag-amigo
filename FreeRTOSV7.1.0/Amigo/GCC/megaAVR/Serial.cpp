@@ -62,6 +62,7 @@ Serial::Serial(Port myport, Count transmits, Count receives, uint8_t mybad)
 , received(receives)
 , transmitting(transmits)
 , port(myport)
+, microseconds(0.0)
 , bad(mybad)
 , errors(0)
 {
@@ -130,30 +131,33 @@ void Serial::start(Baud baud, Data data, Parity parity, Stop stop) {
 // the result so that even incorrect rates will probably yield something useful.
 void Serial::start(uint32_t rate, Data data, Parity parity, Stop stop) {
 	uint16_t counter = (((configCPU_CLOCK_HZ) + (4UL * rate)) / (8UL * rate)) - 1UL;
+	uint8_t bits = 1; // One start bit.
 
 	uint8_t databits;
 	switch (data) {
-	case FIVE:	databits = 0;							break;
-	case SIX:	databits = _BV(UCSZ00);					break;
-	case SEVEN:	databits = _BV(UCSZ01);					break;
+	case FIVE:	databits = 0;                         bits += 5; break;
+	case SIX:	databits = _BV(UCSZ00);               bits += 6; break;
+	case SEVEN:	databits = _BV(UCSZ01);               bits += 7; break;
 	default:
-	case EIGHT:	databits = _BV(UCSZ01) | _BV(UCSZ00);	break;
+	case EIGHT:	databits = _BV(UCSZ01) | _BV(UCSZ00); bits += 8; break;
 	}
 
 	uint8_t paritybits;
 	switch (parity) {
 	default:
-	case NONE:	paritybits = 0;							break;
-	case EVEN:	paritybits = _BV(UPM01);				break;
-	case ODD:	paritybits = _BV(UPM01) | _BV(UPM00);	break;
+	case NONE:	paritybits = 0;                                  break;
+	case EVEN:	paritybits = _BV(UPM01);              bits += 1; break;
+	case ODD:	paritybits = _BV(UPM01) | _BV(UPM00); bits += 1; break;
 	}
 
 	uint8_t stopbits;
 	switch (stop) {
 	default:
-	case ONE:	stopbits = 0;			break;
-	case TWO:	stopbits = _BV(USBS0);	break;
+	case ONE:	stopbits = 0;          bits += 1; break;
+	case TWO:	stopbits = _BV(USBS0); bits += 2; break;
 	}
+
+	microseconds = (1000000.0 / rate) * 2 * bits; // uSec for two characters.
 
 	Uninterruptible uninterruptible;
 
@@ -192,9 +196,40 @@ void Serial::restart() {
 }
 
 void Serial::flush() {
+	// When applications call flush it's typically because they're about to
+	// experience something catastrophic and they want to insure that all of
+	// the bytes have left the building. Just waiting for the transmit queue to
+	// empty is not sufficient. The USART has a two byte FIFO, and resetting
+	// it, directly or indirectly, can cause two characters to be lost.
 	while (transmitting.available() > 0) {
 		Task::yield();
 	}
+	// Merely checking the UDRE bit is not sufficient to insure that all data
+	// has been sent. Resetting the device prior to the TXC bit being set loses
+	// the second character in the two-level FIFO in the USART and it is never
+	// transmitted. We do a task yield because this can be as long as half a
+	// second at the lowest baud rates.
+	while ((UCSRA & (_BV(UDRE0) | _BV(TXC0))) != (_BV(UDRE0) | _BV(TXC0))) {
+		Task::yield();
+	}
+	// Even checking the TXC bit isn't sufficient, despite what the data sheet
+	// may say. This manifests as losing the last character, typically a
+	// newline. A delay of about 174 microseconds is equivalent to the
+	// the transmission latency for two ten-bit characters at 115200 baud.
+	// Note that this could be a busy wait if it is shorter than a tick.
+	if (microseconds < (Task::ticks2milliseconds(1) * 1000)) {
+		// Busy wait for the requested number of microseconds which is less than
+		// a system tick.
+		Task::delay(microseconds);
+	} else {
+		// Task wait by ceiling the microseconds to milliseconds, then ceiling
+		// up to the nearest system tick.
+		Task::delay(Task::milliseconds2ticks(((microseconds + 999) / 1000) + (Task::PERIOD - 1)));
+	}
+	// Note that we don't check to see if someone submitted something to the
+	// transmit queue why we were doing all of this. flush() means flush the
+	// data we know about at the time flush() was called. If someone is so
+	// foolish as to still be emitting, tough nuggies.
 }
 
 Serial & Serial::operator=(uint8_t value) {
