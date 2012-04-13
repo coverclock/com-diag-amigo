@@ -693,7 +693,7 @@ void UnitTestTask::task() {
 #endif
 
 #if 1
-	UNITTEST("Digital Input and Output (requires text fixture on EtherMega)");
+	UNITTEST("Digital I/O (requires text fixture on EtherMega)");
 	// This is a separate test because it requires a simple text fixture to be
 	// wired up on the board. It is specific to the EtherMega 2560 board.
 	// PE4 (Ardunino Mega pin 2) wired to ground.
