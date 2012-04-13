@@ -13,7 +13,7 @@
 #include "com/diag/amigo/target/harvard.h"
 
 /**
- * This is the function is that from which nothing ever returns. It disables
+ * This is the function from which nothing ever returns. It disables
  * interrupts, takes over the console serial port, prints a message if it can
  * using busy waiting, and infinite loops. This version can be called from
  * either C or C++ translation units.
@@ -29,7 +29,7 @@ namespace diag {
 namespace amigo {
 
 /**
- * This is the function is that from which nothing ever returns. It disables
+ * This is the function from which nothing ever returns. It disables
  * interrupts, takes over the console serial port, prints a message if it can
  * using busy waiting, and infinite loops.
  * @param file points to a file name in program space, typically PSTR(__FILE__).

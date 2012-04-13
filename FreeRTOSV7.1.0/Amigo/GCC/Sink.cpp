@@ -32,6 +32,25 @@ size_t Sink::write_P(PGM_VOID_P datum, size_t size) {
 	return (here - static_cast<PGM_P>(datum));
 }
 
+size_t Sink::write(const char * string) {
+	const char * here = string;
+	while (*here != '\0') {
+		if (write(*here) != 1) { break; }
+		++here;
+	}
+	return (here - string);
+}
+
+size_t Sink::write_P(PGM_P string) {
+	PGM_P here = string;
+	uint8_t ch;
+	while ((ch = pgm_read_byte(here)) != '\0') {
+		if (write(ch) != 1) { break; }
+		++here;
+	}
+	return (here - string);
+}
+
 }
 }
 }

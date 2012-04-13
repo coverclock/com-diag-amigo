@@ -197,6 +197,45 @@ void UnitTestTask::task() {
 	serial.start();
 
 #if 1
+	UNITTESTLN("Sink");
+	do {
+		size_t written;
+		written = serialsink.write("Now is the time ");
+		if (written != (sizeof("Now is the time ") - 1)) {
+			FAILED(__LINE__);
+			break;
+		}
+		written = serialsink.write("for all good men ", sizeof("for all good men ") - 1);
+		if (written != (sizeof("for all good men ") - 1)) {
+			FAILED(__LINE__);
+			break;
+		}
+		written = serialsink.write_P(PSTR("to come to the aid "));
+		if (written != (sizeof("to come to the aid ") - 1)) {
+			FAILED(__LINE__);
+			break;
+		}
+		written = serialsink.write_P(PSTR("of their country."), sizeof("of their country.") - 1);
+		if (written != (sizeof("of their country ") - 1)) {
+			FAILED(__LINE__);
+			break;
+		}
+		written = serialsink.write('\r');
+		if (written != 1) {
+			FAILED(__LINE__);
+			break;
+		}
+		written = serialsink.write('\n');
+		if (written != 1) {
+			FAILED(__LINE__);
+			break;
+		}
+		serialsink.flush();
+		PASSED();
+	} while (false);
+#endif
+
+#if 1
 	UNITTESTLN("sizeof");
 	// The need to do this cast smells like a compiler bug to me, but I'd be
 	// glad to be proven wrong. Not doing the cast results in BIGNUMs being
@@ -229,16 +268,15 @@ void UnitTestTask::task() {
 #endif
 
 #if 1
-	UNITTEST("Task::delay");
+	UNITTEST("Low Precision delay");
 	do {
 		static const com::diag::amigo::Ticks W1 = 200;
 		static const com::diag::amigo::Ticks W2 = 500;
 		static const com::diag::amigo::Ticks PERCENT = 20;
-		com::diag::amigo::Ticks milliseconds;
 		com::diag::amigo::Ticks t1 = ticks2milliseconds(elapsed());
 		delay(milliseconds2ticks(W1));
 		com::diag::amigo::Ticks t2 = ticks2milliseconds(elapsed());
-		milliseconds = t2 - t1;
+		com::diag::amigo::Ticks milliseconds = t2 - t1;
 		if (!((W1 <= milliseconds) && (milliseconds <= (W1 + (W1 / (100 / PERCENT)))))) {
 			FAILED(__LINE__);
 			break;
@@ -255,8 +293,33 @@ void UnitTestTask::task() {
 	} while (false);
 #endif
 
+#if 1
+	UNITTEST("High Precision delay");
+	// There is no way to test the high precision delay in a software-only
+	// manner. If we leave interrupts enabled, tick processing by FreeRTOS adds
+	// enormously to our delay (nearly doubles it), since for a 10ms delay we
+	// are taking interrupt latency for 5 ticks. If we disable interrupts,
+	// we have no way to measure time.
+	do {
+		static const com::diag::amigo::Ticks W3 = 10;
+		static const com::diag::amigo::Ticks PERCENT = 100;
+		com::diag::amigo::Ticks t5 = ticks2milliseconds(com::diag::amigo::Task::elapsed());
+		double microseconds = (W3 * 1000) / 100;
+		for (uint8_t ii = 100; ii > 0; --ii) {
+			delay(microseconds);
+		}
+		com::diag::amigo::Ticks t6 = ticks2milliseconds(com::diag::amigo::Task::elapsed());
+		com::diag::amigo::Ticks milliseconds = t6 - t5;
+		if (!((W3 <= milliseconds) && (milliseconds <= (W3 + (W3 / (100 / PERCENT)))))) {
+			FAILED(__LINE__);
+			break;
+		}
+		PASSED();
+	} while (false);
+#endif
+
 #if 0
-	UNITTEST("Task::delay(FOREVER)");
+	UNITTEST("FOREVER");
 	// This delays about two minutes and eleven seconds so I don't normally
 	// run it. But it does verify that the FreeRTOS scheduler doesn't do
 	// something unexpected with the maximum possible Ticks value.
@@ -625,6 +688,65 @@ void UnitTestTask::task() {
 			FAILED(__LINE__);
 			break;
 		}
+		PASSED();
+	} while (false);
+#endif
+
+#if 1
+	UNITTEST("Digital Input and Output (requires text fixture on EtherMega)");
+	// This is a separate test because it requires a simple text fixture to be
+	// wired up on the board. It is specific to the EtherMega 2560 board.
+	// PE4 (Ardunino Mega pin 2) wired to ground.
+	// PE5 (Arduino Mega pin 3) wired to Vcc.
+	// PE3 (Arduino Mega pin 5) connected to PH3 (Arduino Mega pin 6).
+	// PH4 (Arduino Mega pin 7) not connected.
+	do {
+		typedef com::diag::amigo::GPIO GPIO;
+		GPIO::Pin pin2 = GPIO::PIN_E4;
+		GPIO::Pin pin3 = GPIO::PIN_E5;
+		// Used   pin4   GPIO::PIN_G5
+		GPIO::Pin pin5 = GPIO::PIN_E3;
+		GPIO::Pin pin6 = GPIO::PIN_H3;
+		GPIO::Pin pin7 = GPIO::PIN_H4;
+		GPIO::input(pin2);
+		GPIO::input(pin3);
+		GPIO::output(pin5, false);
+		GPIO::input(pin6);
+		GPIO::pulledup(pin7);
+		if (GPIO::get(pin2)) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (!GPIO::get(pin3)) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (GPIO::get(pin6)) {
+			FAILED(__LINE__);
+			break;
+		}
+		GPIO::set(pin5);
+		if (!GPIO::get(pin6)) {
+			FAILED(__LINE__);
+			break;
+		}
+		GPIO::clear(pin5);
+		if (GPIO::get(pin6)) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (!GPIO::get(pin7)) {
+			FAILED(__LINE__);
+			break;
+		}
+		// This is just an example of how the instance methods might be used
+		// using instance method chaining. They are also useful when you want
+		// to manipulate several bits in the same port atomically. It is not
+		// unusual to implement hardware protocols like Two Wire Interface
+		// (TWI a.k.a. I2C), Serial Peripheral Interface (SPI), or even a
+		// serial port by "bit banging" the GPIO pins. This interface is
+		// intended to facilitate this, hence the built-in delay method that
+		// can be incorporated in a method chain.
 		com::diag::amigo::GPIO::Pin pin = com::diag::amigo::GPIO::PIN_B7;
 		volatile void * base = com::diag::amigo::GPIO::base(pin);
 		uint8_t mask = com::diag::amigo::GPIO::mask(pin);
@@ -636,7 +758,7 @@ void UnitTestTask::task() {
 #endif
 
 #if 1
-	UNITTEST("SPI (specific to EtherMega W5100)");
+	UNITTEST("SPI (specific to WIZnet W5100 on EtherMega)");
 	do {
 		com::diag::amigo::SPI spi;
 		spi.start();
@@ -670,7 +792,7 @@ void UnitTestTask::task() {
 #endif
 
 #if 1
-	UNITTESTLN("Source and Sink (type control-D to exit)");
+	UNITTESTLN("Source (type control-D to exit)");
 	if (!source2sink(serialsource, serialsink)) {
 		FAILED(__LINE__);
 	} else {

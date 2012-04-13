@@ -7,7 +7,7 @@
  */
 
 #include <avr/io.h>
-#include <util/delay.h>
+#include "com/diag/amigo/target/delay.h"
 #include "com/diag/amigo/target/Console.h"
 
 namespace com {
