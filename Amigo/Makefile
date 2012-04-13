@@ -435,7 +435,7 @@ screen:
 	stty -f $(SERIAL) hupcl
 	# control-A control-\ y to exit.
 	screen -L $(SERIAL) $(BAUD) $(FORMAT)
-	stty sane
+	stty sane erase 
 
 # This uses the bootloader to load the application.
 upload:	$(BUILD_PLATFORM).hex

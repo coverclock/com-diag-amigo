@@ -10,6 +10,7 @@
  */
 
 #include <avr/io.h>
+#include <avr/cpufunc.h>
 #include "com/diag/amigo/types.h"
 #include "com/diag/amigo/unused.h"
 #include "com/diag/amigo/io.h"
@@ -31,7 +32,10 @@ namespace amigo {
  * an eight-bit mask. Note that this is a simple sequential mapping. Arduino
  * uses a much more complicated and user-friendly mapping that matches the pin
  * numbers printed on the Arduino circuit boards. Any resemblance between that
- * mapping and this one is purely coincidental.
+ * mapping and this one is purely coincidental. This class may seem more
+ * complicated than it needs to be. But GPIO is so central to many (most, in
+ * my experience) embedded projects, that the extra API functionality seemed
+ * warranted.
  */
 class GPIO {
 
@@ -182,12 +186,69 @@ public:
 	static uint8_t offset(Pin pin);
 
 	/**
+	 * Disables pull-ups on all pins. Pull-ups can be reenabled by configuring
+	 * any applicable pin to be pulled-up.
+	 */
+	static void disable();
+
+	/**
 	 * Map an absolute pin number to a eight-bit mask that is simply the offset
 	 * of the same pin applied to a left shift operator.
 	 * @param pin is a Pin enumerated value.
 	 * @return an eight-bit mask or zero if invalid.
 	 */
 	static uint8_t mask(Pin pin);
+
+	/**
+	 * Set GPIO pin to input with no pull-ups enabled.
+	 * @param pin is a Pin enumerated value.
+	 */
+	static void input(Pin pin);
+
+	/**
+	 * Set GPIO pin to input with pull ups enabled. As a side effect, this
+	 * enables the use of pull-ups on all applicable pins.
+	 * @param pin is a Pin enumerated value.
+	 */
+	static void pulledup(Pin pin);
+
+	/**
+	 * Set GPIO pin to output with no explicit initial values.
+	 * @param pin is a Pin enumerated value.
+	 */
+	static void output(Pin pin);
+
+	/**
+	 * Set GPIO pin to output with explicit initial values.
+	 * @param pin is a Pin enumerated value.
+	 * @param initial indicates true for high (one), false for low (zero).
+	 */
+	static void output(Pin pin, bool initial);
+
+	/**
+	 * Set a GPIO pin to one (high).
+	 * @param pin is a Pin enumerated value.
+	 */
+	static void set(Pin pin);
+
+	/**
+	 * Set a GPIO pin to zero (low).
+	 * @param pin is a Pin enumerated value.
+	 */
+	static void clear(Pin pin);
+
+	/**
+	 * Toggle a GPIO pin.
+	 * @param pin is a Pin enumerated value.
+	 */
+	static void toggle(Pin pin);
+
+	/**
+	 * Get the value of GPIO pins.
+	 * @param pin is a Pin enumerated value.
+	 * @return true if the value is high (one), false if it is low (zero).
+	 */
+	static bool get(Pin pin);
 
 	/**
 	 * Constructor.
@@ -210,7 +271,8 @@ public:
 	const GPIO & input(uint8_t mymask) const;
 
 	/**
-	 * Set GPIO pins to inputs with pull ups enabled.
+	 * Set GPIO pins to inputs with pull ups enabled. As a side effect, this
+	 * enables the use of pull-ups on all applicable pins.
 	 * @param mymask indicates input pins with bits set to one.
 	 * @return a reference to this object.
 	 */
@@ -261,10 +323,18 @@ public:
 	const GPIO & get(uint8_t mymask, uint8_t & result) const;
 
 	/**
-	 * Delay the calling task for the specified number of ticks.
+	 * Delay the calling task for the specified number of ticks by yielding the
+	 * processor.
 	 * @return a reference to this object.
 	 */
 	const GPIO & delay(Ticks ticks) const;
+
+	/**
+	 * Delay the calling task for the specified number of microseconds by
+	 * busy waiting.
+	 * @return a reference to this object.
+	 */
+	const GPIO & delay(double microseconds) const;
 
 	/**
 	 * Get the value of GPIO pins.
@@ -278,6 +348,11 @@ protected:
 	volatile void * gpiobase;
 
 };
+
+inline void GPIO::disable() {
+	Uninterruptible uninterruptible;
+	MCUCR |= PUD;
+}
 
 inline volatile void * GPIO::base(Pin pin) {
 	volatile void * mybase;
@@ -296,15 +371,20 @@ inline uint8_t GPIO::mask(Pin pin) {
 
 inline const GPIO & GPIO::input(uint8_t mymask) const {
 	Uninterruptible uninterruptible;
-	COM_DIAG_AMIGO_GPIO_DDR &= ~mymask;
 	COM_DIAG_AMIGO_GPIO_PORT &= ~mymask;
+	COM_DIAG_AMIGO_GPIO_DDR &= ~mymask;
 	return *this;
 }
 
 inline const GPIO & GPIO::pulledup(uint8_t mymask) const {
 	Uninterruptible uninterruptible;
-	COM_DIAG_AMIGO_GPIO_DDR &= ~mymask;
+	MCUCR &= ~PUD;
+	// The example in the data sheet shows the pull-up being enabled before
+	// the direction. Ref: Atmel, 8-bit Atmel Microcontroller with
+	// 64K/128K/256K Bytes In-System Programmable Flash, ATmega2560/V,
+	// Preliminary, 13.2.4, p. 74
 	COM_DIAG_AMIGO_GPIO_PORT |= mymask;
+	COM_DIAG_AMIGO_GPIO_DDR &= ~mymask;
 	return *this;
 }
 
@@ -319,6 +399,16 @@ inline const GPIO & GPIO::output(uint8_t mymask, uint8_t initial) const {
 	COM_DIAG_AMIGO_GPIO_DDR |= mymask;
 	COM_DIAG_AMIGO_GPIO_PORT |= (mymask & initial);
 	COM_DIAG_AMIGO_GPIO_PORT &= ~(mymask & initial);
+	return *this;
+}
+
+inline const GPIO & GPIO::delay(Ticks ticks) const {
+	Task::delay(ticks);
+	return *this;
+}
+
+inline const GPIO & GPIO::delay(double microseconds) const {
+	Task::delay(microseconds);
 	return *this;
 }
 
@@ -341,12 +431,8 @@ inline const GPIO & GPIO::toggle(uint8_t mymask) const {
 }
 
 inline const GPIO & GPIO::get(uint8_t mymask, uint8_t & result) const {
+	_NOP();
 	result = COM_DIAG_AMIGO_GPIO_PIN & mymask;
-	return *this;
-}
-
-inline const GPIO & GPIO::delay(Ticks ticks) const {
-	Task::delay(ticks);
 	return *this;
 }
 
@@ -354,6 +440,48 @@ inline uint8_t GPIO::get(uint8_t mymask) const {
 	uint8_t result;
 	get(mymask, result);
 	return result;
+}
+
+inline void GPIO::input(Pin pin) {
+	GPIO gpio(base(pin));
+	gpio.input(mask(pin));
+}
+
+inline void GPIO::pulledup(Pin pin) {
+	GPIO gpio(base(pin));
+	gpio.pulledup(mask(pin));
+}
+
+inline void GPIO::output(Pin pin) {
+	GPIO gpio(base(pin));
+	gpio.output(mask(pin));
+}
+
+inline void GPIO::output(Pin pin, bool initial) {
+	GPIO gpio(base(pin));
+	uint8_t mymask = mask(pin);
+	gpio.output(mymask, initial ? mymask : 0);
+}
+
+inline void GPIO::set(Pin pin) {
+	GPIO gpio(base(pin));
+	gpio.set(mask(pin));
+}
+
+inline void GPIO::clear(Pin pin) {
+	GPIO gpio(base(pin));
+	gpio.clear(mask(pin));
+}
+
+inline void GPIO::toggle(Pin pin) {
+	GPIO gpio(base(pin));
+	gpio.toggle(mask(pin));
+}
+
+inline bool GPIO::get(Pin pin) {
+	GPIO gpio(base(pin));
+	uint8_t mymask = mask(pin);
+	return (gpio.get(mymask) == mymask);
 }
 
 }

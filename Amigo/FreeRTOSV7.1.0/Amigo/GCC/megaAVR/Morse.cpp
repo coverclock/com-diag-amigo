@@ -6,7 +6,7 @@
  * http://www.diag.com/navigation/downloads/Amigo.html\n
  */
 
-#include <util/delay.h>
+#include "com/diag/amigo/target/delay.h"
 #include "com/diag/amigo/target/Morse.h"
 
 namespace com {

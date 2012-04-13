@@ -9,7 +9,6 @@
  * http://www.diag.com/navigation/downloads/Amigo.html\n
  */
 
-#include <string.h>
 #include "com/diag/amigo/types.h"
 #include "com/diag/amigo/target/harvard.h"
 
@@ -75,7 +74,7 @@ public:
      * @param string points to the nul-terminated C string.
 	 * @return the number of bytes written or zero for fail.
      */
-    size_t write(const char * string) { return write(string, strlen(string)); }
+    size_t write(const char * string);
 
     /**
      * Write a nul-terminated C string from program space to the underlying
@@ -83,7 +82,7 @@ public:
      * @param string points to the nul-terminated C string.
 	 * @return the number of bytes written or zero for fail.
      */
-    size_t write_P(PGM_P string) { return write_P(string, strlen_P(string)); }
+    size_t write_P(PGM_P string);
 
 };
 

@@ -1301,7 +1301,10 @@ INCLUDE_FILE_PATTERNS  =
 PREDEFINED             = DEBUG \
                          __cplusplus \
                          __USE_GNU \
-                         __GNUC__
+                         __GNUC__ \
+                         __AVR__ \
+                         __AVR_ATmega2560__ \
+                         __AVR_3_BYTE_PC__
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then
 # this tag can be used to specify a list of macro names that should be expanded.

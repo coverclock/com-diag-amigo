@@ -9,6 +9,7 @@
  * http://www.diag.com/navigation/downloads/Amigo.html\n
  */
 
+#include "com/diag/amigo/target/delay.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "com/diag/amigo/types.h"
@@ -232,6 +233,17 @@ public:
 	 */
 	static void delay(Ticks & since, Ticks relative);
 
+	/**
+	 * Block the central processing unit for the specified absolute number of
+	 * microseconds by busy waiting. This can be used for high precision
+	 * timing without scheduling latency at the price of blocking all other
+	 * activity except for interrupt service routines. This method can be called
+	 * inside an Uninterruptible section for ever greater precision and at a
+	 * greater price.
+	 * @param microseconds is the delay value in microseconds.
+	 */
+	static void delay(double microseconds);
+
 	/***************************************************************************
 	 * TASK SCHEDULING
 	 **************************************************************************/
@@ -390,6 +402,13 @@ inline void Task::delay(Ticks absolute) {
 
 inline void Task::delay(Ticks & since, Ticks relative) {
 	vTaskDelayUntil(&since, relative);
+}
+
+inline void Task::delay(double microseconds) {
+	// Requires the "backward compatible" AVR delay that allows a variable as
+	// an argument. Newer versions require a constant argument, which is not
+	// relevant to our interests.
+	_delay_us(microseconds);
 }
 
 inline xTaskHandle Task::current() {
