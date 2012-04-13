@@ -182,7 +182,7 @@ public:
 	/**
 	 * Convert milliseconds to ticks. Fractional results are truncated. The
 	 * application can control rounding by adding some portion (like half) or
-	 * all of the value MILLISECONDS_PER_TICK to the argument value.
+	 * all of the value PERIOD to the argument value.
 	 * @param milliseconds is a value in milliseconds.
 	 * @return a value in ticks.
 	 */
