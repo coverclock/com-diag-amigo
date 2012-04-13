@@ -261,7 +261,7 @@ CXXDIALECT=-fno-exceptions -ffunction-sections -fdata-sections -funsigned-char -
 CDEBUG=-g
 CWARN=-Wall
 CTUNING=-fno-exceptions -ffunction-sections -fdata-sections -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums# -mrelax
-CPPFLAGS=$(CARCH) -DF_CPU=$(FREQUENCY) -DARDUINO=$(ARDUINO) $(INCLUDES)
+CPPFLAGS=$(CARCH) -DF_CPU=$(FREQUENCY) -DARDUINO=$(ARDUINO) $(INCLUDES) -DCOM_DIAG_AMIGO_VINTAGE="\"$(MAJOR).$(MINOR).$(FIX)\""
 CFLAGS=$(CDIALECT) $(CDEBUG) -O$(OPT) $(CWARN) $(CEXTRA)
 CXXFLAGS=$(CXXDIALECT) $(CDEBUG) -O$(OPT) $(CWARN) $(CXXEXTRA)
 LDFLAGS=$(CARCH) $(RELAX) -O$(OPT) -Wl,--gc-sections

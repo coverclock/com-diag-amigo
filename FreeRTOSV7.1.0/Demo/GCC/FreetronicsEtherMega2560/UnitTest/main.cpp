@@ -33,6 +33,8 @@
 
 extern "C" void vApplicationStackOverflowHook(xTaskHandle pxTask, signed char * pcTaskName);
 
+static const char VINTAGE[] PROGMEM = "COM_DIAG_AMIGO_VINTAGE=" COM_DIAG_AMIGO_VINTAGE;
+
 /*******************************************************************************
  * UNIT TEST FRAMEWORK (SUCH AS IT IS)
  ******************************************************************************/
@@ -814,7 +816,7 @@ void UnitTestTask::task() {
 
 class Scope {
 public:
-	Scope() { com::diag::amigo::Console::instance().start().write_P(PSTR("\r\nstarting\r\n")).flush().stop(); }
+	Scope() { com::diag::amigo::Console::instance().start().write_P(PSTR("\r\n")).write_P(VINTAGE).write_P(PSTR("\r\n")).flush().stop(); }
 	~Scope() { com::diag::amigo::fatal(PSTR(__FILE__), __LINE__); }
 };
 
