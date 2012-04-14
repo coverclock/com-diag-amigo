@@ -159,6 +159,10 @@ public:
 #endif
 	};
 
+	/***************************************************************************
+	 * MAPPING CLASS METHODS
+	 **************************************************************************/
+
 	/**
 	 * Map an absolute pin number to a base address and a bit offset that may
 	 * be used as a left shift value. If the pin is not valid, neither the
@@ -186,18 +190,31 @@ public:
 	static uint8_t offset(Pin pin);
 
 	/**
-	 * Disables pull-ups on all pins. Pull-ups can be reenabled by configuring
-	 * any applicable pin to be pulled-up.
-	 */
-	static void disable();
-
-	/**
 	 * Map an absolute pin number to a eight-bit mask that is simply the offset
 	 * of the same pin applied to a left shift operator.
 	 * @param pin is a Pin enumerated value.
 	 * @return an eight-bit mask or zero if invalid.
 	 */
 	static uint8_t mask(Pin pin);
+
+	/**
+	 * Map an Arduino pin id (which is typically printed right on the Arduino
+	 * printed circuit board) to a Pin enumerated value. The mapping will be
+	 * different for different models of Arduino and AVR microcontrollers.
+	 * @param id is an Arduino pin identifier.
+	 * @return a Pin enumerated value or ~0 cast to Pin if not a valid pin id.
+	 */
+	static Pin arduino(uint8_t id);
+
+	/***************************************************************************
+	 * CONFIGURATION CLASS METHODS
+	 **************************************************************************/
+
+	/**
+	 * Disables pull-ups on all pins. Pull-ups can be reenabled by configuring
+	 * any applicable pin to be pulled-up.
+	 */
+	static void disable();
 
 	/**
 	 * Set GPIO pin to input with no pull-ups enabled.
@@ -225,6 +242,10 @@ public:
 	 */
 	static void output(Pin pin, bool initial);
 
+	/***************************************************************************
+	 * OPERATIONAL CLASS METHODS
+	 **************************************************************************/
+
 	/**
 	 * Set a GPIO pin to one (high).
 	 * @param pin is a Pin enumerated value.
@@ -249,6 +270,10 @@ public:
 	 * @return true if the value is high (one), false if it is low (zero).
 	 */
 	static bool get(Pin pin);
+
+	/***************************************************************************
+	 * CONFIGURATION INSTANCE METHODS
+	 **************************************************************************/
 
 	/**
 	 * Constructor.
@@ -293,6 +318,10 @@ public:
 	 */
 	const GPIO & output(uint8_t mymask, uint8_t initial) const;
 
+	/***************************************************************************
+	 * OPERATIONAL INSTANCE METHODS
+	 **************************************************************************/
+
 	/**
 	 * Set GPIO pins to one (high).
 	 * @param mymask indicates high pins with bits set to one.
@@ -323,6 +352,13 @@ public:
 	const GPIO & get(uint8_t mymask, uint8_t & result) const;
 
 	/**
+	 * Get the value of GPIO pins.
+	 * @param mymask indicates the pins to be gotten with bits set to one.
+	 * @return the value of the GPIO pins with ones indicating high.
+	 */
+	uint8_t get(uint8_t mymask) const;
+
+	/**
 	 * Delay the calling task for the specified number of ticks by yielding the
 	 * processor.
 	 * @return a reference to this object.
@@ -335,13 +371,6 @@ public:
 	 * @return a reference to this object.
 	 */
 	const GPIO & delay(double microseconds) const;
-
-	/**
-	 * Get the value of GPIO pins.
-	 * @param mymask indicates the pins to be gotten with bits set to one.
-	 * @return the value of the GPIO pins with ones indicating high.
-	 */
-	uint8_t get(uint8_t mymask) const;
 
 protected:
 
