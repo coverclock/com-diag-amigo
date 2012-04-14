@@ -690,6 +690,11 @@ void UnitTestTask::task() {
 			FAILED(__LINE__);
 			break;
 		}
+		if (com::diag::amigo::GPIO::arduino(~0) != static_cast<com::diag::amigo::GPIO::Pin>(~0)) {
+printf(PSTR("id=%d arduino=%d pin=%d\n"), ~0, com::diag::amigo::GPIO::arduino(~0), static_cast<com::diag::amigo::GPIO::Pin>(~0));
+			FAILED(__LINE__);
+			break;
+		}
 		PASSED();
 	} while (false);
 #endif
@@ -698,18 +703,38 @@ void UnitTestTask::task() {
 	UNITTEST("Digital I/O (requires text fixture on EtherMega)");
 	// This is a separate test because it requires a simple text fixture to be
 	// wired up on the board. It is specific to the EtherMega 2560 board.
-	// PE4 (Ardunino Mega pin 2) wired to ground.
+	// PE4 (Arduino Mega pin 2) wired to ground.
 	// PE5 (Arduino Mega pin 3) wired to Vcc.
+	// PG5 (Arduino Mega pin 4) is otherwise in use.
 	// PE3 (Arduino Mega pin 5) connected to PH3 (Arduino Mega pin 6).
 	// PH4 (Arduino Mega pin 7) not connected.
 	do {
 		typedef com::diag::amigo::GPIO GPIO;
-		GPIO::Pin pin2 = GPIO::PIN_E4;
-		GPIO::Pin pin3 = GPIO::PIN_E5;
-		// Used   pin4   GPIO::PIN_G5
-		GPIO::Pin pin5 = GPIO::PIN_E3;
-		GPIO::Pin pin6 = GPIO::PIN_H3;
-		GPIO::Pin pin7 = GPIO::PIN_H4;
+		GPIO::Pin pin2 = GPIO::arduino(2);
+		if (pin2 != GPIO::PIN_E4) {
+			FAILED(__LINE__);
+			break;
+		}
+		GPIO::Pin pin3 = GPIO::arduino(3);
+		if (pin3 != GPIO::PIN_E5) {
+			FAILED(__LINE__);
+			break;
+		}
+		GPIO::Pin pin5 = GPIO::arduino(5);
+		if (pin5 != GPIO::PIN_E3) {
+			FAILED(__LINE__);
+			break;
+		}
+		GPIO::Pin pin6 = GPIO::arduino(6);
+		if (pin6 != GPIO::PIN_H3) {
+			FAILED(__LINE__);
+			break;
+		}
+		GPIO::Pin pin7 = GPIO::arduino(7);
+		if (pin7 != GPIO::PIN_H4) {
+			FAILED(__LINE__);
+			break;
+		}
 		GPIO::input(pin2);
 		GPIO::input(pin3);
 		GPIO::output(pin5, false);
@@ -749,11 +774,11 @@ void UnitTestTask::task() {
 		// serial port by "bit banging" the GPIO pins. This interface is
 		// intended to facilitate this, hence the built-in delay method that
 		// can be incorporated in a method chain.
-		com::diag::amigo::GPIO::Pin pin = com::diag::amigo::GPIO::PIN_B7;
-		volatile void * base = com::diag::amigo::GPIO::base(pin);
-		uint8_t mask = com::diag::amigo::GPIO::mask(pin);
+		GPIO::Pin pin = GPIO::PIN_B7;
+		volatile void * base = GPIO::base(pin);
+		uint8_t mask = GPIO::mask(pin);
 		com::diag::amigo::Ticks ticks = com::diag::amigo::Task::milliseconds2ticks(500);
-		com::diag::amigo::GPIO gpio(base);
+		GPIO gpio(base);
 		gpio.output(mask).set(mask).delay(ticks).clear(mask).delay(ticks).set(mask).delay(ticks).clear(mask).delay(ticks).set(mask).delay(ticks).clear(mask).delay(ticks).set(mask).delay(ticks).clear(mask).delay(ticks).set(mask).delay(ticks).clear(mask);
 		PASSED();
 	} while (false);

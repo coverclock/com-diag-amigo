@@ -79,7 +79,7 @@ SPI::SPI(Controller mycontroller, Count transmits, Count receives)
 		mosi = _BV(3);
 		miso = _BV(4);
 #else
-#	error SPI has to be configured for this microcontroller!
+#	error SPI must be modified for this microcontroller!
 #endif
 		break;
 	}
