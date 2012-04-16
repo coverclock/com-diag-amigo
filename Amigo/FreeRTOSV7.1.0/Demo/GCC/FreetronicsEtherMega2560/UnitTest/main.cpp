@@ -239,34 +239,72 @@ void UnitTestTask::task() {
 
 #if 1
 	UNITTESTLN("sizeof");
-	// The need to do this cast smells like a compiler bug to me, but I'd be
-	// glad to be proven wrong. Not doing the cast results in BIGNUMs being
-	// printed, regardless of the printf format, %u, %d, %lu, etc.
-#	define SIZEOF(_TYPE_) printf(PSTR("sizeof(" # _TYPE_ ")=%lu\n"), static_cast<unsigned long>(sizeof(_TYPE_)));
-	// Note how small many of these are. For some, it's just the two-byte
-	// virtual pointer overhead for the virtual destructor (when one exists).
-	SIZEOF(com::diag::amigo::BinarySemaphore);
-	SIZEOF(com::diag::amigo::Console);
-	SIZEOF(com::diag::amigo::CountingSemaphore);
-	SIZEOF(com::diag::amigo::CriticalSection);
-	SIZEOF(com::diag::amigo::Dump);
-	SIZEOF(com::diag::amigo::GPIO);
-	SIZEOF(com::diag::amigo::Morse);
-	SIZEOF(com::diag::amigo::MutexSemaphore);
-	SIZEOF(com::diag::amigo::PeriodicTimer);
-	SIZEOF(com::diag::amigo::OneShotTimer);
-	SIZEOF(com::diag::amigo::Print);
-	SIZEOF(com::diag::amigo::Queue);
-	SIZEOF(com::diag::amigo::Serial);
-	SIZEOF(com::diag::amigo::SerialSink);
-	SIZEOF(com::diag::amigo::SerialSource);
-	SIZEOF(com::diag::amigo::Sink);
-	SIZEOF(com::diag::amigo::Source);
-	SIZEOF(com::diag::amigo::SPI);
-	SIZEOF(com::diag::amigo::Task);
-	SIZEOF(com::diag::amigo::Timer);
-	SIZEOF(com::diag::amigo::Uninterruptible);
-	PASSED();
+	do {
+		// The need to do this cast smells like a compiler bug to me, but I'd be
+		// glad to be proven wrong. Not doing the cast results in BIGNUMs being
+		// printed, regardless of the printf format, %u, %d, %lu, etc. Note
+		// that this test itself tells us that sizeof(size_t) is two bytes, and
+		// size_t is the type that sizeof() is supposed to return.
+#		define SIZEOF(_TYPE_) printf(PSTR("sizeof(" # _TYPE_ ")=%u\n"), static_cast<size_t>(sizeof(_TYPE_)));
+		// Note how small many of these are. For some, it's just the two-byte
+		// virtual pointer overhead for the virtual destructor (when one exists).
+		// Note: I actually worked on a project for a client in which in their
+		// code base an unsigned wasn't the same sizeof() as the signed for the
+		// same data type. WTF?
+		SIZEOF(char);
+		SIZEOF(signed char);
+		SIZEOF(unsigned char);
+		SIZEOF(short);
+		SIZEOF(signed short);
+		SIZEOF(unsigned short);
+		SIZEOF(int);
+		SIZEOF(signed int);
+		SIZEOF(unsigned int);
+		SIZEOF(long);
+		SIZEOF(signed long);
+		SIZEOF(unsigned long);
+		SIZEOF(long long);
+		SIZEOF(signed long long);
+		SIZEOF(unsigned long long);
+		SIZEOF(int8_t);
+		SIZEOF(uint8_t);
+		SIZEOF(int16_t);
+		SIZEOF(uint16_t);
+		SIZEOF(int32_t);
+		SIZEOF(uint32_t);
+		SIZEOF(int64_t);
+		SIZEOF(uint64_t);
+		SIZEOF(ssize_t);
+		SIZEOF(size_t);
+		SIZEOF(com::diag::amigo::BinarySemaphore);
+		SIZEOF(com::diag::amigo::Console);
+		SIZEOF(com::diag::amigo::CountingSemaphore);
+		SIZEOF(com::diag::amigo::CriticalSection);
+		SIZEOF(com::diag::amigo::Dump);
+		SIZEOF(com::diag::amigo::GPIO);
+		SIZEOF(com::diag::amigo::GPIO::Pin);
+		SIZEOF(com::diag::amigo::Morse);
+		SIZEOF(com::diag::amigo::MutexSemaphore);
+		SIZEOF(com::diag::amigo::PeriodicTimer);
+		SIZEOF(com::diag::amigo::OneShotTimer);
+		SIZEOF(com::diag::amigo::Print);
+		SIZEOF(com::diag::amigo::Queue);
+		SIZEOF(com::diag::amigo::Serial);
+		SIZEOF(com::diag::amigo::SerialSink);
+		SIZEOF(com::diag::amigo::SerialSource);
+		SIZEOF(com::diag::amigo::Sink);
+		SIZEOF(com::diag::amigo::Source);
+		SIZEOF(com::diag::amigo::SPI);
+		SIZEOF(com::diag::amigo::Task);
+		SIZEOF(com::diag::amigo::Timer);
+		SIZEOF(com::diag::amigo::Uninterruptible);
+		if (sizeof(size_t) != sizeof(ssize_t)) {
+			// Fix <com/diag/amigo/types.h>!
+			FAILED(__LINE__);
+			break;
+		}
+		PASSED();
+	} while (false);
 #endif
 
 #if 1
@@ -274,7 +312,7 @@ void UnitTestTask::task() {
 	do {
 		static const com::diag::amigo::Ticks W1 = 200;
 		static const com::diag::amigo::Ticks W2 = 500;
-		static const com::diag::amigo::Ticks PERCENT = 20;
+		static const com::diag::amigo::Ticks PERCENT = 25;
 		com::diag::amigo::Ticks t1 = ticks2milliseconds(elapsed());
 		delay(milliseconds2ticks(W1));
 		com::diag::amigo::Ticks t2 = ticks2milliseconds(elapsed());
@@ -285,8 +323,17 @@ void UnitTestTask::task() {
 		}
 		com::diag::amigo::Ticks t4 = t1;
 		delay(t4, milliseconds2ticks(W2));
-		com::diag::amigo::Ticks t3 = ticks2milliseconds(com::diag::amigo::Task::elapsed());
+		com::diag::amigo::Ticks t3 = ticks2milliseconds(elapsed());
 		milliseconds = t3 - t1;
+		// Typical test results show that 20% is not enough of a margin. I'm
+		// guessing this is due to scheduling latency as I added tasks (most
+		// recently the FreeRTOS timer task). Example: t1=102, t3=704,
+		// milliseconds=602, but (W2+(20%*W2))=(W2*1.2)=600. So the test fails,
+		// barely. This is good to know. Juggling task priorities might solve
+		// this, but at risk of making timers less accurate. I would choose to
+		// have more accurate timers, and have task delays be less accurate,
+		// just based on my experience implementing telecommunications protocol
+		// stacks. This is, after all, the "low precision" delay.
 		if (!((W2 <= milliseconds) && (milliseconds <= (W2 + (W2 / (100 / PERCENT)))))) {
 			FAILED(__LINE__);
 			break;
@@ -301,16 +348,19 @@ void UnitTestTask::task() {
 	// manner. If we leave interrupts enabled, tick processing by FreeRTOS adds
 	// enormously to our delay (nearly doubles it), since for a 10ms delay we
 	// are taking interrupt latency for 5 ticks. If we disable interrupts,
-	// we have no way to measure time.
+	// we have no way to measure time. So here we're really just measuring the
+	// average high precision delay and assuming that the individual delays are
+	// more or less correct. This is where I wish the AVR had a hardware time
+	// base register like I've used in the PowerPC.
 	do {
 		static const com::diag::amigo::Ticks W3 = 10;
 		static const com::diag::amigo::Ticks PERCENT = 100;
-		com::diag::amigo::Ticks t5 = ticks2milliseconds(com::diag::amigo::Task::elapsed());
+		com::diag::amigo::Ticks t5 = ticks2milliseconds(elapsed());
 		double microseconds = (W3 * 1000) / 100;
 		for (uint8_t ii = 100; ii > 0; --ii) {
 			delay(microseconds);
 		}
-		com::diag::amigo::Ticks t6 = ticks2milliseconds(com::diag::amigo::Task::elapsed());
+		com::diag::amigo::Ticks t6 = ticks2milliseconds(elapsed());
 		com::diag::amigo::Ticks milliseconds = t6 - t5;
 		if (!((W3 <= milliseconds) && (milliseconds <= (W3 + (W3 / (100 / PERCENT)))))) {
 			FAILED(__LINE__);
@@ -336,10 +386,10 @@ void UnitTestTask::task() {
 		static const uint8_t programmemory[] PROGMEM = { 0xca, 0xfe, 0xba, 0xbe };
 		com::diag::amigo::Dump dump(serialsink);
 		com::diag::amigo::Dump dump_P(serialsink, true);
-		dump(datamemory, sizeof(datamemory));
-		printf(PSTR("\r\n"));
-		dump_P(programmemory, sizeof(programmemory));
-		printf(PSTR("\r\n"));
+		static const char ZEROX[] PROGMEM = "0x";
+		static const char CRLF[] PROGMEM = "\r\n";
+		printf(ZEROX); dump(datamemory, sizeof(datamemory)); printf(CRLF);
+		printf(ZEROX); dump_P(programmemory, sizeof(programmemory)); printf(CRLF);
 		PASSED();
 	} while (false);
 #endif
@@ -678,20 +728,19 @@ void UnitTestTask::task() {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::GPIO::base(static_cast<com::diag::amigo::GPIO::Pin>(~0)) != 0) {
+		if (com::diag::amigo::GPIO::base(com::diag::amigo::GPIO::INVALID) != 0) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::GPIO::offset(static_cast<com::diag::amigo::GPIO::Pin>(~0)) != static_cast<uint8_t>(~0)) {
+		if (com::diag::amigo::GPIO::offset(com::diag::amigo::GPIO::INVALID) != static_cast<uint8_t>(~0)) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::GPIO::mask(static_cast<com::diag::amigo::GPIO::Pin>(~0)) != 0) {
+		if (com::diag::amigo::GPIO::mask(com::diag::amigo::GPIO::INVALID) != 0) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::GPIO::arduino(~0) != static_cast<com::diag::amigo::GPIO::Pin>(~0)) {
-printf(PSTR("id=%d arduino=%d pin=%d\n"), ~0, com::diag::amigo::GPIO::arduino(~0), static_cast<com::diag::amigo::GPIO::Pin>(~0));
+		if (com::diag::amigo::GPIO::arduino(~0) != com::diag::amigo::GPIO::INVALID) {
 			FAILED(__LINE__);
 			break;
 		}
@@ -847,6 +896,17 @@ public:
 
 int main() __attribute__((OS_main));
 int main() {
+	// The constructor of Scope emits our start up message. You may see this
+	// message more than once, or see some garbage printed before this message.
+	// This is because on a stock Arduino or clone, connecting to the board via
+	// the USB cable resets the AVR microcontroller by design. But there is some
+	// latency in the AVR resetting, so it can actually start running its
+	// software and emit some characters before this reset occurs, after which
+	// it starts all over and remits them. There is also some lag between the
+	// reset, which actually starts the bootloader in a stock Arduino, and the
+	// timout after which the bootloader transfers control to your software.
+	// During this the bootloader may emit some bytes to talk to avrdude, and
+	// those bytes may be unprintable.
 	Scope scope;
 
 	// We test the busy waiting stuff in main before we create our tasks and
@@ -854,7 +914,7 @@ int main() {
 
 #if 0
 	CUNITTEST("fatal");
-	com::diag::amigo::Console::instance().start().write_P(PSTR("Fatal Unit Test...\r\n")).flush().stop();
+	com::diag::amigo::Console::instance().start().write_P(PSTR("Fatal Unit Test\r\n")).flush().stop();
 	com::diag::amigo::fatal(PSTR(__FILE__), __LINE__);
 	CFAILED(__LINE__);
 #endif
