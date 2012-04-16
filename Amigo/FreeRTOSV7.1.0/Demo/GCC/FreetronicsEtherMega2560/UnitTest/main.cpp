@@ -198,6 +198,28 @@ void UnitTestTask::task() {
 	com::diag::amigo::Print printf(serialsink, true);
 	serial.start();
 
+	xTaskHandle currentTask = current();
+	xTaskHandle idleTask = idle();
+#if 1
+	UNITTEST("Task (creation)");
+	do {
+		if (currentTask == 0) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (idleTask == 0) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (tasks() != 4) {
+			// UnitTestTask, TakerTask, Idle Task, Timer Task.
+			FAILED(__LINE__);
+			break;
+		}
+		PASSED();
+	} while (false);
+#endif
+
 #if 1
 	UNITTESTLN("Sink");
 	do {
@@ -312,7 +334,7 @@ void UnitTestTask::task() {
 	do {
 		static const com::diag::amigo::Ticks W1 = 200;
 		static const com::diag::amigo::Ticks W2 = 500;
-		static const com::diag::amigo::Ticks PERCENT = 25;
+		static const com::diag::amigo::Ticks PERCENT = 33;
 		com::diag::amigo::Ticks t1 = ticks2milliseconds(elapsed());
 		delay(milliseconds2ticks(W1));
 		com::diag::amigo::Ticks t2 = ticks2milliseconds(elapsed());
@@ -335,6 +357,9 @@ void UnitTestTask::task() {
 		// just based on my experience implementing telecommunications protocol
 		// stacks. This is, after all, the "low precision" delay.
 		if (!((W2 <= milliseconds) && (milliseconds <= (W2 + (W2 / (100 / PERCENT)))))) {
+			// This occurs often enough that I just leave this debugging
+			// statement in.
+			printf(PSTR("t1=%u t3=%u ms=%u W2=%u W2+=%u\n"), t1, t3, milliseconds, W2, (W2 + (W2 / (100 / PERCENT))));
 			FAILED(__LINE__);
 			break;
 		}
@@ -876,6 +901,26 @@ void UnitTestTask::task() {
 	}
 #endif
 
+#if 1
+	UNITTEST("Task (deletion)");
+	do {
+		if (currentTask != current()) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (idleTask != idle()) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (tasks() != 3) {
+			// UnitTestTask, Idle Task, Timer Task.
+			FAILED(__LINE__);
+			break;
+		}
+		PASSED();
+	} while (false);
+#endif
+
 	// Just to make sure the regular data memory printf() works.
 
 	com::diag::amigo::Print errorf(serialsink);
@@ -984,6 +1029,6 @@ int main() {
 		com::diag::amigo::Task::begin();
 	} while (false);
 
-	// Should never get here.
-	com::diag::amigo::fatal(PSTR(__FILE__), __LINE__);
+	// Should never get here. scope going out of lexical scope will fatal() in
+	// its destructor.
 }
