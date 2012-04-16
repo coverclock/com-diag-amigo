@@ -430,6 +430,7 @@ PHONY+=interrogate screen upload flash debug
 interrogate:
 	$(AVRDUDE) -v -C$(AVRDUDE_CONF) -p$(PART) -c$(PROGRAMMER) -Pusb -t
 
+# To exit out of screen: control-a control-\ y.
 screen:
 	stty sane
 	stty -f $(SERIAL) hupcl
