@@ -30,6 +30,7 @@
 #include "com/diag/amigo/CriticalSection.h"
 #include "com/diag/amigo/MutexSemaphore.h"
 #include "com/diag/amigo/Timer.h"
+#include "com/diag/amigo/SPISlaveSelect.h"
 
 extern "C" void vApplicationStackOverflowHook(xTaskHandle pxTask, signed char * pcTaskName);
 
@@ -87,25 +88,29 @@ void PeriodicTimer::timer() {
  * WIZNET W5100 TEST FIXTURE (FOR TESTING SPI AND ALSO GPIO)
  ******************************************************************************/
 
+static com::diag::amigo::MutexSemaphore * mutexsemaphorep = 0;
+
 class W5100 {
 public:
-	explicit W5100(com::diag::amigo::GPIO::Pin myss, com::diag::amigo::SPI & myspi)
-	: gpio(com::diag::amigo::GPIO::base(myss))
+	explicit W5100(com::diag::amigo::MutexSemaphore & mymutex, com::diag::amigo::GPIO::Pin myss, com::diag::amigo::SPI & myspi)
+	: mutex(&mymutex)
+	, gpio(com::diag::amigo::GPIO::base(myss))
 	, mask(com::diag::amigo::GPIO::mask(myss))
 	, spi(&myspi)
 	{
 		gpio.output(mask, mask);
 	}
 	int read(uint16_t address) {
-		gpio.clear(mask);
+		com::diag::amigo::CriticalSection cs(*mutex);
+		com::diag::amigo::SPISlaveSelect ss(gpio, mask);
 		spi->master(0x0f);
 		spi->master(address >> 8);
 		spi->master(address & 0xff);
 		int datum = spi->master();
-		gpio.set(mask);
 		return datum;
 	}
 private:
+	com::diag::amigo::MutexSemaphore * mutex;
 	com::diag::amigo::GPIO gpio;
 	com::diag::amigo::SPI * spi;
 	uint8_t mask;
@@ -288,6 +293,7 @@ void UnitTestTask::task() {
 		SIZEOF(long long);
 		SIZEOF(signed long long);
 		SIZEOF(unsigned long long);
+		SIZEOF(bool);
 		SIZEOF(int8_t);
 		SIZEOF(uint8_t);
 		SIZEOF(int16_t);
@@ -863,10 +869,8 @@ void UnitTestTask::task() {
 	do {
 		com::diag::amigo::SPI spi;
 		spi.start();
-		com::diag::amigo::MutexSemaphore mutex;
 		do {
-			com::diag::amigo::CriticalSection criticalsection(mutex);
-			W5100 w5100(com::diag::amigo::GPIO::PIN_B4, spi);
+			W5100 w5100(*mutexsemaphorep, com::diag::amigo::GPIO::PIN_B4, spi);
 			static const uint16_t RTR0 = 0x0017;
 			static const uint16_t RTR1 = 0x0018;
 			static const uint16_t RCR = 0x0019;
@@ -1011,6 +1015,9 @@ int main() {
 
 	com::diag::amigo::BinarySemaphore binarysemaphore;
 	binarysemaphorep = &binarysemaphore;
+
+	com::diag::amigo::MutexSemaphore mutexsemaphore;
+	mutexsemaphorep = &mutexsemaphore;
 
 	CUNITTEST("Task");
 	do {

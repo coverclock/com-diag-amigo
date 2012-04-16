@@ -1,5 +1,5 @@
-#ifndef _COM_DIAG_MEGAAVR_SPI_H_
-#define _COM_DIAG_MEGAAVR_SPI_H_
+#ifndef _COM_DIAG_AMIGO_MEGAAVR_SPI_H_
+#define _COM_DIAG_AMIGO_MEGAAVR_SPI_H_
 
 /**
  * @file
@@ -275,4 +275,4 @@ inline int SPI::slave(Ticks timeout) {
 }
 }
 
-#endif /* _COM_DIAG_MEGAAVR_SPI_H_ */
+#endif /* _COM_DIAG_AMIGO_MEGAAVR_SPI_H_ */
