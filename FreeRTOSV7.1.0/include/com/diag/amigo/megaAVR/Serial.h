@@ -1,5 +1,5 @@
-#ifndef _COM_DIAG_MEGAAVR_SERIAL_H_
-#define _COM_DIAG_MEGAAVR_SERIAL_H_
+#ifndef _COM_DIAG_AMIGO_MEGAAVR_SERIAL_H_
+#define _COM_DIAG_AMIGO_MEGAAVR_SERIAL_H_
 
 /**
  * @file
@@ -414,4 +414,4 @@ inline size_t Serial::express(uint8_t ch, Ticks timeout) {
 }
 }
 
-#endif /* _COM_DIAG_MEGAAVR_SERIAL_H_ */
+#endif /* _COM_DIAG_AMIGO_MEGAAVR_SERIAL_H_ */

@@ -1,5 +1,5 @@
-#ifndef _COM_DIAG_AMIGO_MORSE_H_
-#define _COM_DIAG_AMIGO_MORSE_H_
+#ifndef _COM_DIAG_AMIGO_MEGAAVR_MORSE_H_
+#define _COM_DIAG_AMIGO_MEGAAVR_MORSE_H_
 
 /**
  * @file
@@ -97,4 +97,4 @@ private:
 }
 }
 
-#endif /* _COM_DIAG_AMIGO_MORSE_H_ */
+#endif /* _COM_DIAG_AMIGO_MEGAAVR_MORSE_H_ */
