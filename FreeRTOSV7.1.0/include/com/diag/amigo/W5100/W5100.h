@@ -15,6 +15,7 @@
  */
 
 #include "com/diag/amigo/MutexSemaphore.h"
+#include "com/diag/amigo/Socket.h"
 #include "com/diag/amigo/target/GPIO.h"
 #include "com/diag/amigo/target/SPI.h"
 #include "com/diag/amigo/types.h"
@@ -39,7 +40,7 @@ class Socket;
 class W5100
 {
 
-	friend class Socket;
+	friend class com::diag::amigo::W5100::Socket;
 
 	/***************************************************************************
 	 * CREATION AND DESTRUCTION
@@ -61,7 +62,7 @@ public:
 
 	typedef uint8_t socket_t;
 
-	typedef uint16_t port_t;
+	typedef com::diag::amigo::Socket::port_t port_t;
 
 	static const size_t SOCKETS = 4;
 
