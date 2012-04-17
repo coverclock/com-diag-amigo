@@ -18,6 +18,7 @@
 namespace com {
 namespace diag {
 namespace amigo {
+namespace W5100 {
 
 /*******************************************************************************
  * CREATION AND DESTRUCTION
@@ -56,7 +57,7 @@ void W5100::stop() {
  * SPI ACTIONS
  ******************************************************************************/
 
-void W5100::write(Address address, uint8_t datum) {
+void W5100::write(address_t address, uint8_t datum) {
 	CriticalSection cs(*mutex);
 	SPISlaveSelect ss(gpio, mask);
 	spi->master(0xf0);
@@ -65,7 +66,7 @@ void W5100::write(Address address, uint8_t datum) {
 	spi->master(datum);
 }
 
-void W5100::write(Address address, const void * data, size_t length) {
+void W5100::write(address_t address, const void * data, size_t length) {
 	CriticalSection cs(*mutex);
 	const uint8_t * here = static_cast<const uint8_t *>(data);
 	for (; length > 0; --length) {
@@ -77,7 +78,7 @@ void W5100::write(Address address, const void * data, size_t length) {
 	}
 }
 
-uint8_t W5100::read(Address address) {
+uint8_t W5100::read(address_t address) {
 	CriticalSection cs(*mutex);
 	SPISlaveSelect ss(gpio, mask);
 	spi->master(0x0f);
@@ -87,7 +88,7 @@ uint8_t W5100::read(Address address) {
 	return datum;
 }
 
-void W5100::read(Address address, void * buffer, size_t length) {
+void W5100::read(address_t address, void * buffer, size_t length) {
 	CriticalSection cs(*mutex);
 	uint8_t * here = static_cast<uint8_t *>(buffer);
 	for (; length > 0; --length) {
@@ -103,7 +104,7 @@ void W5100::read(Address address, void * buffer, size_t length) {
  * SOCKET ACTIONS
  **************************************************************************/
 
-void W5100::execCmdSn(Socket socket, SockCMD command) {
+void W5100::execCmdSn(socket_t socket, SockCMD command) {
 	// Send command to socket
 	writeSnCR(socket, command);
 	// Wait for command to complete
@@ -111,7 +112,7 @@ void W5100::execCmdSn(Socket socket, SockCMD command) {
 		;
 }
 
-Size W5100::getTXFreeSize(Socket socket)
+size_t W5100::getTXFreeSize(socket_t socket)
 {
 	Size val = 0;
 	Size val1 = 0;
@@ -126,7 +127,7 @@ Size W5100::getTXFreeSize(Socket socket)
 	return val;
 }
 
-Size W5100::getRXReceivedSize(Socket socket)
+size_t W5100::getRXReceivedSize(socket_t socket)
 {
 	Size val = 0;
 	Size val1 = 0;
@@ -141,13 +142,13 @@ Size W5100::getRXReceivedSize(Socket socket)
 	return val;
 }
 
-void W5100::send_data_processing_offset(Socket socket, Size data_offset, const void * data, size_t length)
+void W5100::send_data_processing_offset(socket_t socket, size_t data_offset, const void * data, size_t length)
 {
 	const uint8_t * here = static_cast<const uint8_t *>(data);
-	Address ptr = readSnTX_WR(socket);
+	address_t ptr = readSnTX_WR(socket);
 	ptr += data_offset;
 	Size offset = ptr & SMASK;
-	Address dstAddr = offset + sbase[socket];
+	address_t dstAddr = offset + sbase[socket];
 
 	if (offset + length > SSIZE) {
 		// Wrap around circular buffer
@@ -163,9 +164,9 @@ void W5100::send_data_processing_offset(Socket socket, Size data_offset, const v
 }
 
 
-void W5100::recv_data_processing(Socket socket, void * buffer, size_t length, bool peek)
+void W5100::recv_data_processing(socket_t socket, void * buffer, size_t length, bool peek)
 {
-	Address ptr;
+	address_t ptr;
 	ptr = readSnRX_RD(socket);
 	read_data(socket, ptr, buffer, length);
 	if (!peek) {
@@ -174,12 +175,12 @@ void W5100::recv_data_processing(Socket socket, void * buffer, size_t length, bo
 	}
 }
 
-void W5100::read_data(Socket socket, Address address, void * buffer, size_t length)
+void W5100::read_data(socket_t socket, address_t address, void * buffer, size_t length)
 {
 	uint8_t * here = static_cast<uint8_t *>(buffer);
 	Size size;
-	Address src_mask;
-	Address src_ptr;
+	address_t src_mask;
+	address_t src_ptr;
 
 	src_mask = address & RMASK;
 	src_ptr = rbase[socket] + src_mask;
@@ -194,6 +195,7 @@ void W5100::read_data(Socket socket, Address address, void * buffer, size_t leng
 	}
 }
 
+}
 }
 }
 }
