@@ -31,6 +31,7 @@
 #include "com/diag/amigo/MutexSemaphore.h"
 #include "com/diag/amigo/Timer.h"
 #include "com/diag/amigo/SPISlaveSelect.h"
+#include "com/diag/amigo/W5100/W5100.h"
 
 extern "C" void vApplicationStackOverflowHook(xTaskHandle pxTask, signed char * pcTaskName);
 
@@ -325,7 +326,9 @@ void UnitTestTask::task() {
 		SIZEOF(com::diag::amigo::SPI);
 		SIZEOF(com::diag::amigo::Task);
 		SIZEOF(com::diag::amigo::Timer);
+		SIZEOF(com::diag::amigo::TypedQueue<uint8_t>);
 		SIZEOF(com::diag::amigo::Uninterruptible);
+		SIZEOF(com::diag::amigo::W5100::W5100);
 		if (sizeof(size_t) != sizeof(ssize_t)) {
 			// Fix <com/diag/amigo/types.h>!
 			FAILED(__LINE__);
@@ -865,7 +868,7 @@ void UnitTestTask::task() {
 #endif
 
 #if 1
-	UNITTEST("SPI (specific to WIZnet W5100 on EtherMega)");
+	UNITTEST("SPI (specific to WIZnet W5100 on EtherMega etc.)");
 	do {
 		com::diag::amigo::SPI spi;
 		spi.start();
@@ -892,6 +895,32 @@ void UnitTestTask::task() {
 			}
 			PASSED();
 		} while (false);
+		spi.stop();
+	} while (false);
+#endif
+
+#if 1
+	UNITTEST("W5100 basic sanity (specific to EtherMega etc.)");
+	do {
+		com::diag::amigo::SPI spi;
+		com::diag::amigo::W5100::W5100 w5100(*mutexsemaphorep, com::diag::amigo::GPIO::PIN_B4, spi);
+		spi.start();
+		w5100.start();
+		do {
+			// Reference: WIZnet, W5100 Datasheet, Version 1.2.4, 2011
+			uint16_t rtr = w5100.getRetransmissionTime();
+			if (rtr != 2000) {
+				FAILED(__LINE__);
+				break;
+			}
+			uint8_t rcr = w5100.getRetransmissionCount();
+			if (rcr != 8) {
+				FAILED(__LINE__);
+				break;
+			}
+			PASSED();
+		} while (false);
+		w5100.stop();
 		spi.stop();
 	} while (false);
 #endif

@@ -1,5 +1,5 @@
-#ifndef _COM_DIAG_MEGAAVR_W5100_H_
-#define _COM_DIAG_MEGAAVR_W5100_H_
+#ifndef _COM_DIAG_AMIGO_W5100_W5100_H_
+#define _COM_DIAG_AMIGO_W5100_W5100_H_
 
 /**
  * @file
@@ -22,6 +22,9 @@
 namespace com {
 namespace diag {
 namespace amigo {
+namespace W5100 {
+
+class Socket;
 
 /**
  * W5100 implements a device control interface to the WIZnet W5100 chip, which
@@ -35,6 +38,8 @@ namespace amigo {
  */
 class W5100
 {
+
+	friend class Socket;
 
 	/***************************************************************************
 	 * CREATION AND DESTRUCTION
@@ -52,13 +57,11 @@ public:
 
 public:
 
-	typedef uint16_t Address;
+	typedef uint16_t address_t;
 
-	typedef uint16_t Size;
+	typedef uint8_t socket_t;
 
-	typedef uint8_t Socket;
-
-	typedef uint16_t Port;
+	typedef uint16_t port_t;
 
 	static const size_t SOCKETS = 4;
 
@@ -180,13 +183,13 @@ private:
 
 private:
 
-	void write(Address address, uint8_t datum);
+	void write(address_t address, uint8_t datum);
 
-	void write(Address address, const void * data, size_t length);
+	void write(address_t address, const void * data, size_t length);
 
-	uint8_t read(Address address);
+	uint8_t read(address_t address);
 
-	void read(Address address, void * buffer, size_t length);
+	void read(address_t address, void * buffer, size_t length);
 
 protected:
 
@@ -252,7 +255,11 @@ public:
 
 	void setIPAddress(const uint8_t * data /* [IPV4ADDRESS] */) { writeSIPR(data); }
 
+	uint16_t getRetransmissionTime() { return readRTR(); }
+
 	void setRetransmissionTime(uint16_t timeout) { writeRTR(timeout); }
+
+	uint8_t getRetransmissionCount() { return readRCR(); }
 
 	void setRetransmissionCount(uint8_t retry) { writeRCR(retry); }
 
@@ -262,40 +269,40 @@ public:
 
 private:
 
-	uint8_t readSn(Socket socket, Address address) { return read(CH_BASE + (socket * CH_SIZE) + address); }
+	uint8_t readSn(socket_t socket, address_t address) { return read(CH_BASE + (socket * CH_SIZE) + address); }
 
-	void writeSn(Socket socket, Address address, uint8_t datum) { write(CH_BASE + (socket * CH_SIZE) + address, datum); }
+	void writeSn(socket_t socket, address_t address, uint8_t datum) { write(CH_BASE + (socket * CH_SIZE) + address, datum); }
 
-	void readSn(Socket socket, Address address, void * buffer, size_t length) { read(CH_BASE + (socket * CH_SIZE) + address, buffer, length); }
+	void readSn(socket_t socket, address_t address, void * buffer, size_t length) { read(CH_BASE + (socket * CH_SIZE) + address, buffer, length); }
 
-	void writeSn(Socket socket, Address address, const void * data, size_t length) { write(CH_BASE + (socket * CH_SIZE) + address, data, length); }
+	void writeSn(socket_t socket, address_t address, const void * data, size_t length) { write(CH_BASE + (socket * CH_SIZE) + address, data, length); }
 
-public:
+protected:
 
 #define COM_DIAG_AMIGO_W5100_SO_8(_NAME_, _ADDRESS_)			\
-	void write##_NAME_(Socket socket, uint8_t datum) {			\
+	void write##_NAME_(socket_t socket, uint8_t datum) {		\
 		writeSn(socket, _ADDRESS_, datum);						\
 	}															\
-	uint8_t read##_NAME_(Socket socket) {						\
+	uint8_t read##_NAME_(socket_t socket) {						\
 		return readSn(socket, _ADDRESS_);						\
 	}
 
 #define COM_DIAG_AMIGO_W5100_SO_16(_NAME_, _ADDRESS_)			\
-	void write##_NAME_(Socket socket, uint16_t datum) {			\
+	void write##_NAME_(socket_t socket, uint16_t datum) {		\
 		writeSn(socket, _ADDRESS_,     datum >> 8);				\
 	    writeSn(socket, _ADDRESS_ + 1, datum & 0xFF);			\
 	}															\
-	uint16_t read##_NAME_(Socket socket) {						\
+	uint16_t read##_NAME_(socket_t socket) {					\
 	    uint16_t result = readSn(socket, _ADDRESS_);			\
 	    result = (result << 8) + readSn(socket, _ADDRESS_ + 1);	\
 	    return result;											\
 	}
 
 #define COM_DIAG_AMIGO_W5100_SO_N(_NAME_, _ADDRESS_, _SIZE_)	\
-	  void write##_NAME_(Socket socket, void * data) {			\
+	  void write##_NAME_(socket_t socket, const void * data) {	\
 		writeSn(socket, _ADDRESS_, data, _SIZE_);				\
 	  }															\
-	  void read##_NAME_(Socket socket, void * buffer) {			\
+	  void read##_NAME_(socket_t socket, void * buffer) {		\
 		  readSn(socket, _ADDRESS_, buffer, _SIZE_);			\
 	  }
 
@@ -320,21 +327,21 @@ public:
 
 public:
 
-	uint8_t status(Socket socket) { return readSnSR(socket); }
+	uint8_t status(socket_t socket) { return readSnSR(socket); }
 
-	void read_data(Socket socket, Address address, void * buffer, size_t length);
+	void read_data(socket_t socket, address_t address, void * buffer, size_t length);
 
-	void send_data_processing(Socket socket, const void * data, size_t length) { send_data_processing_offset(socket, 0, data, length); }
+	void send_data_processing(socket_t socket, const void * data, size_t length) { send_data_processing_offset(socket, 0, data, length); }
 
-	void send_data_processing_offset(Socket socket, Size data_offset, const void * data, size_t length);
+	void send_data_processing_offset(socket_t socket, size_t data_offset, const void * data, size_t length);
 
-	void recv_data_processing(Socket socket, void * buffer, size_t length, bool peek = false);
+	void recv_data_processing(socket_t socket, void * buffer, size_t length, bool peek = false);
 
-	void execCmdSn(Socket socket, SockCMD command);
+	void execCmdSn(socket_t socket, SockCMD command);
 
-	Size getTXFreeSize(Socket socket);
+	size_t getTXFreeSize(socket_t socket);
 
-	Size getRXReceivedSize(Socket socket);
+	size_t getRXReceivedSize(socket_t socket);
 
 	/***************************************************************************
 	 * ANCILLARY STUFF
@@ -362,13 +369,14 @@ protected:
 	SPI * spi;
 	GPIO gpio;
 	uint8_t mask;
-	Address sbase[SOCKETS]; // Tx buffer base address
-	Address rbase[SOCKETS]; // Rx buffer base address
+	address_t sbase[SOCKETS]; // Tx buffer base address
+	address_t rbase[SOCKETS]; // Rx buffer base address
 
 };
 
 }
 }
 }
+}
 
-#endif /* _COM_DIAG_MEGAAVR_W5100_H_ */
+#endif /* _COM_DIAG_AMIGO_W5100_W5100_H_ */
