@@ -14,62 +14,50 @@
  * borrows from the SPI test fixture in the Amigo unit test suite.
  */
 
+#include "com/diag/amigo/Socket.h"
 #include "com/diag/amigo/W5100/W5100.h"
-#include "com/diag/amigo/MutexSemaphore.h"
 
 namespace com {
 namespace diag {
 namespace amigo {
 namespace W5100 {
 
-class Socket {
+class Socket
+: public com::diag::amigo::Socket
+{
 
 public:
 
 	typedef W5100::socket_t socket_t;
-
-	typedef W5100::port_t port_t;
-
-	static const size_t IPV4ADDRESS = W5100::IPV4ADDRESS;
-
-	static const port_t LOCAL = 4097;
-
-	enum Protocol {
-		TCP,
-		UDP,
-		IPRAW,
-		MACRAW,
-		PPPOE
-	};
 
 	explicit Socket(W5100 & myw5100, socket_t mysocket)
 	: w5100(&myw5100)
 	, sock(mysocket)
 	{}
 
-	~Socket() {}
+	~Socket();
 
-	bool socket(Protocol protocol, port_t port, uint8_t flag); // Opens a socket(TCP or UDP or IP_RAW mode)
+	virtual bool socket(Protocol protocol, port_t port, uint8_t flag); // Opens a socket(TCP or UDP or IP_RAW mode)
 
-	void close(); // Close socket
+	virtual void close(); // Close socket
 
-	bool connect(const uint8_t * address /* [IPV4ADDRESS] */, uint16_t port); // Establish TCP connection (Active connection)
+	virtual bool connect(const uint8_t * address /* [IPV4ADDRESS] */, uint16_t port); // Establish TCP connection (Active connection)
 
-	void disconnect(); // disconnect the connection
+	virtual void disconnect(); // disconnect the connection
 
-	bool listen();	// Establish TCP connection (Passive connection)
+	virtual bool listen();	// Establish TCP connection (Passive connection)
 
-	ssize_t send(const void * data, size_t length); // Send data (TCP)
+	virtual ssize_t send(const void * data, size_t length); // Send data (TCP)
 
-	ssize_t recv(void * buffer, size_t length);	// Receive data (TCP)
+	virtual ssize_t recv(void * buffer, size_t length);	// Receive data (TCP)
 
-	ssize_t peek(void * buffer);
+	virtual ssize_t peek(void * buffer);
 
-	ssize_t sendto(const void * data, size_t length, const uint8_t * address /* [IPV4ADDRESS] */, port_t port); // Send data (UDP/IP RAW)
+	virtual ssize_t sendto(const void * data, size_t length, const uint8_t * address /* [IPV4ADDRESS] */, port_t port); // Send data (UDP/IP RAW)
 
-	ssize_t recvfrom(void * buffer, size_t length, uint8_t * address /* [IPV4ADDRESS] */, port_t * port); // Receive data (UDP/IP RAW)
+	virtual ssize_t recvfrom(void * buffer, size_t length, uint8_t * address /* [IPV4ADDRESS] */, port_t * port); // Receive data (UDP/IP RAW)
 
-	ssize_t igmpsend(const void * data, size_t length);
+	virtual ssize_t igmpsend(const void * data, size_t length);
 
 	bool startUDP(const uint8_t * address /* [IPV4ADDRESS] */, port_t port);
 
@@ -78,9 +66,6 @@ public:
 	bool sendUDP();
 
 protected:
-
-	static MutexSemaphore mutex;
-	static port_t local_port;
 
 	W5100 * w5100;
 	socket_t sock;

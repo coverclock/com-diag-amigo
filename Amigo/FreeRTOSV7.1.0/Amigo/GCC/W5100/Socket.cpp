@@ -12,15 +12,13 @@
  */
 
 #include "com/diag/amigo/W5100/Socket.h"
-#include "com/diag/amigo/CriticalSection.h"
 
 namespace com {
 namespace diag {
 namespace amigo {
 namespace W5100 {
 
-MutexSemaphore Socket::mutex;
-Socket::port_t Socket::local_port = LOCAL;
+Socket::~Socket() {}
 
 bool Socket::socket(Protocol protocol, port_t port, uint8_t flag) {
 	uint8_t proto;
@@ -46,11 +44,7 @@ bool Socket::socket(Protocol protocol, port_t port, uint8_t flag) {
 	close();
 	w5100->writeSnMR(sock, proto | flag);
 	if (port == 0) {
-		CriticalSection cs(mutex);
-		port = local_port++;
-		if (local_port == 0) {
-			local_port = LOCAL;
-		}
+		port = allocate();
 	}
 	w5100->writeSnPORT(sock, port);
 	w5100->execCmdSn(sock, W5100::Sock_OPEN);
