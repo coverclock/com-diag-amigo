@@ -10,8 +10,8 @@
  * This code is gratefully inspired by and cribbed from w5100h and w5100.cpp by
  * Cristian Maglie from Arduino 1.0. It is specific to the WIZnet W5100 chip
  * as used on the Arduino Ethernet shield and the FreeTronics EtherMega 2560.
- * It may work on other compatibles and clones. Your mileage may vary. It is
- * also borrows from the W5100 stubs in the Amigo unit test suite.
+ * It may work on other compatibles and clones. Your mileage may vary. It also
+ * borrows from the SPI test fixture in the Amigo unit test suite.
  */
 
 #include "com/diag/amigo/MutexSemaphore.h"
@@ -42,41 +42,46 @@ class W5100
 
 public:
 
+	explicit W5100(MutexSemaphore & mymutex, GPIO::Pin myss, SPI & myspi);
+
+	virtual ~W5100();
+
+	/***************************************************************************
+	 * TYPES AND SIZES
+	 **************************************************************************/
+
+public:
+
 	typedef uint16_t Address;
 
 	typedef uint16_t Size;
 
 	typedef uint8_t Socket;
 
-	static const Count SOCKETS = 4;
+	typedef uint16_t Port;
+
+	static const size_t SOCKETS = 4;
+
+	static const size_t MACADDRESS = 6;
+
+	static const size_t IPV4ADDRESS = 4;
 
 	static const size_t SSIZE = 2048; // Max Tx buffer size
 
-	explicit W5100(MutexSemaphore & mymutex, GPIO::Pin myss, SPI & myspi);
-
-	virtual ~W5100();
-
-public:
+	static const size_t RSIZE = 2048; // Max Rx buffer size
 
 	/***************************************************************************
 	 * STARTING AND STOPPING
 	 **************************************************************************/
 
-	void start(bool spitoo = false);
+public:
 
-	void stop(bool spitoo = false);
+	void start();
 
-protected:
-
-	MutexSemaphore * mutex;
-	SPI * spi;
-	GPIO gpio;
-	uint8_t mask;
-	Address sbase[SOCKETS]; // Tx buffer base address
-	Address rbase[SOCKETS]; // Rx buffer base address
+	void stop();
 
 	/***************************************************************************
-	 * W5100 DEFINITIONS
+	 * DEFINITIONS
 	 **************************************************************************/
 
 public:
@@ -155,8 +160,6 @@ private:
 
 	static const uint16_t RMASK = 0x07FF; // Rx buffer MASK
 
-	static const uint16_t RSIZE = 2048; // Max Rx buffer size
-
 	static const uint16_t TX_RX_MAX_BUF_SIZE = 2048;
 
 	static const uint16_t TX_BUF = 0x1100;
@@ -172,7 +175,7 @@ private:
 	static const uint16_t CH_SIZE = 0x0100;
 
 	/***************************************************************************
-	 * W5100 GENERAL PURPOSE REGISTER I/O
+	 * GENERAL PURPOSE REGISTER ACTIONS
 	 **************************************************************************/
 
 private:
@@ -233,28 +236,28 @@ protected:
 
 public:
 
-	void getGatewayIp(void * buffer) { readGAR(buffer); }
+	void getGatewayIp(uint8_t * buffer /* [IPV4ADDRESS] */) { readGAR(buffer); }
 
-	void setGatewayIp(const void * data) { writeGAR(data); }
+	void setGatewayIp(const uint8_t * data /* [IPV4ADDRESS] */) { writeGAR(data); }
 
-	void getSubnetMask(void * buffer) { readSUBR(buffer); }
+	void getSubnetMask(uint8_t * buffer /* [IPV4ADDRESS] */) { readSUBR(buffer); }
 
-	void setSubnetMask(const void * data) { writeSUBR(data); }
+	void setSubnetMask(const uint8_t * data /* [IPV4ADDRESS] */) { writeSUBR(data); }
 
-	void getMACAddress(void * buffer) { readSHAR(buffer); }
+	void getMACAddress(uint8_t * buffer /* [MACADDRESS] */) { readSHAR(buffer); }
 
-	void setMACAddress(const void * data) { writeSHAR(data); }
+	void setMACAddress(const uint8_t * data /* [MACADDRESS] */) { writeSHAR(data); }
 
-	void getIPAddress(void * buffer) { readSIPR(buffer); }
+	void getIPAddress(uint8_t * buffer /* [IPV4ADDRESS] */) { readSIPR(buffer); }
 
-	void setIPAddress(const void * data) { writeSIPR(data); }
+	void setIPAddress(const uint8_t * data /* [IPV4ADDRESS] */) { writeSIPR(data); }
 
 	void setRetransmissionTime(uint16_t timeout) { writeRTR(timeout); }
 
 	void setRetransmissionCount(uint8_t retry) { writeRCR(retry); }
 
 	/***************************************************************************
-	 * W5100 SOCKET REGISTER I/O
+	 * SOCKET REGISTER ACTIONS
 	 **************************************************************************/
 
 private:
@@ -267,7 +270,7 @@ private:
 
 	void writeSn(Socket socket, Address address, const void * data, size_t length) { write(CH_BASE + (socket * CH_SIZE) + address, data, length); }
 
-protected:
+public:
 
 #define COM_DIAG_AMIGO_W5100_SO_8(_NAME_, _ADDRESS_)			\
 	void write##_NAME_(Socket socket, uint8_t datum) {			\
@@ -301,7 +304,7 @@ protected:
 	COM_DIAG_AMIGO_W5100_SO_8 (SnIR,		0x0002)		// Interrupt
 	COM_DIAG_AMIGO_W5100_SO_8 (SnSR,		0x0003)		// Status
 	COM_DIAG_AMIGO_W5100_SO_16(SnPORT,		0x0004)		// Source Port
-	COM_DIAG_AMIGO_W5100_SO_N (SnDHAR,		0x0006, 6)	// Destination Hardware Address
+	COM_DIAG_AMIGO_W5100_SO_N (SnDHAR,		0x0006, 6)	// Destination MAC Address
 	COM_DIAG_AMIGO_W5100_SO_N (SnDIPR,		0x000C, 4)	// Destination IP Address
 	COM_DIAG_AMIGO_W5100_SO_16(SnDPORT,		0x0010)		// Destination Port
 	COM_DIAG_AMIGO_W5100_SO_16(SnMSSR,		0x0012)		// Max Segment Size
@@ -316,6 +319,8 @@ protected:
 	COM_DIAG_AMIGO_W5100_SO_16(SnRX_WR,		0x002A)		// RX Write Pointer (supported?)
 
 public:
+
+	uint8_t status(Socket socket) { return readSnSR(socket); }
 
 	void read_data(Socket socket, Address address, void * buffer, size_t length);
 
@@ -350,6 +355,15 @@ private:
      *  @param that refers to an R-value object of this type.
      */
 	W5100 & operator=(const W5100& that);
+
+protected:
+
+	MutexSemaphore * mutex;
+	SPI * spi;
+	GPIO gpio;
+	uint8_t mask;
+	Address sbase[SOCKETS]; // Tx buffer base address
+	Address rbase[SOCKETS]; // Rx buffer base address
 
 };
 

@@ -42,22 +42,14 @@ W5100::~W5100() {
  * STARTING AND STOPPING
  ******************************************************************************/
 
-void W5100::start(bool spitoo) {
-	if (spitoo) {
-		spi->start(SPI::D4, SPI::MASTER, SPI::MSB, SPI::NORMAL, SPI::LEADING);
-	}
-
+void W5100::start() {
 	gpio.output(mask, mask); // Active low hence initially high.
-
 	writeMR(1 << RST);
 	writeTMSR(0x55);
 	writeRMSR(0x55);
 }
 
-void W5100::stop(bool spitoo) {
-	if (spitoo) {
-		spi->stop();
-	}
+void W5100::stop() {
 }
 
 /*******************************************************************************
