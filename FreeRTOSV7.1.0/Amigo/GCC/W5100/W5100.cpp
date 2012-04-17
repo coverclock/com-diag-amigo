@@ -11,7 +11,7 @@
  * also based on the W5100 unit test stubs in the Amigo unit test suite.
  */
 
-#include "com/diag/amigo/target/W5100.h"
+#include "com/diag/amigo/W5100/W5100.h"
 #include "com/diag/amigo/CriticalSection.h"
 #include "com/diag/amigo/SPISlaveSelect.h"
 
