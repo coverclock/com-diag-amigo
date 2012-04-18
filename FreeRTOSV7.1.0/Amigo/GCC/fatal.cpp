@@ -7,16 +7,13 @@
  */
 
 #include "com/diag/amigo/fatal.h"
-#include "com/diag/amigo/littleendian.h"
+#include "com/diag/amigo/byteorder.h"
 #include "com/diag/amigo/target/Console.h"
 #include "com/diag/amigo/target/Uninterruptible.h"
 
 CXXCAPI void amigo_fatal(PGM_P file, int line) {
 	com::diag::amigo::Uninterruptible uninterruptible;
-	if (com::diag::amigo::littleendian()) {
-		// This just makes the hexadecimal line number more obvious.
-		line = ((line >> 8) & 0xff) | ((line & 0xff) << 8);
-	}
+	line = com::diag::amigo::htons(line); // This just makes the hexadecimal line number more obvious.
 	com::diag::amigo::Console::instance().start().write_P(PSTR("\r\nFATAL: ")).write_P(file).write_P(PSTR("@0x")).dump(&line, sizeof(line)).write_P(PSTR("!\r\n")).flush().stop();
 	// This is a hard infinite loop with interrupts disabled. We aren't going
 	// anywhere once we get here.

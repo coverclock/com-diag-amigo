@@ -30,11 +30,31 @@ public:
 	static const port_t LOCAL = 4097;
 
 	enum Protocol {
-		TCP,
-		UDP,
-		IPRAW,
-		MACRAW,
-		PPPOE
+		PROTOCOL_TCP,
+		PROTOCOL_UDP,
+		PROTOCOL_IPRAW,
+		PROTOCOL_MACRAW,
+		PROTOCOL_PPPOE
+	};
+
+	enum State {
+		STATE_CLOSED,
+		STATE_INIT,
+		STATE_LISTEN,
+		STATE_ESTABLISHED,
+		STATE_CLOSE_WAIT,
+		STATE_UDP,
+		STATE_IPRAW,
+		STATE_MACRAW,
+		STATE_PPPOE,
+		STATE_SYNSENT,
+		STATE_SYNRECV,
+		STATE_FIN_WAIT,
+		STATE_CLOSING,
+		STATE_TIME_WAIT,
+		STATE_LAST_ACK,
+		STATE_ARP,
+		STATE_OTHER
 	};
 
 	static port_t allocate();
@@ -43,7 +63,9 @@ public:
 
 	virtual ~Socket();
 
-	virtual bool socket(Protocol protocol, port_t port, uint8_t flag) = 0; // Opens a socket(TCP or UDP or IP_RAW mode)
+	virtual State state() = 0;
+
+	virtual bool socket(Protocol protocol, port_t port, uint8_t flag = 0x00) = 0; // Opens a socket(TCP or UDP or IP_RAW mode)
 
 	virtual void close() = 0; // Close socket
 

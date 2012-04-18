@@ -126,6 +126,7 @@ public:
 	class SnSR {
 	public:
 	  static const uint8_t CLOSED      = 0x00;
+	  static const uint8_t ARP         = 0x01;
 	  static const uint8_t INIT        = 0x13;
 	  static const uint8_t LISTEN      = 0x14;
 	  static const uint8_t SYNSENT     = 0x15;
@@ -328,7 +329,7 @@ protected:
 
 public:
 
-	uint8_t status(socket_t socket) { return readSnSR(socket); }
+	uint8_t state(socket_t socket) { return readSnSR(socket); }
 
 	void read_data(socket_t socket, address_t address, void * buffer, size_t length);
 
