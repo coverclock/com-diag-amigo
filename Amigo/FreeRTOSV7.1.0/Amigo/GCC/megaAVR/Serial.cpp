@@ -57,7 +57,7 @@ void Serial::initialize() {
 	memset(serial, 0, sizeof(serial));
 }
 
-Serial::Serial(Port myport, Count transmits, Count receives, uint8_t mybad)
+Serial::Serial(Port myport, size_t transmits, size_t receives, uint8_t mybad)
 : base(0)
 , received(receives)
 , transmitting(transmits)

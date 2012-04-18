@@ -65,9 +65,9 @@ static const char CUNITTEST_PASSED[] PROGMEM = "PASSED.\r\n";
 
 class OneShotTimer : public com::diag::amigo::OneShotTimer {
 public:
-	explicit OneShotTimer(com::diag::amigo::Ticks duration) : com::diag::amigo::OneShotTimer(duration), now(0) {}
+	explicit OneShotTimer(com::diag::amigo::ticks_t duration) : com::diag::amigo::OneShotTimer(duration), now(0) {}
 	virtual void timer();
-	com::diag::amigo::Ticks now;
+	com::diag::amigo::ticks_t now;
 };
 
 void OneShotTimer::timer() {
@@ -76,7 +76,7 @@ void OneShotTimer::timer() {
 
 class PeriodicTimer : public com::diag::amigo::PeriodicTimer {
 public:
-	explicit PeriodicTimer(com::diag::amigo::Ticks duration) : com::diag::amigo::PeriodicTimer(duration), counter(0) {}
+	explicit PeriodicTimer(com::diag::amigo::ticks_t duration) : com::diag::amigo::PeriodicTimer(duration), counter(0) {}
 	virtual void timer();
 	int counter;
 };
@@ -325,6 +325,8 @@ void UnitTestTask::task() {
 		SIZEOF(com::diag::amigo::Source);
 		SIZEOF(com::diag::amigo::SPI);
 		SIZEOF(com::diag::amigo::Task);
+		SIZEOF(com::diag::amigo::Task::priority_t);
+		SIZEOF(com::diag::amigo::ticks_t);
 		SIZEOF(com::diag::amigo::Timer);
 		SIZEOF(com::diag::amigo::TypedQueue<uint8_t>);
 		SIZEOF(com::diag::amigo::Uninterruptible);
@@ -341,20 +343,20 @@ void UnitTestTask::task() {
 #if 1
 	UNITTEST("Low Precision delay");
 	do {
-		static const com::diag::amigo::Ticks W1 = 200;
-		static const com::diag::amigo::Ticks W2 = 500;
-		static const com::diag::amigo::Ticks PERCENT = 33;
-		com::diag::amigo::Ticks t1 = ticks2milliseconds(elapsed());
+		static const com::diag::amigo::ticks_t W1 = 200;
+		static const com::diag::amigo::ticks_t W2 = 500;
+		static const com::diag::amigo::ticks_t PERCENT = 33;
+		com::diag::amigo::ticks_t t1 = ticks2milliseconds(elapsed());
 		delay(milliseconds2ticks(W1));
-		com::diag::amigo::Ticks t2 = ticks2milliseconds(elapsed());
-		com::diag::amigo::Ticks milliseconds = t2 - t1;
+		com::diag::amigo::ticks_t t2 = ticks2milliseconds(elapsed());
+		com::diag::amigo::ticks_t milliseconds = t2 - t1;
 		if (!((W1 <= milliseconds) && (milliseconds <= (W1 + (W1 / (100 / PERCENT)))))) {
 			FAILED(__LINE__);
 			break;
 		}
-		com::diag::amigo::Ticks t4 = t1;
+		com::diag::amigo::ticks_t t4 = t1;
 		delay(t4, milliseconds2ticks(W2));
-		com::diag::amigo::Ticks t3 = ticks2milliseconds(elapsed());
+		com::diag::amigo::ticks_t t3 = ticks2milliseconds(elapsed());
 		milliseconds = t3 - t1;
 		// Typical test results show that 20% is not enough of a margin. I'm
 		// guessing this is due to scheduling latency as I added tasks (most
@@ -387,15 +389,15 @@ void UnitTestTask::task() {
 	// more or less correct. This is where I wish the AVR had a hardware time
 	// base register like I've used in the PowerPC.
 	do {
-		static const com::diag::amigo::Ticks W3 = 10;
-		static const com::diag::amigo::Ticks PERCENT = 100;
-		com::diag::amigo::Ticks t5 = ticks2milliseconds(elapsed());
+		static const com::diag::amigo::ticks_t W3 = 10;
+		static const com::diag::amigo::ticks_t PERCENT = 100;
+		com::diag::amigo::ticks_t t5 = ticks2milliseconds(elapsed());
 		double microseconds = (W3 * 1000) / 100;
 		for (uint8_t ii = 100; ii > 0; --ii) {
 			delay(microseconds);
 		}
-		com::diag::amigo::Ticks t6 = ticks2milliseconds(elapsed());
-		com::diag::amigo::Ticks milliseconds = t6 - t5;
+		com::diag::amigo::ticks_t t6 = ticks2milliseconds(elapsed());
+		com::diag::amigo::ticks_t milliseconds = t6 - t5;
 		if (!((W3 <= milliseconds) && (milliseconds <= (W3 + (W3 / (100 / PERCENT)))))) {
 			FAILED(__LINE__);
 			break;
@@ -408,7 +410,7 @@ void UnitTestTask::task() {
 	UNITTEST("FOREVER");
 	// This delays about two minutes and eleven seconds so I don't normally
 	// run it. But it does verify that the FreeRTOS scheduler doesn't do
-	// something unexpected with the maximum possible Ticks value.
+	// something unexpected with the maximum possible ticks value.
 	delay(FOREVER);
 	PASSED();
 #endif
@@ -467,7 +469,7 @@ void UnitTestTask::task() {
 	UNITTEST("BinarySemaphore");
 	do {
 		// 0.5s should be enough for the takertask to initialize.
-		static const com::diag::amigo::Ticks MS = 500;
+		static const com::diag::amigo::ticks_t MS = 500;
 		delay(milliseconds2ticks(MS));
 		if (takertask != true) {
 			FAILED(__LINE__);
@@ -589,8 +591,8 @@ void UnitTestTask::task() {
 #if 1
 	UNITTEST("PeriodicTimer");
 	{
-		static const com::diag::amigo::Ticks T1 = 100;
-		static const com::diag::amigo::Ticks W1 = 500;
+		static const com::diag::amigo::ticks_t T1 = 100;
+		static const com::diag::amigo::ticks_t W1 = 500;
 		PeriodicTimer periodictimer(milliseconds2ticks(T1));
 		do {
 			if (periodictimer != true) {
@@ -632,10 +634,10 @@ void UnitTestTask::task() {
 #if 1
 	UNITTEST("OneShotTimer");
 	{
-		static const com::diag::amigo::Ticks T2 = 200;
-		static const com::diag::amigo::Ticks T3 = 300;
-		static const com::diag::amigo::Ticks W2 = 500;
-		static const com::diag::amigo::Ticks PERCENT = 20;
+		static const com::diag::amigo::ticks_t T2 = 200;
+		static const com::diag::amigo::ticks_t T3 = 300;
+		static const com::diag::amigo::ticks_t W2 = 500;
+		static const com::diag::amigo::ticks_t PERCENT = 20;
 		OneShotTimer oneshottimer(milliseconds2ticks(T2));
 		do {
 			if (oneshottimer != true) {
@@ -647,7 +649,7 @@ void UnitTestTask::task() {
 				FAILED(__LINE__);
 				break;
 			}
-			com::diag::amigo::Ticks t2 = ticks2milliseconds(elapsed());
+			com::diag::amigo::ticks_t t2 = ticks2milliseconds(elapsed());
 			if (!oneshottimer.start()) {
 				FAILED(__LINE__);
 				break;
@@ -657,7 +659,7 @@ void UnitTestTask::task() {
 				FAILED(__LINE__);
 				break;
 			}
-			com::diag::amigo::Ticks milliseconds = oneshottimer.now - t2;
+			com::diag::amigo::ticks_t milliseconds = oneshottimer.now - t2;
 			if (!((T2 <= milliseconds) && (milliseconds <= (T2 + (T2 / (100 / PERCENT)))))) {
 				FAILED(__LINE__);
 				break;
@@ -668,7 +670,7 @@ void UnitTestTask::task() {
 				break;
 			}
 			delay(milliseconds2ticks(T2 / 2));
-			com::diag::amigo::Ticks t3 = ticks2milliseconds(elapsed());
+			com::diag::amigo::ticks_t t3 = ticks2milliseconds(elapsed());
 			if (!oneshottimer.reset()) {
 				FAILED(__LINE__);
 				break;
@@ -689,7 +691,7 @@ void UnitTestTask::task() {
 				break;
 			}
 			delay(milliseconds2ticks(T2 / 2));
-			com::diag::amigo::Ticks t4 = ticks2milliseconds(elapsed());
+			com::diag::amigo::ticks_t t4 = ticks2milliseconds(elapsed());
 			if (!oneshottimer.reschedule(milliseconds2ticks(T3))) {
 				FAILED(__LINE__);
 				break;
@@ -704,7 +706,7 @@ void UnitTestTask::task() {
 				FAILED(__LINE__);
 				break;
 			}
-			com::diag::amigo::Ticks t5 = ticks2milliseconds(elapsed());
+			com::diag::amigo::ticks_t t5 = ticks2milliseconds(elapsed());
 			if (!oneshottimer.reschedule(milliseconds2ticks(T3))) {
 				FAILED(__LINE__);
 				break;
@@ -860,7 +862,7 @@ void UnitTestTask::task() {
 		GPIO::Pin pin = GPIO::PIN_B7;
 		volatile void * base = GPIO::base(pin);
 		uint8_t mask = GPIO::mask(pin);
-		com::diag::amigo::Ticks ticks = com::diag::amigo::Task::milliseconds2ticks(500);
+		com::diag::amigo::ticks_t ticks = com::diag::amigo::Task::milliseconds2ticks(500);
 		GPIO gpio(base);
 		gpio.output(mask).set(mask).delay(ticks).clear(mask).delay(ticks).set(mask).delay(ticks).clear(mask).delay(ticks).set(mask).delay(ticks).clear(mask).delay(ticks).set(mask).delay(ticks).clear(mask).delay(ticks).set(mask).delay(ticks).clear(mask);
 		PASSED();

@@ -114,8 +114,8 @@ void W5100::execCmdSn(socket_t socket, SockCMD command) {
 
 size_t W5100::getTXFreeSize(socket_t socket)
 {
-	Size val = 0;
-	Size val1 = 0;
+	uint16_t val = 0;
+	uint16_t val1 = 0;
 
 	do {
 		val1 = readSnTX_FSR(socket);
@@ -129,8 +129,8 @@ size_t W5100::getTXFreeSize(socket_t socket)
 
 size_t W5100::getRXReceivedSize(socket_t socket)
 {
-	Size val = 0;
-	Size val1 = 0;
+	uint16_t val = 0;
+	uint16_t val1 = 0;
 
 	do {
 		val1 = readSnRX_RSR(socket);
@@ -147,12 +147,12 @@ void W5100::send_data_processing_offset(socket_t socket, size_t data_offset, con
 	const uint8_t * here = static_cast<const uint8_t *>(data);
 	address_t ptr = readSnTX_WR(socket);
 	ptr += data_offset;
-	Size offset = ptr & SMASK;
+	size_t offset = ptr & SMASK;
 	address_t dstAddr = offset + sbase[socket];
 
 	if (offset + length > SSIZE) {
 		// Wrap around circular buffer
-		Size size = SSIZE - offset;
+		size_t size = SSIZE - offset;
 		write(dstAddr, here, size);
 		write(sbase[socket], here + size, length - size);
 	} else {
@@ -178,7 +178,7 @@ void W5100::recv_data_processing(socket_t socket, void * buffer, size_t length, 
 void W5100::read_data(socket_t socket, address_t address, void * buffer, size_t length)
 {
 	uint8_t * here = static_cast<uint8_t *>(buffer);
-	Size size;
+	size_t size;
 	address_t src_mask;
 	address_t src_ptr;
 

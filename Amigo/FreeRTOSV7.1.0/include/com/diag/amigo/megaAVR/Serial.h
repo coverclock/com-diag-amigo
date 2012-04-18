@@ -132,23 +132,23 @@ public:
 	};
 
 	/**
-	 * Defines the timeout value in Ticks that causes the application to never
+	 * Defines the timeout value in ticks that causes the application to never
 	 * block waiting for ring buffer space or data, but instead be returned an
 	 * error.
 	 */
-	static const Ticks IMMEDIATELY = Queue::IMMEDIATELY;
+	static const ticks_t IMMEDIATELY = Queue::IMMEDIATELY;
 
 	/**
-	 * Defines the timeout value in Ticks that causes the application to block
+	 * Defines the timeout value in ticks that causes the application to block
 	 * indefinitely waiting for ring buffer space or data.
 	 */
-	static const Ticks NEVER = Queue::NEVER;
+	static const ticks_t NEVER = Queue::NEVER;
 
 	/**
 	 * Defines the default receive ring buffer size in bytes. This value is
 	 * not even a scientific wild ass guess.
 	 */
-	static const Count RECEIVES = 16;
+	static const size_t RECEIVES = 16;
 
 	/**
 	 * Defines the default transmit ring buffer size in bytes. If you can
@@ -156,7 +156,7 @@ public:
 	 * terminal screen width, which in turn was based on the size of a 1960s
 	 * vintage punch card, plus a trailing carriage return and line feed.
 	 */
-	static const Count TRANSMITS = 82;
+	static const size_t TRANSMITS = 82;
 
 	/**
 	 * Defines the character that is returned when the received character had
@@ -211,7 +211,7 @@ public:
 	 * @param receives specifies the size of the receive ring buffer in bytes.
 	 * @param mybad specifies the character to be used for a receive error.
 	 */
-	explicit Serial(Port myport = CONSOLE, Count transmits = TRANSMITS, Count receives = RECEIVES, uint8_t mybad = BAD);
+	explicit Serial(Port myport = CONSOLE, size_t transmits = TRANSMITS, size_t receives = RECEIVES, uint8_t mybad = BAD);
 
 	/**
 	 * Destructor. The stop() instance method is automatically called, and the
@@ -274,7 +274,7 @@ public:
 	/**
 	 * Clear all the data in the receive ring buffer, discarding it.
 	 */
-	void clear(Ticks timeout = IMMEDIATELY);
+	void clear(ticks_t timeout = IMMEDIATELY);
 
 	/**
 	 * Return the first character in the receive ring buffer without removing
@@ -284,7 +284,7 @@ public:
 	 * @param timeout is the number of ticks to wait when the buffer is empty.
 	 * @return the first character or <0 if fail.
 	 */
-	int peek(Ticks timeout = NEVER);
+	int peek(ticks_t timeout = NEVER);
 
 	/**
 	 * Return the first character in the receive ring buffer and remove it from
@@ -292,7 +292,7 @@ public:
 	 * @param timeout is the number of ticks to wait when the buffer is empty.
 	 * @return the first character or <0 if fail.
 	 */
-	int read(Ticks timeout = NEVER);
+	int read(ticks_t timeout = NEVER);
 
 	/**
 	 * Append a character to the end of the transmit ring buffer.
@@ -300,7 +300,7 @@ public:
 	 * @param timeout is the number of ticks to wait when the buffer is full.
 	 * @return one if the function was successful, zero otherwise.
 	 */
-	size_t write(uint8_t ch, Ticks timeout = NEVER);
+	size_t write(uint8_t ch, ticks_t timeout = NEVER);
 
 	/**
 	 * Prepend a character to the beginning of the transmit ring buffer. This
@@ -312,7 +312,7 @@ public:
 	 * @param timeout is the number of ticks to wait when the buffer is full.
 	 * @return one if the function was successful, zero otherwise.
 	 */
-	size_t express(uint8_t ch, Ticks timeout = NEVER);
+	size_t express(uint8_t ch, ticks_t timeout = NEVER);
 
 	/**
 	 * Cast this object to an integer by returning the error counter. The error
@@ -374,24 +374,24 @@ inline int Serial::available() const {
 	return received.available();
 }
 
-inline void Serial::clear(Ticks timeout) {
+inline void Serial::clear(ticks_t timeout) {
 	uint8_t ch;
 	while (received.receive(&ch, timeout)) {
 		// Do nothing.
 	}
 }
 
-inline int Serial::peek(Ticks timeout) {
+inline int Serial::peek(ticks_t timeout) {
 	uint8_t ch;
 	return (received.peek(&ch, timeout) ? ch : -1);
 }
 
-inline int Serial::read(Ticks timeout) {
+inline int Serial::read(ticks_t timeout) {
 	uint8_t ch;
 	return (received.receive(&ch, timeout) ? ch : -1);
 }
 
-inline size_t Serial::write(uint8_t ch, Ticks timeout) {
+inline size_t Serial::write(uint8_t ch, ticks_t timeout) {
 	if (!transmitting.send(&ch, timeout)) {
 		return 0;
 	} else {
@@ -400,7 +400,7 @@ inline size_t Serial::write(uint8_t ch, Ticks timeout) {
 	}
 }
 
-inline size_t Serial::express(uint8_t ch, Ticks timeout) {
+inline size_t Serial::express(uint8_t ch, ticks_t timeout) {
 	if (!transmitting.express(&ch, timeout)) {
 		return 0;
 	} else {

@@ -74,18 +74,24 @@ public:
 public:
 
 	/**
+	 * This defines the data type which can hold a task priority. Tasks can have
+	 * priorities from 0 (lowest) to (configMAX_PRIORITIES - 1) (highest).
+	 */
+	typedef uint8_t priority_t;
+
+	/**
 	 * This is the default stack depth for a Task. As stated in the FreeRTOS
 	 * documentation, this is in units of the fundamental stack cell type,
 	 * which can differ from architecture to architecture. On the megaAVR a
 	 * stack cell is one byte.
 	 */
-	static const unsigned int DEPTH = 512;
+	static const size_t DEPTH = 512;
 
 	/**
 	 * This is the default priority for a Task. Tasks can have priorities from
-	 * 0 (lowest) to configMAX_PRIORITIES-1 (highest).
+	 * 0 (lowest) to (configMAX_PRIORITIES - 1) (highest).
 	 */
-	static const unsigned int PRIORITY = 0;
+	static const priority_t PRIORITY = 0;
 
 	/**
 	 * Return true if the task is running, false otherwise. When the task
@@ -100,7 +106,7 @@ public:
 	 * @param mydepth is the stack depth for this task.
 	 * @param mypriority is the priority for this task.
 	 */
-	void start(Count mydepth = DEPTH, Count mypriority = PRIORITY);
+	void start(size_t mydepth = DEPTH, priority_t mypriority = PRIORITY);
 
 	/**
 	 * Ask the task to stop. This is purely advisory and stopping is strictly
@@ -167,17 +173,17 @@ public:
 	 * This is the number of milliseconds per system tick. A system tick is
 	 * the basic timing and scheduling interval in FreeRTOS.
 	 */
-	static const Ticks PERIOD = portTICK_RATE_MS;
+	static const ticks_t PERIOD = portTICK_RATE_MS;
 
 	/**
-	 * Defines the maximum delay value in Ticks. The actual delay depends on
-	 * the duration of a system tick, the width of the Ticks data type, and
+	 * Defines the maximum delay value in ticks. The actual delay depends on
+	 * the duration of a system tick, the width of the ticks data type, and
 	 * any underlying scheduling latency. Forever may be as short as about 131
-	 * seconds given a two millisecond tick duration and a sixteen-bit Ticks
+	 * seconds given a two millisecond tick duration and a sixteen-bit ticks
 	 * data type. If you really want to delay forever, you must put your
 	 * delay() in a loop.
 	 */
-	static const Ticks FOREVER = portMAX_DELAY; // Nominally ~0.
+	static const ticks_t FOREVER = portMAX_DELAY; // Nominally (ticks_t)~0.
 
 	/**
 	 * Convert milliseconds to ticks. Fractional results are truncated. The
@@ -186,14 +192,14 @@ public:
 	 * @param milliseconds is a value in milliseconds.
 	 * @return a value in ticks.
 	 */
-	static Ticks milliseconds2ticks(Ticks milliseconds) { return (milliseconds / PERIOD); }
+	static ticks_t milliseconds2ticks(ticks_t milliseconds) { return (milliseconds / PERIOD); }
 
 	/**
 	 * Convert ticks to milliseconds.
 	 * @param ticks is a value in ticks.
 	 * @return a value in milliseconds.
 	 */
-	static Ticks ticks2milliseconds(Ticks ticks) { return (ticks * PERIOD); }
+	static ticks_t ticks2milliseconds(ticks_t ticks) { return (ticks * PERIOD); }
 
 	/**
 	 * Return the number of FreeRTOS ticks that have elapsed since the FreeRTOS
@@ -201,10 +207,10 @@ public:
 	 * around, perhaps quite quickly, depending on the frequency of the system
 	 * clock and the width of the data type used by FreeRTOS for ticks. Quite
 	 * quickly may be as little as about 131 seconds given a two millisecond
-	 * tick duration and a sixteen-bit Ticks data type.
+	 * tick duration and a sixteen-bit ticks data type.
 	 * @return the number of elapsed FreeRTOS ticks.
 	 */
-	static Ticks elapsed();
+	static ticks_t elapsed();
 
 	/**
 	 * Return the number of FreeRTOS ticks that have elapsed since the FreeRTOS
@@ -212,7 +218,7 @@ public:
 	 * service routine.
 	 * @return the number of elapsed FreeRTOS ticks.
 	 */
-	static Ticks elapsedFromISR();
+	static ticks_t elapsedFromISR();
 
 	/**
 	 * Block the calling task for the specified absolute number of ticks. Note
@@ -220,7 +226,7 @@ public:
 	 * Specifying zero is equivalent to yield().
 	 * @param absolute is the absolute delay value in ticks.
 	 */
-	static void delay(Ticks absolute);
+	static void delay(ticks_t absolute);
 
 	/**
 	 * Block the calling task for the specified number of ticks relative to
@@ -231,7 +237,7 @@ public:
 	 * @param since is the prior time value-result variable that is modified.
 	 * @param relative is the relative delay value in ticks.
 	 */
-	static void delay(Ticks & since, Ticks relative);
+	static void delay(ticks_t & since, ticks_t relative);
 
 	/**
 	 * Block the central processing unit for the specified absolute number of
@@ -262,13 +268,13 @@ public:
 	 * Return the priority of this task.
 	 * @return the priorty of this task.
 	 */
-	unsigned int priority() const;
+	priority_t priority() const;
 
 	/**
 	 * Modify the priority of this task.
 	 * @param mypriority is the new priority for this task.
 	 */
-	void priority(unsigned int mypriority);
+	void priority(priority_t mypriority);
 
 	/**
 	 * Suspend the calling task. This is the same as calling suspend() on the
@@ -330,7 +336,7 @@ public:
 	 * Return the number of tasks.
 	 * @return the number of tasks.
 	 */
-	static Count tasks();
+	static size_t tasks();
 
 	/**
 	 * Call the instance task method when invoked by the Amigo trampoline
@@ -388,19 +394,19 @@ inline void Task::yield() {
 	taskYIELD();
 }
 
-inline Ticks Task::elapsed() {
+inline ticks_t Task::elapsed() {
 	return xTaskGetTickCount();
 }
 
-inline Ticks Task::elapsedFromISR() {
+inline ticks_t Task::elapsedFromISR() {
 	return xTaskGetTickCountFromISR();
 }
 
-inline void Task::delay(Ticks absolute) {
+inline void Task::delay(ticks_t absolute) {
 	vTaskDelay(absolute);
 }
 
-inline void Task::delay(Ticks & since, Ticks relative) {
+inline void Task::delay(ticks_t & since, ticks_t relative) {
 	vTaskDelayUntil(&since, relative);
 }
 
@@ -419,7 +425,7 @@ inline xTaskHandle Task::idle() {
 	return xTaskGetIdleTaskHandle();
 }
 
-inline Count Task::tasks() {
+inline size_t Task::tasks() {
 	return uxTaskGetNumberOfTasks();
 }
 
@@ -427,11 +433,11 @@ inline bool Task::suspended() const {
 	return (xTaskIsTaskSuspended(handle) == pdTRUE);
 }
 
-inline unsigned int Task::priority() const {
+inline Task::priority_t Task::priority() const {
 	return uxTaskPriorityGet(handle);
 }
 
-inline void Task::priority(unsigned int mypriority) {
+inline void Task::priority(priority_t mypriority) {
 	vTaskPrioritySet(handle, mypriority);
 }
 

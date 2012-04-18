@@ -42,7 +42,7 @@ public:
 	 * itself for the same duration after it expires.
 	 * @param myname is a C-string that names the timer.
 	 */
-	explicit Timer(Ticks duration, bool periodic = false, const char * myname = "?");
+	explicit Timer(ticks_t duration, bool periodic = false, const char * myname = "?");
 
 	/**
 	 * Destructor. It is a fatal error to delete a Timer object that has an
@@ -63,24 +63,24 @@ public:
 public:
 
 	/**
-	 * Defines the timeout value in Ticks that causes the application to never
+	 * Defines the timeout value in ticks that causes the application to never
 	 * block waiting for the Timer task to become available, but instead be
 	 * returned an error.
 	 */
-	static const Ticks IMMEDIATELY = Queue::IMMEDIATELY;
+	static const ticks_t IMMEDIATELY = Queue::IMMEDIATELY;
 
 	/**
-	 * Defines the timeout value in Ticks that causes the application to block
+	 * Defines the timeout value in ticks that causes the application to block
 	 * indefinitely waiting for the Timer task to become available.
 	 */
-	static const Ticks NEVER = Queue::NEVER;
+	static const ticks_t NEVER = Queue::NEVER;
 
 	/**
 	 * Start the timer.
 	 * @param timeout is the duration in ticks to wait for the timer task.
 	 * @return true if the start message was sent to the timer task.
 	 */
-	bool start(Ticks timeout = NEVER);
+	bool start(ticks_t timeout = NEVER);
 
 	/**
 	 * Start the timer. This method can be called from an interrupt service
@@ -95,7 +95,7 @@ public:
 	 * @param timeout is the duration in ticks to wait for the timer task.
 	 * @return true if the stop message was sent to the timer task.
 	 */
-	bool stop(Ticks timeout = NEVER);
+	bool stop(ticks_t timeout = NEVER);
 
 	/**
 	 * Stop the timer. This method can be called from an interrupt service
@@ -130,7 +130,7 @@ public:
 	 * @param timeout is the duration in ticks to wait for the timer task.
 	 * @return true if the start message was sent to the timer task.
 	 */
-	bool reset(Ticks timeout = NEVER);
+	bool reset(ticks_t timeout = NEVER);
 
 	/**
 	 * Restart the timer. If the timer is not running, it is started with its
@@ -150,7 +150,7 @@ public:
 	 * @param timeout is the duration in ticks to wait for the timer task.
 	 * @return true if the restart message was sent to the timer task.
 	 */
-	bool reschedule(Ticks duration, Ticks timeout = NEVER);
+	bool reschedule(ticks_t duration, ticks_t timeout = NEVER);
 
 	/**
 	 * Restart the timer. If the timer is not running, it is started with the
@@ -161,7 +161,7 @@ public:
 	 * @param woken is returned true if this woke a higher priority task.
 	 * @return true if the restart message was sent to the timer task.
 	 */
-	bool rescheduleFromISR(Ticks duration, bool & woken = unused.b);
+	bool rescheduleFromISR(ticks_t duration, bool & woken = unused.b);
 
 	/***************************************************************************
 	 * ANCILLARY STUFF
@@ -181,7 +181,7 @@ public:
 	 * This is how long this objects' destructor will wait to communicate with
 	 * the FreeRTOS timer task to delete a FreeRTOS timer.
 	 */
-	static const Ticks DESTRUCTION = portMAX_DELAY;
+	static const ticks_t DESTRUCTION = portMAX_DELAY;
 
 	/**
 	 * Call the instance task method when invoked by the Amigo trampoline
@@ -239,7 +239,7 @@ private:
 
 };
 
-inline bool Timer::start(Ticks timeout) {
+inline bool Timer::start(ticks_t timeout) {
 	return (xTimerStart(handle, timeout) == pdPASS);
 }
 
@@ -250,7 +250,7 @@ inline bool Timer::startFromISR(bool & woken) {
 	return result;
 }
 
-inline bool Timer::stop(Ticks timeout) {
+inline bool Timer::stop(ticks_t timeout) {
 	return (xTimerStop(handle, timeout) == pdPASS);
 }
 
@@ -262,7 +262,7 @@ inline bool Timer::stopFromISR(bool & woken) {
 
 }
 
-inline bool Timer::reset(Ticks timeout) {
+inline bool Timer::reset(ticks_t timeout) {
 	return (xTimerReset(handle, timeout) == pdPASS);
 }
 
@@ -273,11 +273,11 @@ inline bool Timer::resetFromISR(bool & woken) {
 	return result;
 }
 
-inline bool Timer::reschedule(Ticks duration, Ticks timeout) {
+inline bool Timer::reschedule(ticks_t duration, ticks_t timeout) {
 	return (xTimerChangePeriod(handle, duration, timeout) == pdPASS);
 }
 
-inline bool Timer::rescheduleFromISR(Ticks duration, bool & woken) {
+inline bool Timer::rescheduleFromISR(ticks_t duration, bool & woken) {
 	portBASE_TYPE temporary = pdFALSE;
 	bool result = (xTimerChangePeriodFromISR(handle, duration, &temporary) == pdPASS);
 	woken = (temporary == pdTRUE);
@@ -306,7 +306,7 @@ public:
 	 * @param duration is the period of the timer in system ticks.
 	 * @param myname is a C-string that names the timer.
 	 */
-	explicit PeriodicTimer(Ticks duration, const char * myname = "?")
+	explicit PeriodicTimer(ticks_t duration, const char * myname = "?")
 	: Timer(duration, true, myname)
 	{}
 
@@ -331,7 +331,7 @@ public:
 	 * @param duration is the period of the timer in system ticks.
 	 * @param myname is a C-string that names the timer.
 	 */
-	explicit OneShotTimer(Ticks duration, const char * myname = "?")
+	explicit OneShotTimer(ticks_t duration, const char * myname = "?")
 	: Timer(duration, false, myname)
 	{}
 

@@ -33,7 +33,7 @@ public:
 	 * @param count is the maximum number of elements in the Queue.
 	 * @param name is the optional name of the Queue.
 	 */
-	explicit TypedQueue(Count count, const signed char * name = 0)
+	explicit TypedQueue(size_t count, const signed char * name = 0)
 	: Queue(count, sizeof(_TYPE_), name)
 	{}
 
@@ -51,7 +51,7 @@ public:
 	 * @param timeout is the duration in ticks to wait if the Queue is empty.
 	 * @return true if an element was copied into the buffer, false otherwise.
 	 */
-	bool peek(_TYPE_ * buffer, Ticks timeout = IMMEDIATELY) { return Queue::peek(buffer, timeout); }
+	bool peek(_TYPE_ * buffer, ticks_t timeout = IMMEDIATELY) { return Queue::peek(buffer, timeout); }
 
 	/**
 	 * Return the first element in the Queue and remove it from the Queue.
@@ -59,7 +59,7 @@ public:
 	 * @param timeout is the duration in ticks to wait if the Queue is empty.
 	 * @return true if an element was copied into the buffer, false otherwise.
 	 */
-	bool receive(_TYPE_ * buffer, Ticks timeout = NEVER) { return Queue::receive(buffer, timeout); }
+	bool receive(_TYPE_ * buffer, ticks_t timeout = NEVER) { return Queue::receive(buffer, timeout); }
 
 	/**
 	 * Return the first element in the Queue and remove it from the Queue. This
@@ -77,7 +77,7 @@ public:
 	 * @param timeout is the duration in ticks to wait if the Queue is full.
 	 * @return true if an element was copied from the datum, false otherwise.
 	 */
-	bool send(const _TYPE_ * datum, Ticks timeout = NEVER) { return Queue::send(datum, timeout); }
+	bool send(const _TYPE_ * datum, ticks_t timeout = NEVER) { return Queue::send(datum, timeout); }
 
 	/**
 	 * Append an element to the end of the Queue. THis is guaranteed to be
@@ -95,7 +95,7 @@ public:
 	 * @param timeout is the duration in ticks to wait if the Queue is full.
 	 * @return true if an element was copied from the datum, false otherwise.
 	 */
-	bool express(const _TYPE_ * datum, Ticks timeout = NEVER) { return Queue::express(datum, timeout); }
+	bool express(const _TYPE_ * datum, ticks_t timeout = NEVER) { return Queue::express(datum, timeout); }
 
 	/**
 	 * Prepend an element to the beginning of the Queue. This can be used to

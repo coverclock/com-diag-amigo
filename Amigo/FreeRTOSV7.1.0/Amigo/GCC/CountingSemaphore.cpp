@@ -13,7 +13,7 @@ namespace com {
 namespace diag {
 namespace amigo {
 
-CountingSemaphore::CountingSemaphore(Count maximum, Count initial) {
+CountingSemaphore::CountingSemaphore(size_t maximum, size_t initial) {
 	handle = xSemaphoreCreateCounting(maximum, initial);
 }
 

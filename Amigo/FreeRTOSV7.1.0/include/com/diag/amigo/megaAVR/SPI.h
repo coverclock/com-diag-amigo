@@ -87,24 +87,24 @@ public:
 	};
 
 	/**
-	 * Defines the timeout value in Ticks that causes the application to never
+	 * Defines the timeout value in ticks that causes the application to never
 	 * block waiting for ring buffer space or data, but instead be returned an
 	 * error.
 	 */
-	static const Ticks IMMEDIATELY = Queue::IMMEDIATELY;
+	static const ticks_t IMMEDIATELY = Queue::IMMEDIATELY;
 
 	/**
-	 * Defines the timeout value in Ticks that causes the application to block
+	 * Defines the timeout value in ticks that causes the application to block
 	 * indefinitely waiting for ring buffer space or data.
 	 */
-	static const Ticks NEVER = Queue::NEVER;
+	static const ticks_t NEVER = Queue::NEVER;
 
 	/**
 	 * Defines the default receive ring buffer size in bytes. With the current
 	 * design this should never need to be anything other than one for masters,
 	 * but might need to be larger for slaves.
 	 */
-	static const Count RECEIVES = 1;
+	static const size_t RECEIVES = 1;
 
 	/**
 	 * Defines the default transmit ring buffer size in bytes. All SPI transfers
@@ -113,7 +113,7 @@ public:
 	 * exactly the same for masters. In the current design,which hasn't been
 	 * tested for slaves, there is never a reason for this to be more than one.
 	 */
-	static const Count TRANSMITS = 1;
+	static const size_t TRANSMITS = 1;
 
 	/**
 	 * This class method is called by the transfer complete interrupt vector
@@ -146,7 +146,7 @@ public:
 	 * @param transmits specifies the size of the transmit ring buffer in bytes.
 	 * @param receives specifies the size of the receive ring buffer in bytes.
 	 */
-	explicit SPI(Controller mycontroller = SPI0, Count transmits = TRANSMITS, Count receives = RECEIVES);
+	explicit SPI(Controller mycontroller = SPI0, size_t transmits = TRANSMITS, size_t receives = RECEIVES);
 
 	/**
 	 * Destructor. The stop() instance method is automatically called, and the
@@ -186,7 +186,7 @@ public:
 	 * @param timeout is the number of ticks to wait when the buffer is full.
 	 * @return the first character or <0 if fail.
 	 */
-	int master(uint8_t ch = 0, Ticks timeout = NEVER);
+	int master(uint8_t ch = 0, ticks_t timeout = NEVER);
 
 	/**
 	 * Return the first character in the receive ring buffer and remove it from
@@ -197,7 +197,7 @@ public:
 	 * @param timeout is the number of ticks to wait when the buffer is empty.
 	 * @return the first character or <0 if fail.
 	 */
-	int slave(Ticks timeout = NEVER);
+	int slave(ticks_t timeout = NEVER);
 
 	/**
 	 * Cast this object to an integer by returning the error counter. The error
@@ -253,7 +253,7 @@ private:
 
 };
 
-inline int SPI::master(uint8_t ch, Ticks timeout) {
+inline int SPI::master(uint8_t ch, ticks_t timeout) {
 	if (!transmitting.send(&ch, timeout)) {
 		return -1;
 	} else {
@@ -266,7 +266,7 @@ inline int SPI::master(uint8_t ch, Ticks timeout) {
 	}
 }
 
-inline int SPI::slave(Ticks timeout) {
+inline int SPI::slave(ticks_t timeout) {
 	uint8_t ch;
 	return (received.receive(&ch, timeout) ? ch : -1);
 }
