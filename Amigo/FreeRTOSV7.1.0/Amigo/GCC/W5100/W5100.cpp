@@ -14,6 +14,8 @@
 #include "com/diag/amigo/W5100/W5100.h"
 #include "com/diag/amigo/CriticalSection.h"
 #include "com/diag/amigo/SPISlaveSelect.h"
+#include "com/diag/amigo/target/Console.h"
+#include "com/diag/amigo/countof.h"
 
 namespace com {
 namespace diag {
@@ -142,56 +144,50 @@ size_t W5100::getRXReceivedSize(socket_t socket)
 	return val;
 }
 
-void W5100::send_data_processing_offset(socket_t socket, size_t data_offset, const void * data, size_t length)
+void W5100::send_data_processing_offset(socket_t socket, size_t displacement, const void * data, size_t length)
 {
 	const uint8_t * here = static_cast<const uint8_t *>(data);
-	address_t ptr = readSnTX_WR(socket);
-	ptr += data_offset;
-	size_t offset = ptr & SMASK;
-	address_t dstAddr = offset + sbase[socket];
+	address_t address = readSnTX_WR(socket) + displacement;
+	size_t offset = address & SMASK;
+	address_t pointer = sbase[socket] + offset;
+	size_t size;
 
-	if (offset + length > SSIZE) {
-		// Wrap around circular buffer
-		size_t size = SSIZE - offset;
-		write(dstAddr, here, size);
+	if ((offset + length) > SSIZE) {
+		// Wrap around circular buffer.
+		size = SSIZE - offset;
+		write(pointer, here, size);
 		write(sbase[socket], here + size, length - size);
 	} else {
-		write(dstAddr, here, length);
+		write(pointer, here, length);
 	}
 
-	ptr += length;
-	writeSnTX_WR(socket, ptr);
+	writeSnTX_WR(socket, address + length);
 }
 
 
 void W5100::recv_data_processing(socket_t socket, void * buffer, size_t length, bool peek)
 {
-	address_t ptr;
-	ptr = readSnRX_RD(socket);
-	read_data(socket, ptr, buffer, length);
+	address_t address = readSnRX_RD(socket);
+	read_data(socket, address, buffer, length);
 	if (!peek) {
-		ptr += length;
-		writeSnRX_RD(socket, ptr);
+		writeSnRX_RD(socket, address + length);
 	}
 }
 
 void W5100::read_data(socket_t socket, address_t address, void * buffer, size_t length)
 {
 	uint8_t * here = static_cast<uint8_t *>(buffer);
+	size_t offset = address & RMASK;
+	address_t pointer = rbase[socket] + offset;
 	size_t size;
-	address_t src_mask;
-	address_t src_ptr;
 
-	src_mask = address & RMASK;
-	src_ptr = rbase[socket] + src_mask;
-
-	if ((src_mask + length) > RSIZE) {
-		size = RSIZE - src_mask;
-		read(src_ptr, here, size);
-		here += size;
-		read(rbase[socket], here, length - size);
+	if ((offset + length) > RSIZE) {
+		// Wrap around circular buffer.
+		size = RSIZE - offset;
+		read(pointer, here, size);
+		read(rbase[socket], here + size, length - size);
 	} else {
-		read(src_ptr, here, length);
+		read(pointer, here, length);
 	}
 }
 

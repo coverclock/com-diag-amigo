@@ -53,6 +53,10 @@ public:
 
 	virtual bool listen();	// Establish TCP connection (Passive connection)
 
+	virtual size_t free();
+
+	virtual size_t available();
+
 	virtual ssize_t send(const void * data, size_t length); // Send data (TCP)
 
 	virtual ssize_t recv(void * buffer, size_t length);	// Receive data (TCP)

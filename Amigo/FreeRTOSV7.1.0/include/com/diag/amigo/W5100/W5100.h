@@ -161,15 +161,13 @@ private:
 
 	static const uint8_t RST = 7; // Reset BIT
 
-	static const uint16_t SMASK = 0x07FF; // Tx buffer MASK
+	static const uint16_t SMASK = SSIZE - 1; // Tx buffer MASK
 
-	static const uint16_t RMASK = 0x07FF; // Rx buffer MASK
-
-	static const uint16_t TX_RX_MAX_BUF_SIZE = 2048;
+	static const uint16_t RMASK = RSIZE - 1; // Rx buffer MASK
 
 	static const uint16_t TX_BUF = 0x1100;
 
-	static const uint16_t RX_BUF = (TX_BUF + TX_RX_MAX_BUF_SIZE);
+	static const uint16_t RX_BUF = (TX_BUF + SSIZE);
 
 	static const uint16_t TXBUF_BASE = 0x4000;
 
@@ -335,7 +333,7 @@ public:
 
 	void send_data_processing(socket_t socket, const void * data, size_t length) { send_data_processing_offset(socket, 0, data, length); }
 
-	void send_data_processing_offset(socket_t socket, size_t data_offset, const void * data, size_t length);
+	void send_data_processing_offset(socket_t socket, size_t displacement, const void * data, size_t length);
 
 	void recv_data_processing(socket_t socket, void * buffer, size_t length, bool peek = false);
 
