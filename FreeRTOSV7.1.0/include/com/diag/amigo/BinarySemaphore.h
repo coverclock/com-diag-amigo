@@ -35,17 +35,17 @@ class BinarySemaphore
 public:
 
 	/**
-	 * Defines the timeout value in Ticks that causes the application to never
+	 * Defines the timeout value in ticks that causes the application to never
 	 * block waiting for the semaphore to become available, but instead be
 	 * returned an error.
 	 */
-	static const Ticks IMMEDIATELY = Queue::IMMEDIATELY;
+	static const ticks_t IMMEDIATELY = Queue::IMMEDIATELY;
 
 	/**
-	 * Defines the timeout value in Ticks that causes the application to block
+	 * Defines the timeout value in ticks that causes the application to block
 	 * indefinitely waiting for the semaphore to become available.
 	 */
-	static const Ticks NEVER = Queue::NEVER;
+	static const ticks_t NEVER = Queue::NEVER;
 
 	/**
 	 * Constructor.
@@ -70,7 +70,7 @@ public:
 	 * @param timeout is the duration in ticks to wait for acquisiton.
 	 * @return true if the semaphore was acquired successfully, false otherwise.
 	 */
-	bool take(Ticks timeout = NEVER);
+	bool take(ticks_t timeout = NEVER);
 
 	/**
 	 * Relinquish the semaphore. On other systems this would be equivalent to
@@ -113,7 +113,7 @@ private:
 
 };
 
-inline bool BinarySemaphore::take(Ticks timeout) {
+inline bool BinarySemaphore::take(ticks_t timeout) {
 	return (xSemaphoreTake(handle, timeout) == pdPASS);
 }
 

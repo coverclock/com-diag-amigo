@@ -364,7 +364,7 @@ public:
 	 * processor.
 	 * @return a reference to this object.
 	 */
-	const GPIO & delay(Ticks ticks) const;
+	const GPIO & delay(ticks_t ticks) const;
 
 	/**
 	 * Delay the calling task for the specified number of microseconds by
@@ -432,7 +432,7 @@ inline const GPIO & GPIO::output(uint8_t mymask, uint8_t initial) const {
 	return *this;
 }
 
-inline const GPIO & GPIO::delay(Ticks ticks) const {
+inline const GPIO & GPIO::delay(ticks_t ticks) const {
 	Task::delay(ticks);
 	return *this;
 }

@@ -31,7 +31,7 @@ extern "C" void amigo_timer_trampoline(xTimerHandle handle) {
 	Timer::timer(static_cast<Timer*>(pvTimerGetTimerID(handle)));
 }
 
-Timer::Timer(Ticks duration, bool periodic, const char * myname)
+Timer::Timer(ticks_t duration, bool periodic, const char * myname)
 : handle(0)
 , name(myname)
 {

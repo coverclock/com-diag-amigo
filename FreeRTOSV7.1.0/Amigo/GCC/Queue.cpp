@@ -12,7 +12,7 @@ namespace com {
 namespace diag {
 namespace amigo {
 
-Queue::Queue(Count count, Size size, const signed char * name)
+Queue::Queue(size_t count, size_t size, const signed char * name)
 {
 	handle = xQueueCreate(count, size);
 	if ((handle != 0) && (name != 0)) {

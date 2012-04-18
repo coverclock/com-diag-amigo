@@ -48,7 +48,7 @@ void SPI::initialize() {
 	memset(spi, 0, sizeof(spi));
 }
 
-SPI::SPI(Controller mycontroller, Count transmits, Count receives)
+SPI::SPI(Controller mycontroller, size_t transmits, size_t receives)
 : spibase(0)
 , gpiobase(0)
 , received(receives)

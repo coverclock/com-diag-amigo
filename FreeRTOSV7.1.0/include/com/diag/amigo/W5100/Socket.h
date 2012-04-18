@@ -37,6 +37,23 @@ public:
 
 	~Socket();
 
+	bool startUDP(const uint8_t * address /* [IPV4ADDRESS] */, port_t port);
+
+	ssize_t bufferData(size_t offset, const void * data, size_t length);
+
+	bool sendUDP();
+
+protected:
+
+	W5100 * w5100;
+	socket_t sock;
+
+	/***************************************************************************
+	 * COM::DIAG::AMIGO::SOCKET INTERFACE
+	 **************************************************************************/
+
+public:
+
 	virtual bool socket(Protocol protocol, port_t port, uint8_t flag); // Opens a socket(TCP or UDP or IP_RAW mode)
 
 	virtual void close(); // Close socket
@@ -58,17 +75,6 @@ public:
 	virtual ssize_t recvfrom(void * buffer, size_t length, uint8_t * address /* [IPV4ADDRESS] */, port_t * port); // Receive data (UDP/IP RAW)
 
 	virtual ssize_t igmpsend(const void * data, size_t length);
-
-	bool startUDP(const uint8_t * address /* [IPV4ADDRESS] */, port_t port);
-
-	ssize_t bufferData(size_t offset, const void * data, size_t length);
-
-	bool sendUDP();
-
-protected:
-
-	W5100 * w5100;
-	socket_t sock;
 
 };
 

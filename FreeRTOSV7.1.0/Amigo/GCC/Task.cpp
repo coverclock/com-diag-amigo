@@ -81,7 +81,7 @@ Task::~Task() {
 	}
 }
 
-void Task::start(Count mydepth, Count mypriority) {
+void Task::start(size_t mydepth, priority_t mypriority) {
 	// We don't check to see if the task is already started. Might be a good
 	// idea, but then we'd have to return a boolean since the handle value
 	// would not reflect the correct state.

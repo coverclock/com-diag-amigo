@@ -31,20 +31,20 @@ class Queue
 public:
 
 	/**
-	 * Defines the timeout value in Ticks that causes the application to never
+	 * Defines the timeout value in ticks that causes the application to never
 	 * block waiting for ring buffer space or data, but instead be returned an
 	 * error.
 	 */
-	static const Ticks IMMEDIATELY = 0;
+	static const ticks_t IMMEDIATELY = 0;
 
 	/**
-	 * Defines the timeout value in Ticks that causes the application to block
+	 * Defines the timeout value in ticks that causes the application to block
 	 * indefinitely waiting for ring buffer space or data. The FreeRTOS
 	 * timeout mechanism actually checks for this value specifically if task
 	 * suspension is enabled, so it does not just mean the maximum amount of
 	 * time that can be specified.
 	 */
-	static const Ticks NEVER = portMAX_DELAY; // Nominally ~0.
+	static const ticks_t NEVER = portMAX_DELAY; // Nominally ~0.
 
 	/**
 	 * Constructor.
@@ -52,7 +52,7 @@ public:
 	 * @param size is the size of each element in the Queue in bytes.
 	 * @param name is the optional name of the Queue.
 	 */
-	explicit Queue(Count count, Size size = 1, const signed char * name = 0);
+	explicit Queue(size_t count, size_t size = 1, const signed char * name = 0);
 
 	/**
 	 * Destructor.
@@ -83,14 +83,14 @@ public:
 	 * Return the number of elements in the Queue.
 	 * @return the number of elements in the Queue.
 	 */
-	Count available() const;
+	size_t available() const;
 
 	/**
 	 * Return the number of elements in the Queue. Can only be called by an
 	 * interrupt service routine.
 	 * @return the number of elements in the Queue.
 	 */
-	Count availableFromISR() const;
+	size_t availableFromISR() const;
 
 	/**
 	 * Return the first element in the Queue without removing it from the
@@ -101,7 +101,7 @@ public:
 	 * @param timeout is the duration in ticks to wait if the Queue is empty.
 	 * @return true if an element was copied into the buffer, false otherwise.
 	 */
-	bool peek(void * buffer, Ticks timeout = IMMEDIATELY);
+	bool peek(void * buffer, ticks_t timeout = IMMEDIATELY);
 
 	/**
 	 * Return the first element in the Queue and remove it from the Queue.
@@ -109,7 +109,7 @@ public:
 	 * @param timeout is the duration in ticks to wait if the Queue is empty.
 	 * @return true if an element was copied into the buffer, false otherwise.
 	 */
-	bool receive(void * buffer, Ticks timeout = NEVER);
+	bool receive(void * buffer, ticks_t timeout = NEVER);
 
 	/**
 	 * Return the first element in the Queue and remove it from the Queue. This
@@ -127,7 +127,7 @@ public:
 	 * @param timeout is the duration in ticks to wait if the Queue is full.
 	 * @return true if an element was copied from the datum, false otherwise.
 	 */
-	bool send(const void * datum, Ticks timeout = NEVER);
+	bool send(const void * datum, ticks_t timeout = NEVER);
 
 	/**
 	 * Append an element to the end of the Queue. THis is guaranteed to be
@@ -145,7 +145,7 @@ public:
 	 * @param timeout is the duration in ticks to wait if the Queue is full.
 	 * @return true if an element was copied from the datum, false otherwise.
 	 */
-	bool express(const void * datum, Ticks timeout = NEVER);
+	bool express(const void * datum, ticks_t timeout = NEVER);
 
 	/**
 	 * Prepend an element to the beginning of the Queue. This can be used to
@@ -187,27 +187,27 @@ inline bool Queue::isFullFromISR() const {
 	return (xQueueIsQueueFullFromISR(handle) != pdFALSE);
 }
 
-inline Count Queue::available() const {
+inline size_t Queue::available() const {
 	return uxQueueMessagesWaiting(handle);
 }
 
-inline Count Queue::availableFromISR() const {
+inline size_t Queue::availableFromISR() const {
 	return uxQueueMessagesWaitingFromISR(handle);
 }
 
-inline bool Queue::peek(void * buffer, Ticks timeout) {
+inline bool Queue::peek(void * buffer, ticks_t timeout) {
 	return (xQueuePeek(handle, buffer, timeout) == pdPASS);
 }
 
-inline bool Queue::receive(void * buffer, Ticks timeout) {
+inline bool Queue::receive(void * buffer, ticks_t timeout) {
 	return (xQueueReceive(handle, buffer, timeout) == pdPASS);
 }
 
-inline bool Queue::send(const void * datum, Ticks timeout) {
+inline bool Queue::send(const void * datum, ticks_t timeout) {
 	return (xQueueSendToBack(handle, datum, timeout) == pdPASS);
 }
 
-inline bool Queue::express(const void * datum, Ticks timeout) {
+inline bool Queue::express(const void * datum, ticks_t timeout) {
 	return (xQueueSendToFront(handle, datum, timeout) == pdPASS);
 }
 
