@@ -80,7 +80,7 @@ class PeriodicTimer : public com::diag::amigo::PeriodicTimer {
 public:
 	explicit PeriodicTimer(com::diag::amigo::ticks_t duration) : com::diag::amigo::PeriodicTimer(duration), counter(0) {}
 	virtual void timer();
-	int counter;
+	unsigned int counter;
 };
 
 void PeriodicTimer::timer() {
@@ -387,19 +387,6 @@ void UnitTestTask::task() {
 	do {
 		static const com::diag::amigo::ticks_t W1 = 200;
 		static const com::diag::amigo::ticks_t W2 = 500;
-		static const com::diag::amigo::ticks_t PERCENT = 33;
-		com::diag::amigo::ticks_t t1 = ticks2milliseconds(elapsed());
-		delay(milliseconds2ticks(W1));
-		com::diag::amigo::ticks_t t2 = ticks2milliseconds(elapsed());
-		com::diag::amigo::ticks_t ms = t2 - t1;
-		if (!((W1 <= ms) && (ms <= (W1 + (W1 / (100 / PERCENT)))))) {
-			FAILED(__LINE__);
-			break;
-		}
-		com::diag::amigo::ticks_t t3 = t1;
-		delay(t3, milliseconds2ticks(W2));
-		com::diag::amigo::ticks_t t4 = ticks2milliseconds(elapsed());
-		ms = t4 - t1;
 		// Typical test results show that 20% is not enough of a margin. I'm
 		// guessing this is due to scheduling latency as I added tasks (most
 		// recently the FreeRTOS timer task). Example: t1=102, t3=704,
@@ -408,7 +395,21 @@ void UnitTestTask::task() {
 		// this, but at risk of making timers less accurate. I would choose to
 		// have more accurate timers, and have task delays be less accurate,
 		// just based on my experience implementing telecommunications protocol
-		// stacks. This is, after all, the "low precision" delay.
+		// stacks. The stacks based real-time actions on timers not on task
+		// delays. This is, after all, the "low precision" delay.
+		static const com::diag::amigo::ticks_t PERCENT = 33;
+		com::diag::amigo::ticks_t t1 = elapsed();
+		delay(milliseconds2ticks(W1));
+		com::diag::amigo::ticks_t t2 = elapsed();
+		com::diag::amigo::ticks_t ms = ticks2milliseconds(t2 - t1);
+		if (!((W1 <= ms) && (ms <= (W1 + (W1 / (100 / PERCENT)))))) {
+			FAILED(__LINE__);
+			break;
+		}
+		com::diag::amigo::ticks_t t3 = t1;
+		delay(t3, milliseconds2ticks(W2));
+		com::diag::amigo::ticks_t t4 = elapsed();
+		ms = ticks2milliseconds(t4 - t1);
 		if (!((W2 <= ms) && (ms <= (W2 + (W2 / (100 / PERCENT)))))) {
 			// Unfortunately, this occurs often enough that I just leave this
 			// debugging statement in.
@@ -668,8 +669,8 @@ void UnitTestTask::task() {
 			}
 			PASSED();
 		} while (false);
-		// Try to avoid taking a fatal() because the timer task hasn't stopped
-		// the timer yet.
+		// Try to avoid taking a fatal() in the destructor because the timer
+		// task hasn't stopped the timer yet.
 		periodictimer.stop();
 		delay(milliseconds2ticks(W1));
 	}
