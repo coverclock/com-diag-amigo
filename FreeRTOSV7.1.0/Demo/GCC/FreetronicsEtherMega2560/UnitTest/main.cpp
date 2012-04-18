@@ -97,9 +97,9 @@ class W5100 {
 public:
 	explicit W5100(com::diag::amigo::MutexSemaphore & mymutex, com::diag::amigo::GPIO::Pin myss, com::diag::amigo::SPI & myspi)
 	: mutex(&mymutex)
+	, spi(&myspi)
 	, gpio(com::diag::amigo::GPIO::base(myss))
 	, mask(com::diag::amigo::GPIO::mask(myss))
-	, spi(&myspi)
 	{
 		gpio.output(mask, mask);
 	}
@@ -114,8 +114,8 @@ public:
 	}
 private:
 	com::diag::amigo::MutexSemaphore * mutex;
-	com::diag::amigo::GPIO gpio;
 	com::diag::amigo::SPI * spi;
+	com::diag::amigo::GPIO gpio;
 	uint8_t mask;
 };
 
@@ -411,10 +411,8 @@ void UnitTestTask::task() {
 		com::diag::amigo::ticks_t t4 = elapsed();
 		ms = ticks2milliseconds(t4 - t1);
 		if (!((W2 <= ms) && (ms <= (W2 + (W2 / (100 / PERCENT)))))) {
-			// Unfortunately, this occurs often enough that I just leave this
-			// debugging statement in.
 			FAILED(__LINE__);
-			printf(PSTR("t1=%u t2=%u t3=%u t4=%u ms=%u W2=%u W2+=%u\n"), t1, t2, t3, t4, ms, W2, (W2 + (W2 / (100 / PERCENT))));
+			//printf(PSTR("t1=%u t2=%u t3=%u t4=%u ms=%u W2=%u W2+=%u\n"), t1, t2, t3, t4, ms, W2, (W2 + (W2 / (100 / PERCENT))));
 			break;
 		}
 		PASSED();
@@ -947,7 +945,7 @@ void UnitTestTask::task() {
 #endif
 
 #if 1
-	UNITTEST("W5100 basic sanity (specific to EtherMega etc.)");
+	UNITTEST("W5100 (specific to EtherMega etc.)");
 	do {
 		com::diag::amigo::SPI spi;
 		com::diag::amigo::W5100::W5100 w5100(*mutexsemaphorep, com::diag::amigo::GPIO::PIN_B4, spi);
@@ -973,13 +971,11 @@ void UnitTestTask::task() {
 #endif
 
 #if 1
-	UNITTEST("Socket basic sanity (specific to EtherMega etc.)");
+	UNITTEST("Socket (specific to EtherMega etc.)");
 	// On typical larger system I would test this against 127.0.0.1 to
 	// make sure I can talk to myself. But that implies a bunch more
 	// infrastructure than we have on this tiny system at this point.
-	// So instead I try to talk to ibm.com which resolves to a single
-	// address (unlike google.com that resolves to a bunch of addresses)
-	// and which is unlikely to change. Your mileage may vary.
+	// So instead I try to talk to the local router. Your mileage may vary.
 	do {
 		com::diag::amigo::SPI spi;
 		com::diag::amigo::W5100::W5100 w5100(*mutexsemaphorep, com::diag::amigo::GPIO::PIN_B4, spi);
@@ -998,7 +994,6 @@ void UnitTestTask::task() {
 		static const uint8_t SUBNET[] = { 255, 255, 255, 0 };
 		static const uint8_t MAC[] = { 0x90, 0xa2, 0xda, 0x0d, 0x03, 0x4c };
 		static const uint8_t HOST[] = { 192, 168, 1, 253 };
-		static const uint8_t IBM[] = { 129, 42, 38, 1 };
 		static const com::diag::amigo::Socket::port_t HTTP = 80;
 		com::diag::amigo::Socket::State state;
 		do {
@@ -1032,7 +1027,7 @@ void UnitTestTask::task() {
 				FAILED(__LINE__);
 				break;
 			}
-			if (!socket.connect(IBM, HTTP)) {
+			if (!socket.connect(GATEWAY, HTTP)) {
 				FAILED(__LINE__);
 				break;
 			}
@@ -1048,7 +1043,32 @@ void UnitTestTask::task() {
 				FAILED(__LINE__);
 				break;
 			}
+			static const char GET[] = "GET /expect404.html HTTP/1.0\rFrom: coverclock@diag.com\rUser-Agent: Amigo/1.0\r\r";
+			ssize_t sent = socket.send(GET, sizeof(GET));
+			if (sent != sizeof(GET)) {
+				FAILED(__LINE__);
+				break;
+			}
+			for (uint8_t ii = 0; (ii < 30) && (socket.available() == 0); ++ii) {
+				delay(milliseconds2ticks(100));
+			}
+			if (socket.available() == 0) {
+				FAILED(__LINE__);
+				break;
+			}
+			char buffer[sizeof("HTTP/1.1 404 Not Found")] = { 0 };
+			ssize_t received = socket.recv(buffer, sizeof(buffer));
+//com::diag::amigo::Console::instance().start().write("length9=0x").dump(&received, sizeof(received)).write("\r\n").flush().stop();
+			if (!((0 < received) && (received <= sizeof(buffer)))) {
+				FAILED(__LINE__);
+				break;
+			}
 			PASSED();
+			buffer[received] = '\0';
+			// No clue what this might really be, but expect the first few
+			// characters of an HTTP packet containing a web page.
+			serialsink.write(buffer);
+			serialsink.write("\r\n");
 		} while (false);
 		socket.disconnect();
 		socket.close();

@@ -12,6 +12,7 @@
  */
 
 #include "com/diag/amigo/W5100/Socket.h"
+#include "com/diag/amigo/target/Console.h"
 
 namespace com {
 namespace diag {
@@ -101,6 +102,14 @@ void Socket::disconnect() {
 	w5100->execCmdSn(sock, W5100::Sock_DISCON);
 }
 
+size_t Socket::free() {
+	return w5100->getTXFreeSize(sock);
+}
+
+size_t Socket::available() {
+	return w5100->getRXReceivedSize(sock);
+}
+
 ssize_t Socket::send(const void * data, size_t length) {
 	ssize_t result = (length < W5100::SSIZE) ? length : W5100::SSIZE; // check size not to exceed MAX size.
 	size_t freesize;
@@ -137,7 +146,7 @@ ssize_t Socket::send(const void * data, size_t length) {
 
 
 ssize_t Socket::recv(void * buffer, size_t length) {
-	ssize_t result = w5100->getRXReceivedSize(sock); // Check how much data is available
+	size_t result = w5100->getRXReceivedSize(sock); // Check how much data is available
 
 	if (result == 0) {
 		// No data available.
@@ -145,18 +154,16 @@ ssize_t Socket::recv(void * buffer, size_t length) {
 		case W5100::SnSR::LISTEN:
 		case W5100::SnSR::CLOSED:
 		case W5100::SnSR::CLOSE_WAIT:
-			// The remote end has closed its side of the connection, so this is the eof state.
-			result = 0;
-			break;
+			// The remote end has closed its side of the connection: EOF.
+			return 0;
 		default:
-			// The connection is still up, but there's no data waiting to be read.
-			result = -1;
-			break;
+			// The connection is still up, but there's no data waiting to be read: ERROR.
+			return -1;
 		}
-	} else if (result > length) {
+	}
+
+	if (result > length) {
 		result = length;
-	} else {
-		// Do nothing.
 	}
 
 	if (result > 0) {
