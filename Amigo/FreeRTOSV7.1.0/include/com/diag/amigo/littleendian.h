@@ -19,25 +19,10 @@
  * at 0x3E, which is little-endian. But even so, AFAIK the SP can't be addressed
  * atomically by the application as a sixteen-bit word. So while the megaAVR
  * isn't entirely endian-neutral, its endianess as a practical matter seems to
- * be largely an artifact of the tool chain.
+ * be largely an artifact of the tool chain. This is a new concept to me.
  */
 
-#include "com/diag/amigo/cxxcapi.h"
 #include "com/diag/amigo/types.h"
-
-/**
- *  Return non-zero if the target has little-endian byte order, zero if
- *  big-endian (a.k.a. "network byte order"). Very likely to be completely
- *  optimized away by the compiler since it can resolve the result at compile
- *  time. Can be called from either C or C++ translation units.
- *  @return non-zero if little-endian, zero if big-endian.
- */
-CXXCINLINE int amigo_littleendian(void) {
-    static union { uint16_t w; uint8_t b[sizeof(uint16_t)]; } d = { 1 };
-    return d.b[0];
-}
-
-#if defined(__cplusplus)
 
 namespace com {
 namespace diag {
@@ -45,17 +30,19 @@ namespace amigo {
 
 /**
  *  Return true if the target has little-endian byte order, false if
- *  big-endian.
+ *  big-endian. True means that multi-byte integer types on this host
+ *  must be swapped to be in network byte order, which is big-endian.
+ *  It is entirely possible that the compiler will optimize this completely
+ *  away to a constant value since it can be determined at compile time.
  *  @return true if little-endian, false if big-endian.
  */
 inline bool littleendian() {
-	return (amigo_littleendian() != 0);
+    static union { uint16_t word; uint8_t byte[sizeof(uint16_t)]; } datum = { 1 };
+    return (datum.byte[0] != 0);
 }
 
 }
 }
 }
-
-#endif
 
 #endif /* _COM_DIAG_AMIGO_LITTLEENDIAN_H_ */

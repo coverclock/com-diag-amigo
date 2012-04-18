@@ -11,6 +11,7 @@
 #include "com/diag/amigo/types.h"
 #include "com/diag/amigo/fatal.h"
 #include "com/diag/amigo/littleendian.h"
+#include "com/diag/amigo/byteorder.h"
 #include "com/diag/amigo/target/harvard.h"
 #include "com/diag/amigo/target/Morse.h"
 #include "com/diag/amigo/target/Serial.h"
@@ -32,6 +33,7 @@
 #include "com/diag/amigo/Timer.h"
 #include "com/diag/amigo/SPISlaveSelect.h"
 #include "com/diag/amigo/W5100/W5100.h"
+#include "com/diag/amigo/W5100/Socket.h"
 
 extern "C" void vApplicationStackOverflowHook(xTaskHandle pxTask, signed char * pcTaskName);
 
@@ -274,11 +276,9 @@ void UnitTestTask::task() {
 		// that this test itself tells us that sizeof(size_t) is two bytes, and
 		// size_t is the type that sizeof() is supposed to return.
 #		define SIZEOF(_TYPE_) printf(PSTR("sizeof(" # _TYPE_ ")=%u\n"), static_cast<size_t>(sizeof(_TYPE_)));
-		// Note how small many of these are. For some, it's just the two-byte
-		// virtual pointer overhead for the virtual destructor (when one exists).
-		// Note: I actually worked on a project for a client in which in their
-		// code base an unsigned wasn't the same sizeof() as the signed for the
-		// same data type. WTF?
+		// I actually worked on a project for a client in which in their code
+		// base the unsigned wasn't the same size as the signed for one of
+		// their locally-defined integer types. WTF? Man, that smelled bad.
 		SIZEOF(char);
 		SIZEOF(signed char);
 		SIZEOF(unsigned char);
@@ -305,6 +305,15 @@ void UnitTestTask::task() {
 		SIZEOF(uint64_t);
 		SIZEOF(ssize_t);
 		SIZEOF(size_t);
+		if (sizeof(size_t) != sizeof(ssize_t)) {
+			// Fix <com/diag/amigo/types.h>!
+			FAILED(__LINE__);
+			break;
+		}
+		SIZEOF(float);
+		SIZEOF(double);
+		// Note how small many of these are. For some, it's just the two-byte
+		// virtual pointer overhead for the virtual destructor.
 		SIZEOF(com::diag::amigo::BinarySemaphore);
 		SIZEOF(com::diag::amigo::Console);
 		SIZEOF(com::diag::amigo::CountingSemaphore);
@@ -322,6 +331,7 @@ void UnitTestTask::task() {
 		SIZEOF(com::diag::amigo::SerialSink);
 		SIZEOF(com::diag::amigo::SerialSource);
 		SIZEOF(com::diag::amigo::Sink);
+		SIZEOF(com::diag::amigo::Socket);
 		SIZEOF(com::diag::amigo::Source);
 		SIZEOF(com::diag::amigo::SPI);
 		SIZEOF(com::diag::amigo::Task);
@@ -331,8 +341,40 @@ void UnitTestTask::task() {
 		SIZEOF(com::diag::amigo::TypedQueue<uint8_t>);
 		SIZEOF(com::diag::amigo::Uninterruptible);
 		SIZEOF(com::diag::amigo::W5100::W5100);
-		if (sizeof(size_t) != sizeof(ssize_t)) {
-			// Fix <com/diag/amigo/types.h>!
+		SIZEOF(com::diag::amigo::W5100::Socket);
+		PASSED();
+	} while (false);
+#endif
+
+#if 1
+	UNITTEST("littleendian and byteorder");
+	// megaAVR is little-endian.
+	do {
+		if (!com::diag::amigo::littleendian()) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::byteswap16(0x1234) != 0x3412) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::htons(0x1234) != 0x3412) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::ntohs(0x1234) != 0x3412) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::byteswap32(0x12345678) != 0x78563412UL) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::htonl(0x12345678) != 0x78563412UL) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::ntohl(0x12345678) != 0x78563412UL) {
 			FAILED(__LINE__);
 			break;
 		}
@@ -349,15 +391,15 @@ void UnitTestTask::task() {
 		com::diag::amigo::ticks_t t1 = ticks2milliseconds(elapsed());
 		delay(milliseconds2ticks(W1));
 		com::diag::amigo::ticks_t t2 = ticks2milliseconds(elapsed());
-		com::diag::amigo::ticks_t milliseconds = t2 - t1;
-		if (!((W1 <= milliseconds) && (milliseconds <= (W1 + (W1 / (100 / PERCENT)))))) {
+		com::diag::amigo::ticks_t ms = t2 - t1;
+		if (!((W1 <= ms) && (ms <= (W1 + (W1 / (100 / PERCENT)))))) {
 			FAILED(__LINE__);
 			break;
 		}
-		com::diag::amigo::ticks_t t4 = t1;
-		delay(t4, milliseconds2ticks(W2));
-		com::diag::amigo::ticks_t t3 = ticks2milliseconds(elapsed());
-		milliseconds = t3 - t1;
+		com::diag::amigo::ticks_t t3 = t1;
+		delay(t3, milliseconds2ticks(W2));
+		com::diag::amigo::ticks_t t4 = ticks2milliseconds(elapsed());
+		ms = t4 - t1;
 		// Typical test results show that 20% is not enough of a margin. I'm
 		// guessing this is due to scheduling latency as I added tasks (most
 		// recently the FreeRTOS timer task). Example: t1=102, t3=704,
@@ -367,11 +409,11 @@ void UnitTestTask::task() {
 		// have more accurate timers, and have task delays be less accurate,
 		// just based on my experience implementing telecommunications protocol
 		// stacks. This is, after all, the "low precision" delay.
-		if (!((W2 <= milliseconds) && (milliseconds <= (W2 + (W2 / (100 / PERCENT)))))) {
-			// This occurs often enough that I just leave this debugging
-			// statement in.
-			printf(PSTR("t1=%u t3=%u ms=%u W2=%u W2+=%u\n"), t1, t3, milliseconds, W2, (W2 + (W2 / (100 / PERCENT))));
+		if (!((W2 <= ms) && (ms <= (W2 + (W2 / (100 / PERCENT)))))) {
+			// Unfortunately, this occurs often enough that I just leave this
+			// debugging statement in.
 			FAILED(__LINE__);
+			printf(PSTR("t1=%u t2=%u t3=%u t4=%u ms=%u W2=%u W2+=%u\n"), t1, t2, t3, t4, ms, W2, (W2 + (W2 / (100 / PERCENT))));
 			break;
 		}
 		PASSED();
@@ -379,22 +421,24 @@ void UnitTestTask::task() {
 #endif
 
 #if 1
-	UNITTEST("High Precision delay");
-	// There is no way to test the high precision delay in a software-only
+	UNITTEST("High Precision busywait");
+	// There is no way to test the high precision busywait in a software-only
 	// manner. If we leave interrupts enabled, tick processing by FreeRTOS adds
 	// enormously to our delay (nearly doubles it), since for a 10ms delay we
 	// are taking interrupt latency for 5 ticks. If we disable interrupts,
 	// we have no way to measure time. So here we're really just measuring the
 	// average high precision delay and assuming that the individual delays are
 	// more or less correct. This is where I wish the AVR had a hardware time
-	// base register like I've used in the PowerPC.
+	// base register like I've used on the PowerPC which is crazy precise.
+	// OTOH, we could use this test to toggle a GPIO pin and measure the
+	// square wave with our handy logic analyzer; that would be totally cool.
 	do {
 		static const com::diag::amigo::ticks_t W3 = 10;
 		static const com::diag::amigo::ticks_t PERCENT = 100;
 		com::diag::amigo::ticks_t t5 = ticks2milliseconds(elapsed());
 		double microseconds = (W3 * 1000) / 100;
 		for (uint8_t ii = 100; ii > 0; --ii) {
-			delay(microseconds);
+			busywait(microseconds);
 		}
 		com::diag::amigo::ticks_t t6 = ticks2milliseconds(elapsed());
 		com::diag::amigo::ticks_t milliseconds = t6 - t5;
@@ -922,6 +966,91 @@ void UnitTestTask::task() {
 			}
 			PASSED();
 		} while (false);
+		w5100.stop();
+		spi.stop();
+	} while (false);
+#endif
+
+#if 1
+	UNITTEST("Socket basic sanity (specific to EtherMega etc.)");
+	// On typical larger system I would test this against 127.0.0.1 to
+	// make sure I can talk to myself. But that implies a bunch more
+	// infrastructure than we have on this tiny system at this point.
+	// So instead I try to talk to ibm.com which resolves to a single
+	// address (unlike google.com that resolves to a bunch of addresses)
+	// and which is unlikely to change. Your mileage may vary.
+	do {
+		com::diag::amigo::SPI spi;
+		com::diag::amigo::W5100::W5100 w5100(*mutexsemaphorep, com::diag::amigo::GPIO::PIN_B4, spi);
+		com::diag::amigo::W5100::Socket w5100socket(w5100);
+		com::diag::amigo::Socket & socket = w5100socket;
+		spi.start();
+		w5100.start();
+		// It's funny, thinking about how to store this stuff. Here, I place
+		// them in data space. But they're actually copied from program space
+		// to data space during run-time initialization. I could put them
+		// explicitly in program space, but I'd still have to explicitly copy
+		// them to local variables in data space. But then they'd be on the
+		// stack, and stack space is precious. This architecture really forces
+		// you to think about how stuff works under the hood.
+		static const uint8_t GATEWAY[] = { 192, 168, 1, 1 };
+		static const uint8_t SUBNET[] = { 255, 255, 255, 0 };
+		static const uint8_t MAC[] = { 0x90, 0xa2, 0xda, 0x0d, 0x03, 0x4c };
+		static const uint8_t HOST[] = { 192, 168, 1, 253 };
+		static const uint8_t IBM[] = { 129, 42, 38, 1 };
+		static const com::diag::amigo::Socket::port_t HTTP = 80;
+		com::diag::amigo::Socket::State state;
+		do {
+			w5100.setGatewayIp(GATEWAY);
+			w5100.setSubnetMask(SUBNET);
+			w5100.setMACAddress(MAC);
+			w5100.setIPAddress(HOST);
+			bool success = false;
+			for (com::diag::amigo::W5100::Socket::socket_t sock = 0; sock < w5100.SOCKETS; ++sock) {
+				w5100socket = sock;
+				state = socket.state();
+				if ((state == socket.STATE_CLOSED) || (state == socket.STATE_FIN_WAIT)) {
+					success = true;
+					break;
+				}
+			}
+			if (!success) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (!w5100socket) {
+				FAILED(__LINE__);
+				break;
+			}
+			com::diag::amigo::Socket::port_t port = socket.allocate();
+			if (port == 0) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (!socket.socket(socket.PROTOCOL_TCP, port)) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (!socket.connect(IBM, HTTP)) {
+				FAILED(__LINE__);
+				break;
+			}
+			while (socket.state() != socket.STATE_ESTABLISHED) {
+				Task::delay(1);
+				if (socket.state() == socket.STATE_CLOSED) {
+					FAILED(__LINE__);
+					break;
+				}
+			}
+			state = socket.state();
+			if ((state == socket.STATE_LISTEN) || (state == socket.STATE_CLOSED) || (state == socket.STATE_FIN_WAIT)) {
+				FAILED(__LINE__);
+				break;
+			}
+			PASSED();
+		} while (false);
+		socket.disconnect();
+		socket.close();
 		w5100.stop();
 		spi.stop();
 	} while (false);

@@ -248,7 +248,7 @@ public:
 	 * greater price.
 	 * @param microseconds is the delay value in microseconds.
 	 */
-	static void delay(double microseconds);
+	static void busywait(double microseconds);
 
 	/***************************************************************************
 	 * SCHEDULING
@@ -410,7 +410,7 @@ inline void Task::delay(ticks_t & since, ticks_t relative) {
 	vTaskDelayUntil(&since, relative);
 }
 
-inline void Task::delay(double microseconds) {
+inline void Task::busywait(double microseconds) {
 	// Requires the "backward compatible" AVR delay that allows a variable as
 	// an argument. Newer versions require a constant argument, which is not
 	// relevant to our interests.

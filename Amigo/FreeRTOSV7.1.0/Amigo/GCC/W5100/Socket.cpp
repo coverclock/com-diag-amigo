@@ -20,24 +20,40 @@ namespace W5100 {
 
 Socket::~Socket() {}
 
+Socket::State Socket::state() {
+	State state;
+
+	switch (w5100->state(sock)) {
+	case W5100::SnSR::CLOSED:		state = STATE_CLOSED;		break;
+	case W5100::SnSR::INIT:			state = STATE_INIT;			break;
+	case W5100::SnSR::LISTEN:		state = STATE_LISTEN;		break;
+	case W5100::SnSR::ESTABLISHED:	state = STATE_ESTABLISHED;	break;
+	case W5100::SnSR::CLOSE_WAIT:	state = STATE_CLOSE_WAIT;	break;
+	case W5100::SnSR::UDP:			state = STATE_UDP;			break;
+	case W5100::SnSR::IPRAW:		state = STATE_IPRAW;		break;
+	case W5100::SnSR::MACRAW:		state = STATE_MACRAW;		break;
+	case W5100::SnSR::PPPOE:		state = STATE_PPPOE;		break;
+	case W5100::SnSR::SYNSENT:		state = STATE_SYNSENT;		break;
+	case W5100::SnSR::SYNRECV:		state = STATE_SYNRECV;		break;
+	case W5100::SnSR::FIN_WAIT:		state = STATE_FIN_WAIT;		break;
+	case W5100::SnSR::CLOSING:		state = STATE_CLOSING;		break;
+	case W5100::SnSR::TIME_WAIT:	state = STATE_TIME_WAIT;	break;
+	case W5100::SnSR::LAST_ACK:		state = STATE_LAST_ACK;		break;
+	case W5100::SnSR::ARP:			state = STATE_ARP;			break;
+	default:						state = STATE_OTHER;		break;
+	}
+
+	return state;
+}
+
 bool Socket::socket(Protocol protocol, port_t port, uint8_t flag) {
 	uint8_t proto;
 	switch (protocol) {
-	case TCP:
-		proto = W5100::SnMR::TCP;
-		break;
-	case UDP:
-		proto = W5100::SnMR::UDP;
-		break;
-	case IPRAW:
-		proto = W5100::SnMR::IPRAW;
-		break;
-	case MACRAW:
-		proto = W5100::SnMR::MACRAW;
-		break;
-	case PPPOE:
-		proto = W5100::SnMR::PPPOE;
-		break;
+	case PROTOCOL_TCP:		proto = W5100::SnMR::TCP;		break;
+	case PROTOCOL_UDP:		proto = W5100::SnMR::UDP;		break;
+	case PROTOCOL_IPRAW:	proto = W5100::SnMR::IPRAW;		break;
+	case PROTOCOL_MACRAW:	proto = W5100::SnMR::MACRAW;	break;
+	case PROTOCOL_PPPOE:	proto = W5100::SnMR::PPPOE;		break;
 	default:
 		return false;
 	}
@@ -88,13 +104,13 @@ void Socket::disconnect() {
 ssize_t Socket::send(const void * data, size_t length) {
 	ssize_t result = (length < W5100::SSIZE) ? length : W5100::SSIZE; // check size not to exceed MAX size.
 	size_t freesize;
-	uint8_t status;
+	uint8_t state;
 
 	// If freebuf is available, start.
 	do {
 		freesize = w5100->getTXFreeSize(sock);
-		status = w5100->status(sock);
-		if ((status != W5100::SnSR::ESTABLISHED) && (status != W5100::SnSR::CLOSE_WAIT)) {
+		state = w5100->state(sock);
+		if ((state != W5100::SnSR::ESTABLISHED) && (state != W5100::SnSR::CLOSE_WAIT)) {
 			result = 0;
 			break;
 		}

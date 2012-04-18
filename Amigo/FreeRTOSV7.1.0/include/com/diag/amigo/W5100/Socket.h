@@ -30,31 +30,20 @@ public:
 
 	typedef W5100::socket_t socket_t;
 
-	explicit Socket(W5100 & myw5100, socket_t mysocket)
+	explicit Socket(W5100 & myw5100, socket_t mysocket = W5100::SOCKETS)
 	: w5100(&myw5100)
 	, sock(mysocket)
 	{}
 
 	~Socket();
 
-	bool startUDP(const uint8_t * address /* [IPV4ADDRESS] */, port_t port);
+	operator bool() const { return (sock != W5100::SOCKETS); }
 
-	ssize_t bufferData(size_t offset, const void * data, size_t length);
+	Socket & operator=(socket_t mysocket) { sock = mysocket; return *this; }
 
-	bool sendUDP();
+	virtual State state();
 
-protected:
-
-	W5100 * w5100;
-	socket_t sock;
-
-	/***************************************************************************
-	 * COM::DIAG::AMIGO::SOCKET INTERFACE
-	 **************************************************************************/
-
-public:
-
-	virtual bool socket(Protocol protocol, port_t port, uint8_t flag); // Opens a socket(TCP or UDP or IP_RAW mode)
+	virtual bool socket(Protocol protocol, port_t port, uint8_t flag = 0x00); // Opens a socket(TCP or UDP or IP_RAW mode)
 
 	virtual void close(); // Close socket
 
@@ -75,6 +64,17 @@ public:
 	virtual ssize_t recvfrom(void * buffer, size_t length, uint8_t * address /* [IPV4ADDRESS] */, port_t * port); // Receive data (UDP/IP RAW)
 
 	virtual ssize_t igmpsend(const void * data, size_t length);
+
+	bool startUDP(const uint8_t * address /* [IPV4ADDRESS] */, port_t port);
+
+	ssize_t bufferData(size_t offset, const void * data, size_t length);
+
+	bool sendUDP();
+
+protected:
+
+	W5100 * w5100;
+	socket_t sock;
 
 };
 
