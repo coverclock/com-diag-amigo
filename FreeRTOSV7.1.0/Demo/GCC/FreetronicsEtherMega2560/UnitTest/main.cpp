@@ -12,6 +12,7 @@
 #include "com/diag/amigo/fatal.h"
 #include "com/diag/amigo/littleendian.h"
 #include "com/diag/amigo/byteorder.h"
+#include "com/diag/amigo/heap.h"
 #include "com/diag/amigo/target/harvard.h"
 #include "com/diag/amigo/target/Morse.h"
 #include "com/diag/amigo/target/Serial.h"
@@ -1087,20 +1088,18 @@ void UnitTestTask::task() {
 #endif
 
 #if 1
-	UNITTESTLN("stack");
+	UNITTEST("stack");
 	do {
 		Task proxyidletask(idle());
 		if (!proxyidletask) {
 			FAILED(__LINE__);
 			break;
 		}
-		printf(PSTR("idlestack=%u\n"), proxyidletask.stack());
-		Task proxytimetask(com::diag::amigo::Timer::daemon());
-		if (!proxytimetask) {
+		Task proxytimertask(com::diag::amigo::Timer::daemon());
+		if (!proxytimertask) {
 			FAILED(__LINE__);
 			break;
 		}
-		printf(PSTR("timerstack=%u\n"), proxyidletask.stack());
 		Task proxyselftask(self());
 		if (!proxyselftask) {
 			FAILED(__LINE__);
@@ -1119,8 +1118,56 @@ void UnitTestTask::task() {
 			FAILED(__LINE__);
 			break;
 		}
-		printf(PSTR("unitteststack=%u\n"), stackSelf());
+		size_t proxyidlestack = proxyidletask.stack();
+		size_t proxytimerstack = proxytimertask.stack();
+		size_t selfstack = stackSelf();
 		PASSED();
+		printf(PSTR("idlestack=%u\n"), proxyidlestack);
+		printf(PSTR("timerstack=%u\n"), proxytimerstack);
+		printf(PSTR("unitteststack=%u\n"), selfstack);
+	} while (false);
+#endif
+
+#if 1
+	UNITTEST("heap");
+	do {
+		size_t beforefreeheap = heap();
+		void * thing = ::malloc(20);
+		if (thing == 0) {
+			FAILED(__LINE__);
+			break;
+		}
+		::free(thing);
+		thing = ::calloc(3, 10);
+		if (thing == 0) {
+			FAILED(__LINE__);
+			break;
+		}
+		::free(thing);
+		static bool ctor = false;
+		static bool dtor = false;
+		struct That { That() { ctor = true; } ~That() { dtor = true; } };
+		That * that = new That;
+		if (that == 0) {
+			FAILED(__LINE__);
+			break;
+		}
+		if ((!ctor) || dtor) {
+			FAILED(__LINE__);
+			break;
+		}
+		delete that;
+		if (!dtor) {
+			FAILED(__LINE__);
+			break;
+		}
+		size_t afterfreeheap = heap();
+		if (beforefreeheap != afterfreeheap) {
+			FAILED(__LINE__);
+			break;
+		}
+		PASSED();
+		printf(PSTR("freeheap=%u\n"), afterfreeheap);
 	} while (false);
 #endif
 

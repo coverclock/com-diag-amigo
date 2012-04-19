@@ -315,6 +315,34 @@ public:
 	bool resumeFromISR();
 
 	/***************************************************************************
+	 * MEMORY MANAGEMENT
+	 **************************************************************************/
+
+	/**
+	 * Return the number of bytes left in the heap.
+	 * @return the number of bytes left in the heap.
+	 */
+	static size_t heap();
+
+	/**
+	 * Return an estimate of the high water mark of stack usage for the calling
+	 * task as the smallest number of unused bytes in the stack seen when the
+	 * calling task was last context switched.
+	 * @return an estimate of the high water mark of stack usage.
+	 */
+	static size_t stackSelf();
+
+	/**
+	 * Return an estimate of the high water mark of stack usage for this task
+	 * as the smallest number of unused bytes in the stack seen when this task
+	 * was last context switched.
+	 * @return an estimate of the high water mark of stack usage.
+	 */
+	size_t stack();
+
+public:
+
+	/***************************************************************************
 	 * ANCILLARY STUFF
 	 **************************************************************************/
 
@@ -337,22 +365,6 @@ public:
 	 * @return the number of tasks.
 	 */
 	static size_t tasks();
-
-	/**
-	 * Return an estimate of the high water mark of stack usage for this task
-	 * as the smallest number of unused bytes in the stack seen when this task
-	 * was last context switched.
-	 * @return an estimate of the high water mark of stack usage.
-	 */
-	size_t stack();
-
-	/**
-	 * Return an estimate of the high water mark of stack usage for the calling
-	 * task as the smallest number of unused bytes in the stack seen when the
-	 * calling task was last context switched.
-	 * @return an estimate of the high water mark of stack usage.
-	 */
-	static size_t stackSelf();
 
 	/**
 	 * Call the instance task method when invoked by the Amigo trampoline
@@ -479,6 +491,10 @@ inline size_t Task::stack() {
 
 inline size_t Task::stackSelf() {
 	return uxTaskGetStackHighWaterMark(NULL);
+}
+
+inline size_t Task::heap() {
+	return xPortGetFreeHeapSize();
 }
 
 }

@@ -22,11 +22,6 @@ extern "C" void * calloc(size_t nmemb, size_t size) {
 	return pvPortMalloc(nmemb * size);
 }
 
-extern "C" void * realloc(void * ptr, size_t size) {
-	vPortFree(ptr);
-	return pvPortMalloc(size);
-}
-
 void * operator new(size_t size) {
 	return pvPortMalloc(size);
 }
