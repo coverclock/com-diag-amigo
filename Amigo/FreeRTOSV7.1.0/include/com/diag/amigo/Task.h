@@ -40,7 +40,7 @@ public:
 	 * @param myname points to a C-string naming this task; this object keeps
 	 * a pointer to this C-string.
 	 */
-	explicit Task(const char * myname = "?");
+	explicit Task(const char * myname);
 
 	/**
 	 * Constructor. This form of the constructor can be used to construct a
@@ -321,10 +321,10 @@ public:
 public:
 
 	/**
-	 * Return the task handle for the current task.
-	 * @return the task handle for the current task.
+	 * Return the task handle for the calling task.
+	 * @return the task handle for the calling task.
 	 */
-	static xTaskHandle current();
+	static xTaskHandle self();
 
 	/**
 	 * Return the task handle for the idle task.
@@ -337,6 +337,22 @@ public:
 	 * @return the number of tasks.
 	 */
 	static size_t tasks();
+
+	/**
+	 * Return an estimate of the high water mark of stack usage for this task
+	 * as the smallest number of unused bytes in the stack seen when this task
+	 * was last context switched.
+	 * @return an estimate of the high water mark of stack usage.
+	 */
+	size_t stack();
+
+	/**
+	 * Return an estimate of the high water mark of stack usage for the calling
+	 * task as the smallest number of unused bytes in the stack seen when the
+	 * calling task was last context switched.
+	 * @return an estimate of the high water mark of stack usage.
+	 */
+	static size_t stackSelf();
 
 	/**
 	 * Call the instance task method when invoked by the Amigo trampoline
@@ -417,7 +433,7 @@ inline void Task::busywait(double microseconds) {
 	_delay_us(microseconds);
 }
 
-inline xTaskHandle Task::current() {
+inline xTaskHandle Task::self() {
 	return xTaskGetCurrentTaskHandle();
 }
 
@@ -455,6 +471,14 @@ inline void Task::resume() {
 
 inline bool Task::resumeFromISR() {
 	return (xTaskResumeFromISR(handle) == pdTRUE);
+}
+
+inline size_t Task::stack() {
+	return uxTaskGetStackHighWaterMark(handle);
+}
+
+inline size_t Task::stackSelf() {
+	return uxTaskGetStackHighWaterMark(NULL);
 }
 
 }
