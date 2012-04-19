@@ -497,7 +497,7 @@ void UnitTestTask::task() {
 			FAILED(__LINE__);
 			break;
 		}
-		if (current() != getHandle()) {
+		if (self() != getHandle()) {
 			FAILED(__LINE__);
 			break;
 		}
@@ -1083,6 +1083,44 @@ void UnitTestTask::task() {
 		}
 		w5100.stop();
 		spi.stop();
+	} while (false);
+#endif
+
+#if 1
+	UNITTESTLN("stack");
+	do {
+		Task proxyidletask(idle());
+		if (!proxyidletask) {
+			FAILED(__LINE__);
+			break;
+		}
+		printf(PSTR("idlestack=%u\n"), proxyidletask.stack());
+		Task proxytimetask(com::diag::amigo::Timer::daemon());
+		if (!proxytimetask) {
+			FAILED(__LINE__);
+			break;
+		}
+		printf(PSTR("timerstack=%u\n"), proxyidletask.stack());
+		Task proxyselftask(self());
+		if (!proxyselftask) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (proxyselftask.getHandle() != self()) {
+			FAILED(__LINE__);
+			break;
+		}
+		Task proxydefaultask;
+		if (!proxydefaultask) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (proxydefaultask.getHandle() != self()) {
+			FAILED(__LINE__);
+			break;
+		}
+		printf(PSTR("unitteststack=%u\n"), stackSelf());
+		PASSED();
 	} while (false);
 #endif
 

@@ -1,10 +1,3 @@
-COM_DIAG_AMIGO_VINTAGE=1.0.0
-Unit Test Console
-STARTING=0x5354415254494E4700
-unittesttask=0x49040000130200000000
-PASSED.
-Unit Test Morse PASSED.
-Unit Test initialize PASSED.
 Unit Test Task PASSED.
 Unit Test Sink
 Now is the time for all good men to come to the aid of their country.
@@ -80,14 +73,20 @@ Unit Test CountingSemaphore PASSED.
 Unit Test MutexSemaphore PASSED.
 Unit Test CriticalSection PASSED.
 Unit Test PeriodicTimer PASSED.
-Unit Test OneShotTimer PASSED
+Unit Test OneShotTimer PASSED.
 Unit Test GPIO PASSED.
 Unit Test Digital I/O (requires text fixture on EtherMega) PASSED.
 Unit Test SPI (specific to WIZnet W5100 on EtherMega etc.) PASSED.
 Unit Test W5100 (specific to EtherMega etc.) PASSED.
 Unit Test Socket (requires internet connectivity) PASSED.
+Unit Test stack
+idlestack=66
+timerstack=66
+unitteststack=108
+PASSED.
 Unit Test errors=0 (so far)
 Unit Test Source (type control-D to exit)
 England expects each man to do his duty.
 PASSED.
 Unit Test errors=0
+
