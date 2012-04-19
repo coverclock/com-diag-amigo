@@ -19,11 +19,16 @@ namespace diag {
 namespace amigo {
 namespace W5100 {
 
-Socket::~Socket() {}
+Socket::~Socket() {
+	close();
+}
 
 Socket::State Socket::state() {
-	State state;
+	if (sock >= W5100::SOCKETS) {
+		return STATE_OTHER;
+	}
 
+	State state;
 	switch (w5100->state(sock)) {
 	case W5100::SnSR::CLOSED:		state = STATE_CLOSED;		break;
 	case W5100::SnSR::INIT:			state = STATE_INIT;			break;
@@ -48,6 +53,10 @@ Socket::State Socket::state() {
 }
 
 bool Socket::socket(Protocol protocol, port_t port, uint8_t flag) {
+	if (sock >= W5100::SOCKETS) {
+		return false;
+	}
+
 	uint8_t proto;
 	switch (protocol) {
 	case PROTOCOL_TCP:		proto = W5100::SnMR::TCP;		break;
@@ -58,22 +67,32 @@ bool Socket::socket(Protocol protocol, port_t port, uint8_t flag) {
 	default:
 		return false;
 	}
-	close();
+
+	w5100->execCmdSn(sock, W5100::Sock_CLOSE);
+	w5100->writeSnIR(sock, 0xFF);
+
 	w5100->writeSnMR(sock, proto | flag);
 	if (port == 0) {
 		port = allocate();
 	}
 	w5100->writeSnPORT(sock, port);
 	w5100->execCmdSn(sock, W5100::Sock_OPEN);
+
 	return true;
 }
 
 void Socket::close() {
-	w5100->execCmdSn(sock, W5100::Sock_CLOSE);
-	w5100->writeSnIR(sock, 0xFF);
+	if (sock < W5100::SOCKETS) {
+		w5100->execCmdSn(sock, W5100::Sock_CLOSE);
+		w5100->writeSnIR(sock, 0xFF);
+		sock = W5100::SOCKETS;
+	}
 }
 
 bool Socket::listen() {
+	if (sock >= W5100::SOCKETS) {
+		return false;
+	}
 	if (w5100->readSnSR(sock) != W5100::SnSR::INIT) {
 		return false;
 	}
@@ -82,6 +101,10 @@ bool Socket::listen() {
 }
 
 bool Socket::connect(const uint8_t * address, port_t port) {
+	if (sock >= W5100::SOCKETS) {
+		return false;
+	}
+
 	if (
 		((address[0] == 0xff) && (address[1] == 0xff) && (address[2] == 0xff) && (address[3] == 0xff)) ||
 		((address[0] == 0x00) && (address[1] == 0x00) && (address[2] == 0x00) && (address[3] == 0x00)) ||
@@ -99,18 +122,30 @@ bool Socket::connect(const uint8_t * address, port_t port) {
 }
 
 void Socket::disconnect() {
-	w5100->execCmdSn(sock, W5100::Sock_DISCON);
+	if (sock < W5100::SOCKETS) {
+		w5100->execCmdSn(sock, W5100::Sock_DISCON);
+	}
 }
 
 size_t Socket::free() {
+	if (sock >= W5100::SOCKETS) {
+		return 0;
+	}
 	return w5100->getTXFreeSize(sock);
 }
 
 size_t Socket::available() {
+	if (sock >= W5100::SOCKETS) {
+		return 0;
+	}
 	return w5100->getRXReceivedSize(sock);
 }
 
 ssize_t Socket::send(const void * data, size_t length) {
+	if (sock >= W5100::SOCKETS) {
+		return -2;
+	}
+
 	ssize_t result = (length < W5100::SSIZE) ? length : W5100::SSIZE; // check size not to exceed MAX size.
 	size_t freesize;
 	uint8_t state;
@@ -146,6 +181,10 @@ ssize_t Socket::send(const void * data, size_t length) {
 
 
 ssize_t Socket::recv(void * buffer, size_t length) {
+	if (sock >= W5100::SOCKETS) {
+		return -2;
+	}
+
 	size_t result = w5100->getRXReceivedSize(sock); // Check how much data is available
 
 	if (result == 0) {
@@ -175,11 +214,18 @@ ssize_t Socket::recv(void * buffer, size_t length) {
 }
 
 ssize_t Socket::peek(void * buffer) {
+	if (sock >= W5100::SOCKETS) {
+		return -2;
+	}
 	w5100->recv_data_processing(sock, buffer, 1, 1);
 	return 1;
 }
 
 ssize_t Socket::sendto(const void * data, size_t length, const uint8_t * address , port_t port) {
+	if (sock >= W5100::SOCKETS) {
+		return -2;
+	}
+
 	ssize_t result = (length < W5100::SSIZE) ? length : W5100::SSIZE; // check size not to exceed MAX size.
 
 	if (
@@ -216,6 +262,10 @@ ssize_t Socket::sendto(const void * data, size_t length, const uint8_t * address
 
 
 ssize_t Socket::recvfrom(void * buffer, size_t length, uint8_t * address, port_t * port) {
+	if (sock >= W5100::SOCKETS) {
+		return -2;
+	}
+
 	ssize_t result = 0;
 	uint8_t head[8];
 	W5100::address_t ptr = 0;
@@ -289,7 +339,11 @@ ssize_t Socket::recvfrom(void * buffer, size_t length, uint8_t * address, port_t
 
 
 ssize_t Socket::igmpsend(const void * data, size_t length) {
-	ssize_t result = (length < W5100::SSIZE) ? length : W5100::SSIZE; // Check size not to exceed MAX size.;
+	if (sock >= W5100::SOCKETS) {
+		return -2;
+	}
+
+	ssize_t result = (length < W5100::SSIZE) ? length : W5100::SSIZE; // Check size not to exceed MAX size.
 	uint8_t status;
 
 	if (result == 0) {
@@ -315,6 +369,10 @@ ssize_t Socket::igmpsend(const void * data, size_t length) {
 }
 
 ssize_t Socket::bufferData(size_t offset, const void * data, size_t length) {
+	if (sock >= W5100::SOCKETS) {
+		return -2;
+	}
+
 	size_t free = w5100->getTXFreeSize(sock);
 	ssize_t result = (length < free) ? length : free;
 
@@ -324,6 +382,10 @@ ssize_t Socket::bufferData(size_t offset, const void * data, size_t length) {
 }
 
 bool Socket::startUDP(const uint8_t * address, port_t port) {
+	if (sock >= W5100::SOCKETS) {
+		return false;
+	}
+
 	if (
 		((address[0] == 0x00) && (address[1] == 0x00) && (address[2] == 0x00) && (address[3] == 0x00)) ||
 		(port == 0x00)
@@ -337,6 +399,10 @@ bool Socket::startUDP(const uint8_t * address, port_t port) {
 }
 
 bool Socket::sendUDP() {
+	if (sock >= W5100::SOCKETS) {
+		return false;
+	}
+
 	w5100->execCmdSn(sock, W5100::Sock_SEND);
 
 	/* +2008.01 bj */
