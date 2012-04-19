@@ -67,12 +67,11 @@ CXXCAPI void free(void * ptr);
  */
 CXXCAPI void * calloc(size_t nmemb, size_t size);
 
-/**
- * Release a previously allocated block of memory and allocate a new block.
- * @param ptr points to the previously allocated memory block to be freed.
- * @param size is the desired amount of memory to be reallocated in bytes.
- * @return pointer to the newly allocated memory block or 0 if fail.
- */
-CXXCAPI void * realloc(void * ptr, size_t size);
+// We don't implement realloc() because it has to know the internal structure
+// of the allocated blocks so that it can get the size of the block being
+// released in order to copy data from the old block to the new block. That
+// obviously could be done but would require realloc() to know about the
+// internal structure of FreeRTOS than I'm comfortable with for a routine that
+// I seldom if ever have used.
 
 #endif /* _COM_DIAG_AMIGO_HEAP_H_ */
