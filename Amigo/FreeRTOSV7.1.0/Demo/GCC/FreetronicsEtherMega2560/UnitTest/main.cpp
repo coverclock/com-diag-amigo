@@ -971,11 +971,13 @@ void UnitTestTask::task() {
 #endif
 
 #if 1
-	UNITTEST("Socket (specific to EtherMega etc.)");
+	UNITTEST("Socket (requires internet connectivity)");
 	// On typical larger system I would test this against 127.0.0.1 to
 	// make sure I can talk to myself. But that implies a bunch more
 	// infrastructure than we have on this tiny system at this point.
-	// So instead I try to talk to the local router. Your mileage may vary.
+	// So instead I try to talk to q well known web server available
+	// at a single IP address (so it is unlikely to be down or to
+	// change). Your mileage may vary.
 	do {
 		com::diag::amigo::SPI spi;
 		com::diag::amigo::W5100::W5100 w5100(*mutexsemaphorep, com::diag::amigo::GPIO::PIN_B4, spi);
@@ -992,15 +994,16 @@ void UnitTestTask::task() {
 		// you to think about how stuff works under the hood.
 		static const uint8_t GATEWAY[] = { 192, 168, 1, 1 };
 		static const uint8_t SUBNET[] = { 255, 255, 255, 0 };
-		static const uint8_t MAC[] = { 0x90, 0xa2, 0xda, 0x0d, 0x03, 0x4c };
-		static const uint8_t HOST[] = { 192, 168, 1, 253 };
+		static const uint8_t MACADDRESS[] = { 0x90, 0xa2, 0xda, 0x0d, 0x03, 0x4c };
+		static const uint8_t IPADDRESS[] = { 192, 168, 1, 253 };
+		static const uint8_t WEBSERVER[] = { 129, 42, 60, 216 }; // www.ibm.com
 		static const com::diag::amigo::Socket::port_t HTTP = 80;
 		com::diag::amigo::Socket::State state;
 		do {
 			w5100.setGatewayIp(GATEWAY);
 			w5100.setSubnetMask(SUBNET);
-			w5100.setMACAddress(MAC);
-			w5100.setIPAddress(HOST);
+			w5100.setMACAddress(MACADDRESS);
+			w5100.setIPAddress(IPADDRESS);
 			bool success = false;
 			for (com::diag::amigo::W5100::Socket::socket_t sock = 0; sock < w5100.SOCKETS; ++sock) {
 				w5100socket = sock;
@@ -1027,12 +1030,12 @@ void UnitTestTask::task() {
 				FAILED(__LINE__);
 				break;
 			}
-			if (!socket.connect(GATEWAY, HTTP)) {
+			if (!socket.connect(WEBSERVER, HTTP)) {
 				FAILED(__LINE__);
 				break;
 			}
 			while (socket.state() != socket.STATE_ESTABLISHED) {
-				Task::delay(1);
+				delay(milliseconds2ticks(10));
 				if (socket.state() == socket.STATE_CLOSED) {
 					FAILED(__LINE__);
 					break;
@@ -1043,9 +1046,10 @@ void UnitTestTask::task() {
 				FAILED(__LINE__);
 				break;
 			}
-			static const char GET[] = "GET /expect404.html HTTP/1.0\rFrom: coverclock@diag.com\rUser-Agent: Amigo/1.0\r\r";
-			ssize_t sent = socket.send(GET, sizeof(GET));
-			if (sent != sizeof(GET)) {
+			// Reference: T. Berners-Lee et al., "Hypertext Transfer Protocol -- HTTP/1.0", RFC1945, May 1996
+			static const char GET[] = "GET /expect404.html HTTP/1.0\r\nFrom: coverclock@diag.com\r\nUser-Agent: Amigo/1.0\r\n\r\n";
+			ssize_t sent = socket.send(GET, sizeof(GET) - 1 /* Not including terminating NUL. */);
+			if (sent != (sizeof(GET) - 1)) {
 				FAILED(__LINE__);
 				break;
 			}
@@ -1056,19 +1060,21 @@ void UnitTestTask::task() {
 				FAILED(__LINE__);
 				break;
 			}
-			char buffer[sizeof("HTTP/1.1 404 Not Found")] = { 0 };
-			ssize_t received = socket.recv(buffer, sizeof(buffer));
-//com::diag::amigo::Console::instance().start().write("length9=0x").dump(&received, sizeof(received)).write("\r\n").flush().stop();
-			if (!((0 < received) && (received <= sizeof(buffer)))) {
+			static const char EXPECTED[] = "HTTP/1.1 404 Not Found";
+			char buffer[sizeof(EXPECTED)];
+			ssize_t received = socket.recv(buffer, sizeof(buffer) - 1 /* Not including terminating NUL. */);
+			if (!((0 < received) && (received < sizeof(buffer)))) {
 				FAILED(__LINE__);
 				break;
 			}
-			PASSED();
 			buffer[received] = '\0';
-			// No clue what this might really be, but expect the first few
-			// characters of an HTTP packet containing a web page.
-			serialsink.write(buffer);
-			serialsink.write("\r\n");
+			if (strcmp(buffer, EXPECTED) != 0) {
+				FAILED(__LINE__);
+				serialsink.write(buffer);
+				serialsink.write("\r\n");
+				break;
+			}
+			PASSED();
 		} while (false);
 		socket.disconnect();
 		socket.close();
