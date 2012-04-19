@@ -206,30 +206,9 @@ void UnitTestTask::task() {
 	com::diag::amigo::Print printf(serialsink, true);
 	serial.start();
 
-	xTaskHandle currentTask = current();
-	xTaskHandle idleTask = idle();
-#if 1
-	UNITTEST("Task (creation)");
-	do {
-		if (currentTask == 0) {
-			FAILED(__LINE__);
-			break;
-		}
-		if (idleTask == 0) {
-			FAILED(__LINE__);
-			break;
-		}
-		if (tasks() != 4) {
-			// UnitTestTask, TakerTask, Idle Task, Timer Task.
-			FAILED(__LINE__);
-			break;
-		}
-		PASSED();
-	} while (false);
-#endif
-
 #if 1
 	UNITTESTLN("Sink");
+	// We do this first because printf() depends upon it.
 	do {
 		size_t written;
 		written = serialsink.write("Now is the time ");
@@ -512,9 +491,22 @@ void UnitTestTask::task() {
 	UNITTEST("BinarySemaphore");
 	do {
 		// 0.5s should be enough for the takertask to initialize.
-		static const com::diag::amigo::ticks_t MS = 500;
-		delay(milliseconds2ticks(MS));
+		static const com::diag::amigo::ticks_t DELAY = milliseconds2ticks(500);
+		delay(DELAY);
 		if (takertask != true) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (current() != getHandle()) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (idle() == 0) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (tasks() != 4) {
+			// UnitTestTask, TakerTask, Idle Task, Timer Task.
 			FAILED(__LINE__);
 			break;
 		}
@@ -527,7 +519,7 @@ void UnitTestTask::task() {
 			break;
 		}
 		// 0.5s should be enough for the takertask to become ready.
-		delay(milliseconds2ticks(MS));
+		delay(DELAY);
 		if (takertask != true) {
 			FAILED(__LINE__);
 			break;
@@ -542,12 +534,17 @@ void UnitTestTask::task() {
 			break;
 		}
 		// 0.5s should be enough for the takertask to terminate.
-		delay(milliseconds2ticks(MS));
+		delay(DELAY);
 		if (takertask != false) {
 			FAILED(__LINE__);
 			break;
 		}
 		if (takertask.errors != 0) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (tasks() != 3) {
+			// UnitTestTask, Idle Task, Timer Task.
 			FAILED(__LINE__);
 			break;
 		}
@@ -1083,6 +1080,8 @@ void UnitTestTask::task() {
 	} while (false);
 #endif
 
+	printf(PSTR("Unit Test errors=%d\n"), errors);
+
 #if 1
 	UNITTESTLN("Source (type control-D to exit)");
 	if (!source2sink(serialsource, serialsink)) {
@@ -1090,26 +1089,6 @@ void UnitTestTask::task() {
 	} else {
 		PASSED();
 	}
-#endif
-
-#if 1
-	UNITTEST("Task (deletion)");
-	do {
-		if (currentTask != current()) {
-			FAILED(__LINE__);
-			break;
-		}
-		if (idleTask != idle()) {
-			FAILED(__LINE__);
-			break;
-		}
-		if (tasks() != 3) {
-			// UnitTestTask, Idle Task, Timer Task.
-			FAILED(__LINE__);
-			break;
-		}
-		PASSED();
-	} while (false);
 #endif
 
 	// Just to make sure the regular data memory printf() works.
