@@ -4,7 +4,7 @@
  * Licensed under the terms in README.h\n
  * Chip Overclock mailto:coverclock@diag.com\n
  * http://www.diag.com/navigation/downloads/Amigo.html\n
- * This code is gratefully inspired by and cribbed from w5100h and w5100.cpp by
+ * This code is gratefully inspired by and cribbed from w5100.h and w5100.cpp by
  * Cristian Maglie from Arduino 1.0. It is specific to the WIZnet W5100 chip
  * as used on the Arduino Ethernet shield and the FreeTronics EtherMega 2560.
  * It may work on other compatibles and clones. Your mileage may vary. It is

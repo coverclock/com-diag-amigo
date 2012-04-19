@@ -1001,18 +1001,16 @@ void UnitTestTask::task() {
 			w5100.setSubnetMask(SUBNET);
 			w5100.setMACAddress(MACADDRESS);
 			w5100.setIPAddress(IPADDRESS);
-			bool success = false;
-			for (com::diag::amigo::W5100::Socket::socket_t sock = 0; sock < w5100.SOCKETS; ++sock) {
+			if (w5100socket) {
+				FAILED(__LINE__);
+				break;
+			}
+			for (com::diag::amigo::W5100::Socket::socket_t sock = 0; sock <= w5100.SOCKETS; ++sock) {
 				w5100socket = sock;
 				state = socket.state();
 				if ((state == socket.STATE_CLOSED) || (state == socket.STATE_FIN_WAIT)) {
-					success = true;
 					break;
 				}
-			}
-			if (!success) {
-				FAILED(__LINE__);
-				break;
 			}
 			if (!w5100socket) {
 				FAILED(__LINE__);
@@ -1050,7 +1048,7 @@ void UnitTestTask::task() {
 				FAILED(__LINE__);
 				break;
 			}
-			for (uint8_t ii = 0; (ii < 30) && (socket.available() == 0); ++ii) {
+			for (uint8_t ii = 0; (ii < 100) && (socket.available() == 0); ++ii) {
 				delay(milliseconds2ticks(100));
 			}
 			if (socket.available() == 0) {
@@ -1074,13 +1072,21 @@ void UnitTestTask::task() {
 			PASSED();
 		} while (false);
 		socket.disconnect();
+		if (!w5100socket) {
+			FAILED(__LINE__);
+			break;
+		}
 		socket.close();
+		if (w5100socket) {
+			FAILED(__LINE__);
+			break;
+		}
 		w5100.stop();
 		spi.stop();
 	} while (false);
 #endif
 
-	printf(PSTR("Unit Test errors=%d\n"), errors);
+	printf(PSTR("Unit Test errors=%d (so far)\n"), errors);
 
 #if 1
 	UNITTESTLN("Source (type control-D to exit)");

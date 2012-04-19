@@ -7,7 +7,7 @@
  * Licensed under the terms in README.h\n
  * Chip Overclock mailto:coverclock@diag.com\n
  * http://www.diag.com/navigation/downloads/Amigo.html\n
- * This code is gratefully inspired by and cribbed from w5100h and w5100.cpp by
+ * This code is gratefully inspired by and cribbed from w5100.h and w5100.cpp by
  * Cristian Maglie from Arduino 1.0. It is specific to the WIZnet W5100 chip
  * as used on the Arduino Ethernet shield and the FreeTronics EtherMega 2560.
  * It may work on other compatibles and clones. Your mileage may vary. It also
@@ -48,8 +48,17 @@ class W5100
 
 public:
 
+	/**
+	 * Constructor.
+	 * @param mymutex refers to a mutex used to synchronize access to the SPI.
+	 * @param myss specifies the Slave Select pin for the W5100.
+	 * @param myspi refers to the SPI.
+	 */
 	explicit W5100(MutexSemaphore & mymutex, GPIO::Pin myss, SPI & myspi);
 
+	/**
+	 * Destructor.
+	 */
 	virtual ~W5100();
 
 	/***************************************************************************
@@ -58,21 +67,45 @@ public:
 
 public:
 
+	/**
+	 * This is the integral type used as a memory address when reading and
+	 * writing memory in the W5100 via SPI.
+	 */
 	typedef uint16_t address_t;
 
+	/**
+	 * The W5100 identifies individual sockets using a handle of this type.
+	 * Legitimate values for variables of this type range from zero to
+	 * (SOCKETS - 1).
+	 */
 	typedef uint8_t socket_t;
 
+	/**
+	 * Internet Protocol has a sixteen bit port type. A pair of port numbers
+	 * identify a specific service provider on the far end and a specific
+	 * service requester on the near end. 0 is not a valid port number.
+	 * Nominally port numbers 1024 and lower, or conventionally 4096 and
+	 * lower, are reserved for well known services. For example, web service
+	 * via the Hypertext Transfer Protocol (HTTP) is available on port 80.
+	 */
 	typedef com::diag::amigo::Socket::port_t port_t;
 
+	/**
+	 * The W5100 support four concurrent active sockets.
+	 */
 	static const size_t SOCKETS = 4;
 
-	static const size_t MACADDRESS = 6;
+	/**
+	 * This is the size of an individual transmit buffer for a socket. Packets
+	 * larger than this cannot be sent.
+	 */
+	static const size_t SSIZE = 2048;
 
-	static const size_t IPV4ADDRESS = 4;
-
-	static const size_t SSIZE = 2048; // Max Tx buffer size
-
-	static const size_t RSIZE = 2048; // Max Rx buffer size
+	/**
+	 * This is the size of an individual receive buffer for a socket. Packets
+	 * larger than this cannot be received.
+	 */
+	static const size_t RSIZE = 2048;
 
 	/***************************************************************************
 	 * STARTING AND STOPPING
@@ -80,15 +113,21 @@ public:
 
 public:
 
+	/**
+	 * Start the W5100.
+	 */
 	void start();
 
+	/**
+	 * Stop the W5100.
+	 */
 	void stop();
 
 	/***************************************************************************
 	 * DEFINITIONS
 	 **************************************************************************/
 
-public:
+protected:
 
 	enum SockCMD {
 	  Sock_OPEN      = 0x01,
@@ -161,9 +200,9 @@ private:
 
 	static const uint8_t RST = 7; // Reset BIT
 
-	static const uint16_t SMASK = SSIZE - 1; // Tx buffer MASK
+	static const uint16_t SMASK = SSIZE - 1; // Tx buffer mask
 
-	static const uint16_t RMASK = RSIZE - 1; // Rx buffer MASK
+	static const uint16_t RMASK = RSIZE - 1; // Rx buffer mask
 
 	static const uint16_t TX_BUF = 0x1100;
 
@@ -239,28 +278,76 @@ protected:
 
 public:
 
+	/**
+	 * Get the gateway (router) IP address from the W5100.
+	 * @param buffer points to a buffer into which the IP address is stored.
+	 */
 	void getGatewayIp(uint8_t * buffer /* [IPV4ADDRESS] */) { readGAR(buffer); }
 
+	/**
+	 * Set the gateway (router) IP address in the W5100.
+	 * @param data points to the array from which the IP address is loaded.
+	 */
 	void setGatewayIp(const uint8_t * data /* [IPV4ADDRESS] */) { writeGAR(data); }
 
+	/**
+	 * Get the IP subnet mask from the W5100.
+	 * @param buffer points to a buffer into which the IP subnet mask is stored.
+	 */
 	void getSubnetMask(uint8_t * buffer /* [IPV4ADDRESS] */) { readSUBR(buffer); }
 
+	/**
+	 * Set the IP subnet mask in the W5100.
+	 * @param data points to the array from which the IP subnet mask is loaded.
+	 */
 	void setSubnetMask(const uint8_t * data /* [IPV4ADDRESS] */) { writeSUBR(data); }
 
+	/**
+	 * Get the MAC address for this end point from the W5100.
+	 * @param buffer points to a buffer into which the MAC address is stored.
+	 */
 	void getMACAddress(uint8_t * buffer /* [MACADDRESS] */) { readSHAR(buffer); }
 
+	/**
+	 * Set the MAC address for this end point in the W5100.
+	 * @param data points to the array from which the MAC address is loaded.
+	 */
 	void setMACAddress(const uint8_t * data /* [MACADDRESS] */) { writeSHAR(data); }
 
+	/**
+	 * Get the IP address for this end point from the W5100.
+	 * @param buffer points to a buffer into which the IP address is stored.
+	 */
 	void getIPAddress(uint8_t * buffer /* [IPV4ADDRESS] */) { readSIPR(buffer); }
 
+	/**
+	 * Set the IP address for this end point to the W5100.
+	 * @param data points to the array from which the IP address is loaded.
+	 */
 	void setIPAddress(const uint8_t * data /* [IPV4ADDRESS] */) { writeSIPR(data); }
 
+	/**
+	 * Get the retransmission time parameter from the W5100.
+	 * @return the retransmission time parameter.
+	 */
 	uint16_t getRetransmissionTime() { return readRTR(); }
 
+	/**
+	 * Set the retransmission time parameter in the W5100.
+	 * @param timeout is the retransmission time parameter.
+	 */
 	void setRetransmissionTime(uint16_t timeout) { writeRTR(timeout); }
 
+	/**
+	 * Get the retransmission count parameter from the W5100.
+	 * @return the retransmission count parameter.
+	 */
 	uint8_t getRetransmissionCount() { return readRCR(); }
 
+	/**
+	 * Set the retransmission count parameter in the W5100.
+	 * @param retry is the retransmission count parameter.
+	 */
 	void setRetransmissionCount(uint8_t retry) { writeRCR(retry); }
 
 	/***************************************************************************
@@ -327,20 +414,67 @@ protected:
 
 public:
 
+	/**
+	 * Return the state of the W5100 socket.
+	 * @param socket identifies the socket.
+	 * @return the state of the socket.
+	 */
 	uint8_t state(socket_t socket) { return readSnSR(socket); }
 
+	/**
+	 * Read data from the W5100 socket buffer.
+	 * @param socket identifies the socket.
+	 * @param address specifies the W5100 memory address at which to start.
+	 * @param buffer points to a buffer in which to store data.
+	 * @param length is the length of the buffer in bytes.
+	 */
 	void read_data(socket_t socket, address_t address, void * buffer, size_t length);
 
+	/**
+	 * Send data to a W5100 socket at zero bytes displacement.
+	 * @param socket identifies the socket.
+	 * @param data points to the data to be sent.
+	 * @param length is the length of the data in bytes.
+	 */
 	void send_data_processing(socket_t socket, const void * data, size_t length) { send_data_processing_offset(socket, 0, data, length); }
 
+	/**
+	 * Send data to a W5100 socket at a specified byte displacement.
+	 * @param socket identifies the socket.
+	 * @param displacement specifies a byte offset.
+	 * @param data points to the data to be sent.
+	 * @param length is the length of the data in bytes.
+	 */
 	void send_data_processing_offset(socket_t socket, size_t displacement, const void * data, size_t length);
 
+	/**
+	 * Receive data from a W5100 socket.
+	 * @param socket identifies the socket.
+	 * @param buffer points to a buffer into which the data is stored.
+	 * @param length is the length of the buffer in bytes.
+	 * @param peek is true indicates not to consume the data from the W5100.
+	 */
 	void recv_data_processing(socket_t socket, void * buffer, size_t length, bool peek = false);
 
+	/**
+	 * Execute a W5100 socket command.
+	 * @param socket identifies the socket.
+	 * @param command is the socket command.
+	 */
 	void execCmdSn(socket_t socket, SockCMD command);
 
+	/**
+	 * Get the number of free bytes in a W5100 socket buffer.
+	 * @param socket identifies the socket.
+	 * @return the number of free bytes.
+	 */
 	size_t getTXFreeSize(socket_t socket);
 
+	/**
+	 * Get the number of received bytes in a W5100 socket buffer.
+	 * @param socket identifies the socket.
+	 * @return the number of received bytes.
+	 */
 	size_t getRXReceivedSize(socket_t socket);
 
 	/***************************************************************************
