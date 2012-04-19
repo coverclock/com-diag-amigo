@@ -1,0 +1,93 @@
+COM_DIAG_AMIGO_VINTAGE=1.0.0
+Unit Test Console
+STARTING=0x5354415254494E4700
+unittesttask=0x49040000130200000000
+PASSED.
+Unit Test Morse PASSED.
+Unit Test initialize PASSED.
+Unit Test Task PASSED.
+Unit Test Sink
+Now is the time for all good men to come to the aid of their country.
+PASSED.
+Unit Test sizeof
+sizeof(char)=1
+sizeof(signed char)=1
+sizeof(unsigned char)=1
+sizeof(short)=2
+sizeof(signed short)=2
+sizeof(unsigned short)=2
+sizeof(int)=2
+sizeof(signed int)=2
+sizeof(unsigned int)=2
+sizeof(long)=4
+sizeof(signed long)=4
+sizeof(unsigned long)=4
+sizeof(long long)=8
+sizeof(signed long long)=8
+sizeof(unsigned long long)=8
+sizeof(bool)=1
+sizeof(int8_t)=1
+sizeof(uint8_t)=1
+sizeof(int16_t)=2
+sizeof(uint16_t)=2
+sizeof(int32_t)=4
+sizeof(uint32_t)=4
+sizeof(int64_t)=8
+sizeof(uint64_t)=8
+sizeof(ssize_t)=2
+sizeof(size_t)=2
+sizeof(float)=4
+sizeof(double)=4
+sizeof(com::diag::amigo::BinarySemaphore)=4
+sizeof(com::diag::amigo::Console)=7
+sizeof(com::diag::amigo::CountingSemaphore)=4
+sizeof(com::diag::amigo::CriticalSection)=2
+sizeof(com::diag::amigo::Dump)=3
+sizeof(com::diag::amigo::GPIO)=2
+sizeof(com::diag::amigo::GPIO::Pin)=1
+sizeof(com::diag::amigo::Morse)=3
+sizeof(com::diag::amigo::MutexSemaphore)=4
+sizeof(com::diag::amigo::PeriodicTimer)=6
+sizeof(com::diag::amigo::OneShotTimer)=6
+sizeof(com::diag::amigo::Print)=3
+sizeof(com::diag::amigo::Queue)=4
+sizeof(com::diag::amigo::Serial)=19
+sizeof(com::diag::amigo::SerialSink)=4
+sizeof(com::diag::amigo::SerialSource)=4
+sizeof(com::diag::amigo::Sink)=2
+sizeof(com::diag::amigo::Socket)=2
+sizeof(com::diag::amigo::Source)=2
+sizeof(com::diag::amigo::SPI)=20
+sizeof(com::diag::amigo::Task)=8
+sizeof(com::diag::amigo::Task::priority_t)=1
+sizeof(com::diag::amigo::ticks_t)=2
+sizeof(com::diag::amigo::Timer)=6
+sizeof(com::diag::amigo::TypedQueue<uint8_t>)=4
+sizeof(com::diag::amigo::Uninterruptible)=1
+sizeof(com::diag::amigo::W5100::W5100)=25
+sizeof(com::diag::amigo::W5100::Socket)=5
+PASSED.
+Unit Test littleendian and byteorder PASSED.
+Unit Test Low Precision delay PASSED.
+Unit Test High Precision busywait PASSED.
+Unit Test Dump
+0xDEADBEEF
+0xCAFEBABE
+PASSED.
+Unit Test Uninterruptible PASSED.
+Unit Test BinarySemaphore PASSED.
+Unit Test CountingSemaphore PASSED.
+Unit Test MutexSemaphore PASSED.
+Unit Test CriticalSection PASSED.
+Unit Test PeriodicTimer PASSED.
+Unit Test OneShotTimer PASSED
+Unit Test GPIO PASSED.
+Unit Test Digital I/O (requires text fixture on EtherMega) PASSED.
+Unit Test SPI (specific to WIZnet W5100 on EtherMega etc.) PASSED.
+Unit Test W5100 (specific to EtherMega etc.) PASSED.
+Unit Test Socket (requires internet connectivity) PASSED.
+Unit Test errors=0 (so far)
+Unit Test Source (type control-D to exit)
+England expects each man to do his duty.
+PASSED.
+Unit Test errors=0
