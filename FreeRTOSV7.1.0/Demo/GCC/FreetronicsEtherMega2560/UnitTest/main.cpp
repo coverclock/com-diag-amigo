@@ -1156,6 +1156,22 @@ void UnitTestTask::task() {
 			FAILED(__LINE__);
 			break;
 		}
+		ctor = false;
+		That * that2 = new(that) That;
+		if (that2 != that) {
+			FAILED(__LINE__);
+			break;
+		}
+		if ((!ctor) || dtor) {
+			FAILED(__LINE__);
+			break;
+		}
+		that->~That();
+		if (!dtor) {
+			FAILED(__LINE__);
+			break;
+		}
+		dtor = false;
 		delete that;
 		if (!dtor) {
 			FAILED(__LINE__);

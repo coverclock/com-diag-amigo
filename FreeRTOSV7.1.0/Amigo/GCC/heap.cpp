@@ -26,6 +26,10 @@ void * operator new(size_t size) {
 	return pvPortMalloc(size);
 }
 
+void * operator new(size_t size, void * ptr) {
+	return ptr;
+}
+
 void operator delete(void * ptr) {
 	vPortFree(ptr);
 }
