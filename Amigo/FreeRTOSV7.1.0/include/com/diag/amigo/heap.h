@@ -17,20 +17,34 @@
 
 /**
  * Allocate a block of memory from the heap. No alignment is guaranteed.
- * @param size is the desired amount of memory in bytes.
+ * @param size is the desired amount of memory in bytes. This is in support
+ * of the C++ new operator.
  * @return a pointer to the newly allocated memory block or 0 if fail.
  */
 void * operator new(size_t size);
 
 /**
- * Return a block of memory to the heap.
+ * Initialize a block of memory that has already been allocated. This is in
+ * support of the C++ placement new operator.
+ * @param size is the desired amount of memory in bytes.
+ * @return a pointer to the newly allocated memory block or 0 if fail.
+ */
+void * operator new(size_t size, void * ptr);
+
+/**
+ * Return a block of memory to the heap. This is in support of the C++
+ * placement delete operator
  * @param ptr points to the previously newed memory block to be deleted.
  */
 void operator delete(void * ptr);
 
+// I've seen blog comments suggesting there is a placement delete, and
+// the C++ <new> header suggests that there is. But Stroustrup says no!
+
 /**
  * Allocate a block of memory from the heap. No alignment is guaranteed. The
- * memory block represents an array.
+ * memory block represents an array. This is in support of the C++ new[]
+ * operator.
  * @param size is the desired total amount of memory in bytes.
  * @return pointer to the newly allocated memory block or 0 if fail.
  */
@@ -38,6 +52,7 @@ void * operator new[](size_t size);
 
 /**
  * Return a block of memory to the heap. The memory block represents an array.
+ * This is in support of the C++ delete[] operator.
  * @param ptr points to the previously newed memory block to be deleted.
  */
 void operator delete[](void * ptr);
