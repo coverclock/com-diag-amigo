@@ -205,7 +205,7 @@ public:
 	 * @param id is an Arduino pin identifier.
 	 * @return a Pin enumerated value or ~0 cast to Pin if not a valid pin id.
 	 */
-	static Pin arduino(uint8_t id);
+	static Pin arduino2gpio(uint8_t id);
 
 	/***************************************************************************
 	 * CONFIGURATION CLASS METHODS

@@ -934,7 +934,7 @@ void UnitTestTask::task() {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::GPIO::arduino(~0) != com::diag::amigo::GPIO::INVALID) {
+		if (com::diag::amigo::GPIO::arduino2gpio(~0) != com::diag::amigo::GPIO::INVALID) {
 			FAILED(__LINE__);
 			break;
 		}
@@ -953,27 +953,27 @@ void UnitTestTask::task() {
 	// PH4 (Arduino Mega pin 7) not connected.
 	do {
 		typedef com::diag::amigo::GPIO GPIO;
-		GPIO::Pin pin2 = GPIO::arduino(2);
+		GPIO::Pin pin2 = GPIO::arduino2gpio(2);
 		if (pin2 != GPIO::PIN_E4) {
 			FAILED(__LINE__);
 			break;
 		}
-		GPIO::Pin pin3 = GPIO::arduino(3);
+		GPIO::Pin pin3 = GPIO::arduino2gpio(3);
 		if (pin3 != GPIO::PIN_E5) {
 			FAILED(__LINE__);
 			break;
 		}
-		GPIO::Pin pin5 = GPIO::arduino(5);
+		GPIO::Pin pin5 = GPIO::arduino2gpio(5);
 		if (pin5 != GPIO::PIN_E3) {
 			FAILED(__LINE__);
 			break;
 		}
-		GPIO::Pin pin6 = GPIO::arduino(6);
+		GPIO::Pin pin6 = GPIO::arduino2gpio(6);
 		if (pin6 != GPIO::PIN_H3) {
 			FAILED(__LINE__);
 			break;
 		}
-		GPIO::Pin pin7 = GPIO::arduino(7);
+		GPIO::Pin pin7 = GPIO::arduino2gpio(7);
 		if (pin7 != GPIO::PIN_H4) {
 			FAILED(__LINE__);
 			break;
