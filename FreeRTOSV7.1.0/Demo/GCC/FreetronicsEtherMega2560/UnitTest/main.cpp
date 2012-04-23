@@ -19,6 +19,7 @@
 #include "com/diag/amigo/target/Serial.h"
 #include "com/diag/amigo/target/SPI.h"
 #include "com/diag/amigo/target/GPIO.h"
+#include "com/diag/amigo/target/PWM.h"
 #include "com/diag/amigo/target/Uninterruptible.h"
 #include "com/diag/amigo/target/Console.h"
 #include "com/diag/amigo/Task.h"
@@ -307,6 +308,8 @@ void UnitTestTask::task() {
 		SIZEOF(com::diag::amigo::PeriodicTimer);
 		SIZEOF(com::diag::amigo::OneShotTimer);
 		SIZEOF(com::diag::amigo::Print);
+		SIZEOF(com::diag::amigo::PWM);
+		SIZEOF(com::diag::amigo::PWM::Pin);
 		SIZEOF(com::diag::amigo::Queue);
 		SIZEOF(com::diag::amigo::Serial);
 		SIZEOF(com::diag::amigo::SerialSink);
@@ -1023,6 +1026,80 @@ void UnitTestTask::task() {
 		com::diag::amigo::ticks_t ticks = com::diag::amigo::Task::milliseconds2ticks(500);
 		GPIO gpio(base);
 		gpio.output(mask).set(mask).delay(ticks).clear(mask).delay(ticks).set(mask).delay(ticks).clear(mask).delay(ticks).set(mask).delay(ticks).clear(mask).delay(ticks).set(mask).delay(ticks).clear(mask).delay(ticks).set(mask).delay(ticks).clear(mask);
+		PASSED();
+	} while (false);
+#endif
+
+#if 1
+	UNITTEST("PWM");
+	do {
+		// Eight-bit.
+		if (com::diag::amigo::PWM::control(com::diag::amigo::PWM::PIN_2A) != &TCCR2A) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::PWM::outputcompare8(com::diag::amigo::PWM::PIN_2A) != &OCR2A) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::PWM::outputcompare16(com::diag::amigo::PWM::PIN_2A) != 0) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::PWM::offset(com::diag::amigo::PWM::PIN_2A) != COM2A1) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::PWM::mask(com::diag::amigo::PWM::PIN_2A) != _BV(COM2A1)) {
+			FAILED(__LINE__);
+			break;
+		}
+		// Sixteen-bit.
+		if (com::diag::amigo::PWM::control(com::diag::amigo::PWM::PIN_4B) != &TCCR4B) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::PWM::outputcompare8(com::diag::amigo::PWM::PIN_4B) != 0) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::PWM::outputcompare16(com::diag::amigo::PWM::PIN_4B) != &OCR4B) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::PWM::offset(com::diag::amigo::PWM::PIN_4B) != COM4B1) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::PWM::mask(com::diag::amigo::PWM::PIN_4B) != _BV(COM4B1)) {
+			FAILED(__LINE__);
+			break;
+		}
+		// Invalid.
+		if (com::diag::amigo::PWM::control(com::diag::amigo::PWM::INVALID) != 0) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::PWM::outputcompare8(com::diag::amigo::PWM::INVALID) != 0) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::PWM::outputcompare16(com::diag::amigo::PWM::INVALID) != 0) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::PWM::offset(com::diag::amigo::PWM::INVALID) != static_cast<uint8_t>(~0)) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::PWM::mask(com::diag::amigo::PWM::INVALID) != 0) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::PWM::arduino2pwm(~0) != com::diag::amigo::PWM::INVALID) {
+			FAILED(__LINE__);
+			break;
+		}
 		PASSED();
 	} while (false);
 #endif
