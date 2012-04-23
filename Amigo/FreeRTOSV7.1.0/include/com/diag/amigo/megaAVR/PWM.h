@@ -54,7 +54,7 @@ public:
 		PIN_1C = 5,
 #	endif
 #	if defined(TCCR1D) && defined(COM1D1)
-		PIN_1C = 6,
+		PIN_1D = 6,
 #	endif
 #endif
 #if !defined(portUSE_TIMER2)
@@ -107,10 +107,6 @@ public:
 		INVALID = 255
 	};
 
-	static const uint8_t LOW = 0;
-
-	static const uint8_t HIGH = ~0;
-
 	/***************************************************************************
 	 * MAPPING CLASS METHODS
 	 **************************************************************************/
@@ -127,35 +123,32 @@ public:
 
 	static uint8_t mask(Pin pin);
 
+	static GPIO::Pin pwm2gpio(Pin pin);
+
+	static Pin arduino2pwm(uint8_t id);
+
 	/***************************************************************************
 	 * CREATION AND DESTRUCTION
 	 **************************************************************************/
 
-	/**
-	 * Constructor.
-	 * @param mybase is the base address for the first GPIO register.
-	 */
-	explicit PWM(GPIO::Pin mygpiopin, Pin mypwmpin)
-	: gpio(mygpiopin)
-	, gpiomask(GPIO::mask(mygpiopin))
+	explicit PWM(Pin mypwmpin)
+	: gpio(pwm2gpio(mypwmpin))
+	, gpiomask(GPIO::mask(pwm2gpio(mypwmpin)))
 	, controlbase(control(mypwmpin))
 	, outputcompare8base(outputcompare8(mypwmpin))
 	, outputcompare16base(outputcompare16(mypwmpin))
 	, pwmmask(mask(mypwmpin))
 	{}
 
-	/**
-	 * Destructor.
-	 */
 	~PWM() {}
 
-	operator bool() const { return (gpio && (controlbase != 0) && ((outputcompare8base != 0) || (outputcompare16base != 0)) && (pwmmask != static_cast<uint8_t>(~0))); }
+	operator bool() const { return (gpio && (controlbase != 0) && ((outputcompare8base != 0) || (outputcompare16base != 0)) && (pwmmask != 0)); }
 
 	/***************************************************************************
 	 * STARTING AND STOPPING
 	 **************************************************************************/
 
-	void start(uint8_t dutycycle /* 0..255 */);
+	void start(uint16_t dutycycle /* 0..255 or 0..65535 */);
 
 	void stop(bool activelow = false);
 

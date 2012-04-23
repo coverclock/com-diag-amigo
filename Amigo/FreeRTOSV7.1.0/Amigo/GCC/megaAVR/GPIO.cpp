@@ -92,7 +92,7 @@ static volatile void * const BASE[] PROGMEM = {
 // clones which use the same microcontrollers. Support for other alternatives
 // might be derived from the Arduino 1.0 code, from which I cribbed the
 // configurations below.
-static const uint8_t PIN[] PROGMEM = {
+static const uint8_t ARDUINOPIN[] PROGMEM = {
 #if defined(__AVR_ATmega2560__)
 	// Gratefully adapted from variants/mega/pins_arduino.h in Arduino 1.0.
 	GPIO::PIN_E0,
@@ -206,8 +206,8 @@ bool GPIO::map(uint8_t pin, volatile void * & mybase, uint8_t & myoffset) {
 	return (base != 0);
 }
 
-GPIO::Pin GPIO::arduino(uint8_t id) {
-	return (id < countof(PIN)) ? static_cast<Pin>(pgm_read_byte(&PIN[id])) : INVALID;
+GPIO::Pin GPIO::arduino2gpio(uint8_t id) {
+	return (id < countof(ARDUINOPIN)) ? static_cast<Pin>(pgm_read_byte(&ARDUINOPIN[id])) : INVALID;
 }
 
 }
