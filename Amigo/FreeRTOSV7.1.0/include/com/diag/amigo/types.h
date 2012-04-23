@@ -47,9 +47,7 @@
 #	define NULL ((void*)0)
 #endif
 
-#include "projdefs.h"
-#include "FreeRTOSConfig.h"
-#include "portable.h"
+#include "com/diag/amigo/configuration.h"
 
 #if defined(__cplusplus)
 namespace com {

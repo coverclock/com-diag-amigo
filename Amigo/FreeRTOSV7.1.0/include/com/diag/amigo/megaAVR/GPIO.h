@@ -273,7 +273,7 @@ public:
 	static bool get(Pin pin);
 
 	/***************************************************************************
-	 * CONFIGURATION INSTANCE METHODS
+	 * CREATION AND DESTRUCTION
 	 **************************************************************************/
 
 	/**
@@ -284,10 +284,24 @@ public:
 	: gpiobase(mybase)
 	{}
 
+	explicit GPIO(Pin pin)
+	: gpiobase(base(pin))
+	{}
+
 	/**
 	 * Destructor.
 	 */
 	~GPIO() {}
+
+	/**
+	 * Return true if construction was successful false otherwise.
+	 * @return true if construction was successful, false otherwise.
+	 */
+	operator bool() const { return (gpiobase != 0); }
+
+	/***************************************************************************
+	 * CONFIGURATION INSTANCE METHODS
+	 **************************************************************************/
 
 	/**
 	 * Set GPIO pins to inputs with no pull-ups enabled.

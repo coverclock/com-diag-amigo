@@ -53,7 +53,8 @@
 #
 # IMPORTANT SAFETY TIP
 #
-#	Amigo has been tested with the following GCC tool chains and AVR C libaries.
+#	Amigo has been built and tested with the following GCC tool chains and AVR
+#	C libaries.
 #
 #		HOST			PACKAGE				GCC			LIBC
 #		Mac OS X		AVR CrossPack		4.5.1		1.8.0
@@ -62,6 +63,14 @@
 #
 #	The standard Ubuntu AVR packages available via Synaptics are too old (GCC
 #	4.3.4, LIBC 1.6.7) and WILL NOT WORK!
+#
+#	Amigo has been build and tested tested with the following hardware.
+#
+#		VENDOR			BOARD			CONTROLLER
+#		Freetronics		EtherMega		ATmega2560
+#
+#	I also have an Adruino Uno and an Arduino Mega ADK but haven't found the
+#	time to try those yet.
 #
 ################################################################################
 
@@ -213,6 +222,7 @@ AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/$(TARGET)/GPIO.cpp
 AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/$(TARGET)/Morse.cpp
 AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/$(TARGET)/Serial.cpp
 AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/$(TARGET)/SPI.cpp
+AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/$(TARGET)/PWM.cpp
 
 # Amigo W5100-specific files
 AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/W5100/Socket.cpp
