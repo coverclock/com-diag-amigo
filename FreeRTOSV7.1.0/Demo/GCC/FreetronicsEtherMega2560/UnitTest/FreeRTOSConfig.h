@@ -73,14 +73,14 @@
 // Otherwise for Arduino Mega Rev3 and Pololu SVP 1284P, Timer3 should be the default
 
 #if defined(__AVR_ATmega640__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega1281__) || defined(__AVR_ATmega2560__) || defined(__AVR_ATmega2561__)
-/* v coverclock@diag.com 2012-03-11 */
 	#define portUSE_TIMER3											// portUSE_TIMER3 to use 16 bit Timer3
-/* ^ coverclock@diag.com 2012-03-11 */
+/* v coverclock@diag.com 2012-03-11 */
     #define configCPU_CLOCK_HZ		( ( unsigned long ) F_CPU )		// Arduino Mega Rev3
+/* ^ coverclock@diag.com 2012-03-11 */
     #define configTICK_RATE_HZ		( ( portTickType ) 500 )		// Use 500Hz for TIMER3
 
 /* v coverclock@diag.com 2012-04-10 */
-    #define configTOTAL_HEAP_SIZE	( (size_t ) ( 5500 ) )			// used for heap_1.c and heap2.c only
+    #define configTOTAL_HEAP_SIZE	( (size_t ) ( 4096 ) )			// used for heap_1.c and heap2.c only
 /* v coverclock@diag.com 2012-04-10 */
 																	// around 4500 works for standard memory
                                                                     // Should be 0xffff - 0x2200 = 56831 for heap in Extended RAM

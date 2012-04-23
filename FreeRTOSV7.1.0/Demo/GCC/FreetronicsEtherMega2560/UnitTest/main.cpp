@@ -8,6 +8,7 @@
  */
 
 #include <string.h>
+#include <avr/io.h>
 #include "com/diag/amigo/types.h"
 #include "com/diag/amigo/fatal.h"
 #include "com/diag/amigo/littleendian.h"
@@ -323,6 +324,122 @@ void UnitTestTask::task() {
 		SIZEOF(com::diag::amigo::W5100::W5100);
 		SIZEOF(com::diag::amigo::W5100::Socket);
 		PASSED();
+	} while (false);
+#endif
+
+#if 1
+	UNITTEST("stack");
+	do {
+		Task proxyidletask(idle());
+		if (!proxyidletask) {
+			FAILED(__LINE__);
+			break;
+		}
+		Task proxytimertask(com::diag::amigo::Timer::daemon());
+		if (!proxytimertask) {
+			FAILED(__LINE__);
+			break;
+		}
+		Task proxyselftask(self());
+		if (!proxyselftask) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (proxyselftask.getHandle() != self()) {
+			FAILED(__LINE__);
+			break;
+		}
+		Task proxycurrentask;
+		if (!proxycurrentask) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (proxycurrentask.getHandle() != self()) {
+			FAILED(__LINE__);
+			break;
+		}
+		size_t proxyidlestack = proxyidletask.stack();
+		size_t proxytimerstack = proxytimertask.stack();
+		size_t takerstack = takertask.stack();
+		size_t unitteststack = stack();
+		size_t selfstack = stackSelf();
+		if (unitteststack != selfstack) {
+			FAILED(__LINE__);
+			break;
+		}
+		uintptr_t stackpointerbefore = SPH;
+		stackpointerbefore = (stackpointerbefore << 8) | SPL;
+		yield();
+		uintptr_t stackpointerafter = SPH;
+		stackpointerafter = (stackpointerafter << 8) | SPL;
+		if (stackpointerbefore != stackpointerafter) {
+			FAILED(__LINE__);
+			break;
+		}
+		PASSED();
+		printf(PSTR("idlestack=%u\n"), proxyidlestack);
+		printf(PSTR("timerstack=%u\n"), proxytimerstack);
+		printf(PSTR("takerstack=%u\n"), takerstack);
+		printf(PSTR("unitteststack=%u\n"), selfstack);
+	} while (false);
+#endif
+
+#if 1
+	UNITTEST("heap");
+	do {
+		size_t freeheapbefore = heap();
+		void * thing = ::malloc(20);
+		if (thing == 0) {
+			FAILED(__LINE__);
+			break;
+		}
+		::free(thing);
+		thing = ::calloc(3, 10);
+		if (thing == 0) {
+			FAILED(__LINE__);
+			break;
+		}
+		::free(thing);
+		static bool ctor = false;
+		static bool dtor = false;
+		struct That { That() { ctor = true; } ~That() { dtor = true; } };
+		That * that = new That;
+		if (that == 0) {
+			FAILED(__LINE__);
+			break;
+		}
+		if ((!ctor) || dtor) {
+			FAILED(__LINE__);
+			break;
+		}
+		ctor = false;
+		That * that2 = new(that) That;
+		if (that2 != that) {
+			FAILED(__LINE__);
+			break;
+		}
+		if ((!ctor) || dtor) {
+			FAILED(__LINE__);
+			break;
+		}
+		that->~That();
+		if (!dtor) {
+			FAILED(__LINE__);
+			break;
+		}
+		dtor = false;
+		delete that;
+		if (!dtor) {
+			FAILED(__LINE__);
+			break;
+		}
+		size_t freeheapafter = heap();
+		if (freeheapbefore != freeheapafter) {
+			FAILED(__LINE__);
+			break;
+		}
+		PASSED();
+		printf(PSTR("freeheap=%u\n"), freeheapafter);
 	} while (false);
 #endif
 
@@ -1087,106 +1204,6 @@ void UnitTestTask::task() {
 	} while (false);
 #endif
 
-#if 1
-	UNITTEST("stack");
-	do {
-		Task proxyidletask(idle());
-		if (!proxyidletask) {
-			FAILED(__LINE__);
-			break;
-		}
-		Task proxytimertask(com::diag::amigo::Timer::daemon());
-		if (!proxytimertask) {
-			FAILED(__LINE__);
-			break;
-		}
-		Task proxyselftask(self());
-		if (!proxyselftask) {
-			FAILED(__LINE__);
-			break;
-		}
-		if (proxyselftask.getHandle() != self()) {
-			FAILED(__LINE__);
-			break;
-		}
-		Task proxydefaultask;
-		if (!proxydefaultask) {
-			FAILED(__LINE__);
-			break;
-		}
-		if (proxydefaultask.getHandle() != self()) {
-			FAILED(__LINE__);
-			break;
-		}
-		size_t proxyidlestack = proxyidletask.stack();
-		size_t proxytimerstack = proxytimertask.stack();
-		size_t selfstack = stackSelf();
-		PASSED();
-		printf(PSTR("idlestack=%u\n"), proxyidlestack);
-		printf(PSTR("timerstack=%u\n"), proxytimerstack);
-		printf(PSTR("unitteststack=%u\n"), selfstack);
-	} while (false);
-#endif
-
-#if 1
-	UNITTEST("heap");
-	do {
-		size_t beforefreeheap = heap();
-		void * thing = ::malloc(20);
-		if (thing == 0) {
-			FAILED(__LINE__);
-			break;
-		}
-		::free(thing);
-		thing = ::calloc(3, 10);
-		if (thing == 0) {
-			FAILED(__LINE__);
-			break;
-		}
-		::free(thing);
-		static bool ctor = false;
-		static bool dtor = false;
-		struct That { That() { ctor = true; } ~That() { dtor = true; } };
-		That * that = new That;
-		if (that == 0) {
-			FAILED(__LINE__);
-			break;
-		}
-		if ((!ctor) || dtor) {
-			FAILED(__LINE__);
-			break;
-		}
-		ctor = false;
-		That * that2 = new(that) That;
-		if (that2 != that) {
-			FAILED(__LINE__);
-			break;
-		}
-		if ((!ctor) || dtor) {
-			FAILED(__LINE__);
-			break;
-		}
-		that->~That();
-		if (!dtor) {
-			FAILED(__LINE__);
-			break;
-		}
-		dtor = false;
-		delete that;
-		if (!dtor) {
-			FAILED(__LINE__);
-			break;
-		}
-		size_t afterfreeheap = heap();
-		if (beforefreeheap != afterfreeheap) {
-			FAILED(__LINE__);
-			break;
-		}
-		PASSED();
-		printf(PSTR("freeheap=%u\n"), afterfreeheap);
-	} while (false);
-#endif
-
 	printf(PSTR("Unit Test errors=%d (so far)\n"), errors);
 
 #if 1
@@ -1198,10 +1215,12 @@ void UnitTestTask::task() {
 	}
 #endif
 
-	// Just to make sure the regular data memory printf() works.
+	printf(PSTR("Unit Test errors=%d\n"), errors);
 
-	com::diag::amigo::Print errorf(serialsink);
-	errorf("Unit Test errors=%d\n", errors);
+	// Just to make sure the regular data memory Print works.
+
+	com::diag::amigo::Print testf(serialsink);
+	testf("Type \"[control-a][control-\\]y\" to exit Mac screen utility.\n");
 
 	serial.flush();
 }

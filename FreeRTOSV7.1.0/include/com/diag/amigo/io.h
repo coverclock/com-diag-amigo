@@ -16,9 +16,18 @@
  * @def COM_DIAG_AMIGO_MMIO_8
  *
  * Generate the code for either a volatile R-value or L-value reference of a
- * memory mapped I/O register whose location is represented as an offset from a
- * base address.
+ * eight-bit memory mapped I/O register whose location is represented as an
+ * offset from a base address.
  */
 #define COM_DIAG_AMIGO_MMIO_8(_BASE_, _OFFSET_)  (*CXXCSTATICCAST(volatile uint8_t *,CXXCSTATICCAST(volatile uint8_t *, (_BASE_))  + (_OFFSET_)))
+
+/**
+ * @def COM_DIAG_AMIGO_MMIO_16
+ *
+ * Generate the code for either a volatile R-value or L-value reference of a
+ * sixteen-bit memory mapped I/O register whose location is represented as an
+ * offset from a base address.
+ */
+#define COM_DIAG_AMIGO_MMIO_16(_BASE_, _OFFSET_)  (*CXXCSTATICCAST(volatile uint16_t *,CXXCSTATICCAST(volatile uint16_t *, (_BASE_))  + (_OFFSET_)))
 
 #endif /* _COM_DIAG_AMIGO_IO_H_ */

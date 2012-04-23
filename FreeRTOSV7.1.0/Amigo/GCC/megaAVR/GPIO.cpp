@@ -6,11 +6,9 @@
  * http://www.diag.com/navigation/downloads/Amigo.html\n
  */
 
-#include <avr/io.h>
 #include "com/diag/amigo/countof.h"
 #include "com/diag/amigo/target/harvard.h"
 #include "com/diag/amigo/target/GPIO.h"
-#include "com/diag/amigo/target/Console.h"
 
 namespace com {
 namespace diag {
@@ -207,7 +205,6 @@ bool GPIO::map(uint8_t pin, volatile void * & mybase, uint8_t & myoffset) {
 	}
 	return (base != 0);
 }
-
 
 GPIO::Pin GPIO::arduino(uint8_t id) {
 	return (id < countof(PIN)) ? static_cast<Pin>(pgm_read_byte(&PIN[id])) : INVALID;

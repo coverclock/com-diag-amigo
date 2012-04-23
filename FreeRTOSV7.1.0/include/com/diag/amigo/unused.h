@@ -42,6 +42,8 @@ union Unused {
 	uint64_t u64;
 	void * vp;
 	volatile void * vvp;
+	uint8_t * u8p;
+	volatile uint8_t * vu8p;
 };
 
 /**
