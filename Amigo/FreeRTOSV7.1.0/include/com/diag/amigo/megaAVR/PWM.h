@@ -7,8 +7,8 @@
  * Licensed under the terms in README.h\n
  * Chip Overclock mailto:coverclock@diag.com\n
  * http://www.diag.com/navigation/downloads/Amigo.html\n
- * This code is gratefully inspired by and cripped from wiring_analog.c and
- * pins_arduino.h by David A. Mellis and Mark Sproul.
+ * This code is gratefully inspired by and cribbed from wiring.c,
+ * wiring_analog.c and pins_arduino.h by David A. Mellis and Mark Sproul.
  */
 
 #include <avr/io.h>
@@ -107,8 +107,18 @@ public:
 		INVALID = 255
 	};
 
+	enum Timer {
+		TIMER_0,
+		TIMER_1,
+		TIMER_2,
+		TIMER_3,
+		TIMER_4,
+		TIMER_5,
+		TIMER_NONE
+	};
+
 	/***************************************************************************
-	 * MAPPING CLASS METHODS
+	 * MAPPING AND CONFIGURATION CLASS METHODS
 	 **************************************************************************/
 
 	static bool map(uint8_t pin, volatile void * & mycontrolbase, volatile void * & myoutputcompare8base, volatile void * & myoutputcompare16base, uint8_t & myoffset);
@@ -127,6 +137,8 @@ public:
 
 	static Pin arduino2pwm(uint8_t id);
 
+	static Timer setup(Pin pin);
+
 	/***************************************************************************
 	 * CREATION AND DESTRUCTION
 	 **************************************************************************/
@@ -134,6 +146,15 @@ public:
 	explicit PWM(Pin mypwmpin)
 	: gpio(pwm2gpio(mypwmpin))
 	, gpiomask(GPIO::mask(pwm2gpio(mypwmpin)))
+	, controlbase(control(mypwmpin))
+	, outputcompare8base(outputcompare8(mypwmpin))
+	, outputcompare16base(outputcompare16(mypwmpin))
+	, pwmmask(mask(mypwmpin))
+	{}
+
+	explicit PWM(GPIO::Pin mygpiopin, Pin mypwmpin)
+	: gpio(mygpiopin)
+	, gpiomask(GPIO::mask(mygpiopin))
 	, controlbase(control(mypwmpin))
 	, outputcompare8base(outputcompare8(mypwmpin))
 	, outputcompare16base(outputcompare16(mypwmpin))
