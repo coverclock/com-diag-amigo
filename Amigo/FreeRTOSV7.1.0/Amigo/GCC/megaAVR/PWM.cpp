@@ -766,20 +766,32 @@ PWM::Pin PWM::arduino2pwm(uint8_t id) {
 	return (id < countof(ARDUINOPIN)) ? static_cast<Pin>(pgm_read_byte(&ARDUINOPIN[id])) : INVALID;
 }
 
-void PWM::start(uint16_t dutycycle) {
+void PWM::start(uint16_t dutycycle, bool eightbit) {
 	if (*this) {
 		gpio.output(gpiomask);
 		if (dutycycle == 0) {
+			// Duty cycle is 0%, which is DC low.
 			gpio.clear(gpiomask);
+		} else if (eightbit && (outputcompare8base != 0) && (dutycycle >= 0xff)) {
+			// Duty cycle is 100% for an eight-bit timer, which is DC high.
+			gpio.set(gpiomask);
 		} else if ((outputcompare16base != 0) && (dutycycle == 0xffff)) {
+			// Duty cycle is 100% for a sixteen-bit timer, which is DC high.
 			gpio.set(gpiomask);
 		} else if ((outputcompare8base != 0) && (dutycycle >= 0xff)) {
+			// Duty cycle is 100% for an eight-bit timer, which is DC high.
 			gpio.set(gpiomask);
 		} else {
+			// (0% < duty cycle < 100%) so we generate a square wave...
 			COM_DIAG_AMIGO_GPIO_TCCR |= pwmmask;
-			if (outputcompare16base != 0) {
+			if (eightbit && (outputcompare8base != 0)) {
+				// ... using eight bit resolution instead of sixteen-bit.
+				COM_DIAG_AMIGO_GPIO_OCR8 = dutycycle;
+			} else if (outputcompare16base != 0) {
+				// ... using sixteen bit resolution that is available.
 				COM_DIAG_AMIGO_GPIO_OCR16 = dutycycle;
 			} else {
+				// ... using eight bit resolution that is available.
 				COM_DIAG_AMIGO_GPIO_OCR8 = dutycycle;
 			}
 		}

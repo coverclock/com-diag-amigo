@@ -1105,12 +1105,44 @@ void UnitTestTask::task() {
 #endif
 
 #if 1
+	UNITTEST("Square Wave Generation (uses text fixture on EtherMega)");
+	// This is a separate test because it a text fixture to be wired up on the
+	// board and an operator to watch it. It is specific to the EtherMega 2560
+	// board. It is designed not to conflict with the test fixture for the
+	// Digital I/O test above.
+	// OC4C (Arduino Mega pin 8) wired to voltmeter or logic analyzer.
+	// OC2A (Arduino Mega pin 9) wired to voltmeter or logic analyzer.
+	do {
+		typedef com::diag::amigo::PWM PWM;
+		PWM::Pin pwm16 = PWM::arduino2pwm(8);
+		if (pwm16 != PWM::PIN_4C) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (PWM::outputcompare16(pwm16) == 0) {
+			FAILED(__LINE__);
+			break;
+		}
+		PWM::Pin pwm8 = PWM::arduino2pwm(9);
+		if (pwm8 != PWM::PIN_2A) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (PWM::outputcompare8(pwm8) == 0) {
+			FAILED(__LINE__);
+			break;
+		}
+		PASSED();
+	} while (false);
+#endif
+
+#if 1
 	UNITTEST("SPI (specific to WIZnet W5100 on EtherMega etc.)");
 	do {
 		com::diag::amigo::SPI spi;
 		spi.start();
 		do {
-			W5100 w5100(*mutexsemaphorep, com::diag::amigo::GPIO::PIN_B4, spi);
+			W5100 w5100(*mutexsemaphorep, com::diag::amigo::GPIO::arduino2gpio(10), spi);
 			static const uint16_t RTR0 = 0x0017;
 			static const uint16_t RTR1 = 0x0018;
 			static const uint16_t RCR = 0x0019;
@@ -1140,7 +1172,7 @@ void UnitTestTask::task() {
 	UNITTEST("W5100 (specific to EtherMega etc.)");
 	do {
 		com::diag::amigo::SPI spi;
-		com::diag::amigo::W5100::W5100 w5100(*mutexsemaphorep, com::diag::amigo::GPIO::PIN_B4, spi);
+		com::diag::amigo::W5100::W5100 w5100(*mutexsemaphorep, com::diag::amigo::GPIO::arduino2gpio(10), spi);
 		spi.start();
 		w5100.start();
 		do {

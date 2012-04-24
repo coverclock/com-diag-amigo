@@ -148,7 +148,7 @@ public:
 	 * STARTING AND STOPPING
 	 **************************************************************************/
 
-	void start(uint16_t dutycycle /* 0..255 or 0..65535 */);
+	void start(uint16_t dutycycle /* 0..65535 or 0..255 if eightbit */, bool eightbit = false);
 
 	void stop(bool activelow = false);
 
