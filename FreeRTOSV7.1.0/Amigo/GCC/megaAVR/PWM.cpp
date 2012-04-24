@@ -934,14 +934,14 @@ PWM::Timer PWM::pwm2timer(Pin pin) {
  * CONTROL INSTANCE METHODS
  ******************************************************************************/
 
-bool PWM::configure(Timer timer) {
-	bool result = true;
+void PWM::configure() {
 
 	// The code and comments below were gatefully cribbed with minor changes
 	// directly from Arduino 1.0 wiring.c by David A. Mellis. Any flaws are
-	// strictly mine, introduced by my editing. Arduino does this initialization
-	// up front in its init() function. Amigo does it every time the caller
-	// wants to set up a pin for PWM.
+	// strictly mine, introduced by my editing. Arduino initializes every
+	// available timer up front in its init() function. Amigo requires the
+	// application to do this, and only configures the one timer used by this
+	// object.
 
 	switch (timer) {
 
@@ -966,8 +966,6 @@ bool PWM::configure(Timer timer) {
 		// This combination is for the __AVR_ATmega645__ series.
 		TCCR0A |= CS01;
 		TCCR0A |= CS00;
-#else
-		result = false;
 #endif
 		break;
 
@@ -984,8 +982,6 @@ bool PWM::configure(Timer timer) {
 #	if F_CPU >= 8000000L
 		TCCR1 |= CS10;
 #	endif
-#else
-		result = false;
 #endif
 		// Put timer 1 in 8-bit phase correct PWM mode.
 #if defined(TCCR1A) && defined(WGM10)
@@ -1003,8 +999,6 @@ bool PWM::configure(Timer timer) {
 		TCCR2 |= WGM20;
 #elif defined(TCCR2A) && defined(WGM20)
 		TCCR2A |= WGM20;
-#else
-		result = false;
 #endif
 		break;
 
@@ -1013,8 +1007,6 @@ bool PWM::configure(Timer timer) {
 		TCCR3B |= CS31;		// Set timer 3 prescale factor to 64.
 		TCCR3B |= CS30;
 		TCCR3A |= WGM30;	// Put timer 3 in 8-bit phase correct PWM mode.
-#else
-		result = false;
 #endif
 		break;
 
@@ -1023,8 +1015,6 @@ bool PWM::configure(Timer timer) {
 		TCCR4B |= CS41;		// Set timer 4 prescale factor to 64.
 		TCCR4B |= CS40;
 		TCCR4A |= WGM40;	// Put timer 4 in 8-bit phase correct PWM mode.
-#else
-		result = false;
 #endif
 		break;
 
@@ -1033,22 +1023,15 @@ bool PWM::configure(Timer timer) {
 		TCCR5B |= CS51;		// Set timer 5 prescale factor to 64.
 		TCCR5B |= CS50;
 		TCCR5A |= WGM50;	// Put timer 5 in 8-bit phase correct PWM mode.
-#else
-		result = false;
 #endif
 		break;
 
 	case NONE:
 	default:
-		result = false;
 		break;
 	}
 
-	if (result) {
-		gpio.output(gpiomask);
-	}
-
-	return result;
+	gpio.output(gpiomask);
 }
 
 void PWM::start(uint8_t dutycycle) {

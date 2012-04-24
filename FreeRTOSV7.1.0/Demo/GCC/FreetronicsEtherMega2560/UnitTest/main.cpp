@@ -65,7 +65,7 @@ static const char CUNITTEST_PASSED[] PROGMEM = "PASSED.\r\n";
 #define CPASSED() com::diag::amigo::Console::instance().start().write_P(CUNITTEST_PASSED).flush().stop()
 
 /*******************************************************************************
- * TIMERS
+ * TIMER TEXT FIXTURES
  ******************************************************************************/
 
 class OneShotTimer : public com::diag::amigo::OneShotTimer {
@@ -123,7 +123,7 @@ private:
 };
 
 /*******************************************************************************
- * TAKER TASK (FOR TESTING BINARYSEMAPHORE)
+ * TAKER TEST FIXTURE (FOR TESTING BINARYSEMAPHORE)
  ******************************************************************************/
 
 static com::diag::amigo::BinarySemaphore * binarysemaphorep = 0;
@@ -188,6 +188,33 @@ static bool source2sink(com::diag::amigo::Source & source, com::diag::amigo::Sin
 		}
 	}
 	sink.flush();
+	return true;
+}
+
+/*******************************************************************************
+ * SQUARE WAVE GENERATOR
+ ******************************************************************************/
+
+static bool squarewavegenerator(com::diag::amigo::PWM::Pin pin, com::diag::amigo::ticks_t ticks) {
+	com::diag::amigo::PWM pwm(pin);
+	if (!pwm) {
+		return false;
+	}
+	pwm.configure();
+	for (uint16_t ii = 0; ii <= 250; ii += 25) {
+		com::diag::amigo::Task::delay(ticks);
+		pwm.start(ii);
+	}
+	com::diag::amigo::Task::delay(ticks);
+	pwm.start(255);
+	for (uint16_t ii = 250; ii > 0; ii -= 25) {
+		com::diag::amigo::Task::delay(ticks);
+		pwm.start(ii);
+	}
+	com::diag::amigo::Task::delay(ticks);
+	pwm.start(0);
+	com::diag::amigo::Task::delay(ticks);
+	pwm.stop();
 	return true;
 }
 
@@ -1031,7 +1058,33 @@ void UnitTestTask::task() {
 
 #if 1
 	UNITTEST("PWM");
+	// This should work on either the 2560 (Mega etc.) or the 328p (Uno).
 	do {
+		// Sixteen-bit.
+		if (com::diag::amigo::PWM::pwm2control(com::diag::amigo::PWM::PIN_1A) != &TCCR1A) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::PWM::pwm2outputcompare8(com::diag::amigo::PWM::PIN_1A) != 0) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::PWM::pwm2outputcompare16(com::diag::amigo::PWM::PIN_1A) != &OCR1A) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::PWM::pwm2offset(com::diag::amigo::PWM::PIN_1A) != COM1A1) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::PWM::pwm2mask(com::diag::amigo::PWM::PIN_1A) != _BV(COM1A1)) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::PWM::pwm2timer(com::diag::amigo::PWM::PIN_1A) != com::diag::amigo::PWM::PWM::TIMER_1) {
+			FAILED(__LINE__);
+			break;
+		}
 		// Eight-bit.
 		if (com::diag::amigo::PWM::pwm2control(com::diag::amigo::PWM::PIN_2A) != &TCCR2A) {
 			FAILED(__LINE__);
@@ -1053,24 +1106,7 @@ void UnitTestTask::task() {
 			FAILED(__LINE__);
 			break;
 		}
-		// Sixteen-bit.
-		if (com::diag::amigo::PWM::pwm2control(com::diag::amigo::PWM::PIN_4B) != &TCCR4B) {
-			FAILED(__LINE__);
-			break;
-		}
-		if (com::diag::amigo::PWM::pwm2outputcompare8(com::diag::amigo::PWM::PIN_4B) != 0) {
-			FAILED(__LINE__);
-			break;
-		}
-		if (com::diag::amigo::PWM::pwm2outputcompare16(com::diag::amigo::PWM::PIN_4B) != &OCR4B) {
-			FAILED(__LINE__);
-			break;
-		}
-		if (com::diag::amigo::PWM::pwm2offset(com::diag::amigo::PWM::PIN_4B) != COM4B1) {
-			FAILED(__LINE__);
-			break;
-		}
-		if (com::diag::amigo::PWM::pwm2mask(com::diag::amigo::PWM::PIN_4B) != _BV(COM4B1)) {
+		if (com::diag::amigo::PWM::pwm2timer(com::diag::amigo::PWM::PIN_2A) != com::diag::amigo::PWM::PWM::TIMER_2) {
 			FAILED(__LINE__);
 			break;
 		}
@@ -1095,6 +1131,10 @@ void UnitTestTask::task() {
 			FAILED(__LINE__);
 			break;
 		}
+		if (com::diag::amigo::PWM::pwm2timer(com::diag::amigo::PWM::INVALID) != com::diag::amigo::PWM::PWM::NONE) {
+			FAILED(__LINE__);
+			break;
+		}
 		if (com::diag::amigo::PWM::arduino2pwm(~0) != com::diag::amigo::PWM::INVALID) {
 			FAILED(__LINE__);
 			break;
@@ -1103,64 +1143,41 @@ void UnitTestTask::task() {
 	} while (false);
 #endif
 
-#if 0
-	UNITTEST("Analog Output (uses text fixture on EtherMega)");
+#if 1
 	// This is a separate test because it a text fixture to be wired up on the
 	// board and an operator to watch it. It is specific to the EtherMega 2560
 	// board. It is designed not to conflict with the test fixture for the
 	// Digital I/O test above.
+	// OC0A (Arduino Mega pin 13) wired to fixed red LED on EtherMega.
 	// OC4C (Arduino Mega pin 8) wired to voltmeter or logic analyzer.
 	// OC2B (Arduino Mega pin 9) wired to voltmeter or logic analyzer.
-	do {
+	{
 		typedef com::diag::amigo::PWM PWM;
-		PWM::Pin pin8bit = PWM::arduino2pwm(9);
-		if (pin8bit != PWM::PIN_2B) {
-			FAILED(__LINE__);
-			break;
-		}
-		if (PWM::pwm2outputcompare8(pin8bit) == 0) {
-			FAILED(__LINE__);
-			break;
-		}
-		if (PWM::pwm2timer(pin8bit) != PWM::TIMER_2) {
-			FAILED(__LINE__);
-			break;
-		}
-		PWM::Pin pin16bit = PWM::arduino2pwm(8);
-		if (pin16bit != PWM::PIN_4C) {
-			FAILED(__LINE__);
-			break;
-		}
-		if (PWM::pwm2outputcompare16(pin16bit) == 0) {
-			FAILED(__LINE__);
-			break;
-		}
-		if (PWM::pwm2timer(pin16bit) != PWM::TIMER_4) {
-			FAILED(__LINE__);
-			break;
-		}
-		com::diag::amigo::ticks_t ticks = milliseconds2ticks(500);
-		PWM pwm8bit(pin8bit);
-		if (!pwm8bit.configure(pin8bit)) {
-			FAILED(__LINE__);
-			break;
-		}
-		for (uint16_t ii = 0; ii <= 250; ii += 25) {
-			delay(ticks);
-			pwm8bit.start(ii);
-		}
-		delay(ticks);
-		pwm8bit.start(255);
-		for (uint16_t ii = 250; ii > 0; ii -= 25) {
-			delay(ticks);
-			pwm8bit.start(ii);
-		}
-		delay(ticks);
-		pwm8bit.start(0);
-		delay(ticks);
-		pwm8bit.stop();
-		PASSED();
-	} while (false);
+		do {
+			UNITTEST("Analog Output (uses red LED on EtherMega)");
+			if (!squarewavegenerator(PWM::arduino2pwm(13), milliseconds2ticks(500))) {
+				FAILED(__LINE__);
+				break;
+			}
+			PASSED();
+		} while (false);
+		do {
+			UNITTEST("Analog Output (uses pin 9 on EtherMega)");
+			if (!squarewavegenerator(PWM::arduino2pwm(9), milliseconds2ticks(500))) {
+				FAILED(__LINE__);
+				break;
+			}
+			PASSED();
+		} while (false);
+		do {
+			UNITTEST("Analog Output (uses pin 8 on EtherMega)");
+			if (!squarewavegenerator(PWM::arduino2pwm(8), milliseconds2ticks(500))) {
+				FAILED(__LINE__);
+				break;
+			}
+			PASSED();
+		} while (false);
+	}
 #endif
 
 #if 1
