@@ -152,6 +152,7 @@ public:
 	, outputcompare8base(pwm2outputcompare8(mypwmpin))
 	, outputcompare16base(pwm2outputcompare16(mypwmpin))
 	, pwmmask(pwm2mask(mypwmpin))
+	, timer(pwm2timer(mypwmpin))
 	{}
 
 	explicit PWM(GPIO::Pin mygpiopin, Pin mypwmpin)
@@ -161,19 +162,18 @@ public:
 	, outputcompare8base(pwm2outputcompare8(mypwmpin))
 	, outputcompare16base(pwm2outputcompare16(mypwmpin))
 	, pwmmask(pwm2mask(mypwmpin))
+	, timer(pwm2timer(mypwmpin))
 	{}
 
 	~PWM() {}
 
-	operator bool() const { return (gpio && (controlbase != 0) && ((outputcompare8base != 0) || (outputcompare16base != 0)) && (pwmmask != 0)); }
+	operator bool() const { return (gpio && (controlbase != 0) && ((outputcompare8base != 0) || (outputcompare16base != 0)) && (pwmmask != 0) && (timer != NONE)); }
 
 	/***************************************************************************
 	 * STARTING AND STOPPING
 	 **************************************************************************/
 
-	bool configure(Timer timer);
-
-	bool configure(Pin pin) { return configure(pwm2timer(pin)); }
+	void configure();
 
 	void start(uint8_t dutycycle /* 0..255 */);
 
@@ -187,6 +187,7 @@ protected:
 	volatile void * outputcompare8base;
 	volatile void * outputcompare16base;
 	uint8_t pwmmask;
+	Timer timer;
 
 };
 
