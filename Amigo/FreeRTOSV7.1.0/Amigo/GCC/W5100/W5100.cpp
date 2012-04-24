@@ -29,8 +29,8 @@ namespace W5100 {
 W5100::W5100(MutexSemaphore & mymutex, GPIO::Pin myss, SPI & myspi)
 : mutex(&mymutex)
 , spi(&myspi)
-, gpio(GPIO::base(myss))
-, mask(GPIO::mask(myss))
+, gpio(GPIO::gpio2base(myss))
+, mask(GPIO::gpio2mask(myss))
 {
 	for (uint8_t ii = 0; ii < SOCKETS; ++ii) {
 		sbase[ii] = TXBUF_BASE + (SSIZE * ii);

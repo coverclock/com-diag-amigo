@@ -192,18 +192,14 @@ static const uint8_t ARDUINOPIN[] PROGMEM = {
 #endif
 };
 
-bool GPIO::map(uint8_t pin, volatile void * & mybase, uint8_t & myoffset) {
-	volatile void * base = 0;
+volatile void * GPIO::gpio2base(Pin pin) {
 	uint8_t index = pin / 8;
-	if (index >= countof(BASE)) {
-		// Do nothing.
-	} else if ((base = reinterpret_cast<volatile void *>(pgm_read_word(&(BASE[index])))) == 0) {
-		// Do nothing.
-	} else {
-		mybase = base;
-		myoffset = pin % 8;
-	}
-	return (base != 0);
+	return (index < countof(BASE)) ? reinterpret_cast<volatile void *>(pgm_read_word(&(BASE[index]))) : 0;
+}
+
+uint8_t GPIO::gpio2offset(Pin pin) {
+	uint8_t index = pin / 8;
+	return (index < countof(BASE)) ? (pin % 8) : ~0;
 }
 
 GPIO::Pin GPIO::arduino2gpio(uint8_t id) {

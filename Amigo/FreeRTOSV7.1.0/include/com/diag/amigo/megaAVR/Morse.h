@@ -61,8 +61,8 @@ public:
 	 * @param pin is the GPIO pen to use to control the LED.
 	 */
 	Morse(GPIO::Pin pin = LED)
-	: base(GPIO::base(pin))
-	, mask(GPIO::mask(pin))
+	: base(GPIO::gpio2base(pin))
+	, mask(GPIO::gpio2mask(pin))
 	{}
 
 	/**

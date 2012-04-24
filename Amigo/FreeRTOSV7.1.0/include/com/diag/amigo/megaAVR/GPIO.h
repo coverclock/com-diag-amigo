@@ -165,38 +165,27 @@ public:
 	 **************************************************************************/
 
 	/**
-	 * Map an absolute pin number to a base address and a bit offset that may
-	 * be used as a left shift value. If the pin is not valid, neither the
-	 * base variable nor the offset variable are modified.
-	 * @param pin is an absolute pin number.
-	 * @param mybase refers to a base address variable.
-	 * @param myoffset refers to an offset variable.
-	 * @return true if the pin is valid for this target, false otherwise.
-	 */
-	static bool map(uint8_t pin, volatile void * & mybase, uint8_t & myoffset);
-
-	/**
-	 * Map an absolute pin number into a base address.
+	 * Map a pin into a base address.
 	 * @param pin is a Pin enumerated value.
 	 * @return a base address or NULL if invalid.
 	 */
-	static volatile void * base(Pin pin);
+	static volatile void * gpio2base(Pin pin);
 
 	/**
-	 * Map an absolute pin number into a bit offset that can be used as a left
+	 * Map a pin into a bit offset that can be used as a left
 	 * shift value to generate a mask.
 	 * @param pin is a Pin enumerated value.
 	 * @return a bit offset or ~0 if invalid.
 	 */
-	static uint8_t offset(Pin pin);
+	static uint8_t gpio2offset(Pin pin);
 
 	/**
-	 * Map an absolute pin number to a eight-bit mask that is simply the offset
+	 * Map a pin to a eight-bit mask that is simply the offset
 	 * of the same pin applied to a left shift operator.
 	 * @param pin is a Pin enumerated value.
 	 * @return an eight-bit mask or zero if invalid.
 	 */
-	static uint8_t mask(Pin pin);
+	static uint8_t gpio2mask(Pin pin);
 
 	/**
 	 * Map an Arduino pin id (which is typically printed right on the Arduino
@@ -285,7 +274,7 @@ public:
 	{}
 
 	explicit GPIO(Pin pin)
-	: gpiobase(base(pin))
+	: gpiobase(gpio2base(pin))
 	{}
 
 	/**
@@ -393,24 +382,14 @@ protected:
 
 };
 
+inline uint8_t GPIO::gpio2mask(Pin pin) {
+	uint8_t offset = gpio2offset(pin);
+	return (offset != static_cast<uint8_t>(~0)) ? (1 << offset) : 0;
+}
+
 inline void GPIO::disable() {
 	Uninterruptible uninterruptible;
 	MCUCR |= PUD;
-}
-
-inline volatile void * GPIO::base(Pin pin) {
-	volatile void * mybase;
-	return (map(pin, mybase, unused.u8) ? mybase : 0);
-}
-
-inline uint8_t GPIO::offset(Pin pin) {
-	uint8_t myoffset;
-	return (map(pin, unused.vvp, myoffset) ? myoffset : ~0);
-}
-
-inline uint8_t GPIO::mask(Pin pin) {
-	uint8_t myoffset;
-	return (map(pin, unused.vvp, myoffset) ? (1 << myoffset) : 0);
 }
 
 inline const GPIO & GPIO::input(uint8_t mymask) const {
@@ -487,44 +466,44 @@ inline uint8_t GPIO::get(uint8_t mymask) const {
 }
 
 inline void GPIO::input(Pin pin) {
-	GPIO gpio(base(pin));
-	gpio.input(mask(pin));
+	GPIO gpio(gpio2base(pin));
+	gpio.input(gpio2mask(pin));
 }
 
 inline void GPIO::pulledup(Pin pin) {
-	GPIO gpio(base(pin));
-	gpio.pulledup(mask(pin));
+	GPIO gpio(gpio2base(pin));
+	gpio.pulledup(gpio2mask(pin));
 }
 
 inline void GPIO::output(Pin pin) {
-	GPIO gpio(base(pin));
-	gpio.output(mask(pin));
+	GPIO gpio(gpio2base(pin));
+	gpio.output(gpio2mask(pin));
 }
 
 inline void GPIO::output(Pin pin, bool initial) {
-	GPIO gpio(base(pin));
-	uint8_t mymask = mask(pin);
+	GPIO gpio(gpio2base(pin));
+	uint8_t mymask = gpio2mask(pin);
 	gpio.output(mymask, initial ? mymask : 0);
 }
 
 inline void GPIO::set(Pin pin) {
-	GPIO gpio(base(pin));
-	gpio.set(mask(pin));
+	GPIO gpio(gpio2base(pin));
+	gpio.set(gpio2mask(pin));
 }
 
 inline void GPIO::clear(Pin pin) {
-	GPIO gpio(base(pin));
-	gpio.clear(mask(pin));
+	GPIO gpio(gpio2base(pin));
+	gpio.clear(gpio2mask(pin));
 }
 
 inline void GPIO::toggle(Pin pin) {
-	GPIO gpio(base(pin));
-	gpio.toggle(mask(pin));
+	GPIO gpio(gpio2base(pin));
+	gpio.toggle(gpio2mask(pin));
 }
 
 inline bool GPIO::get(Pin pin) {
-	GPIO gpio(base(pin));
-	uint8_t mymask = mask(pin);
+	GPIO gpio(gpio2base(pin));
+	uint8_t mymask = gpio2mask(pin);
 	return (gpio.get(mymask) == mymask);
 }
 
