@@ -101,8 +101,8 @@ public:
 	explicit W5100(com::diag::amigo::MutexSemaphore & mymutex, com::diag::amigo::GPIO::Pin myss, com::diag::amigo::SPI & myspi)
 	: mutex(&mymutex)
 	, spi(&myspi)
-	, gpio(com::diag::amigo::GPIO::base(myss))
-	, mask(com::diag::amigo::GPIO::mask(myss))
+	, gpio(com::diag::amigo::GPIO::gpio2base(myss))
+	, mask(com::diag::amigo::GPIO::gpio2mask(myss))
 	{
 		gpio.output(mask, mask);
 	}
@@ -901,39 +901,39 @@ void UnitTestTask::task() {
 	// 2560 (ATmega2560) and the Arduino Uno (ATmega328p) respectively for
 	// their diagnostic LEDs, and hence would be the pins likely used by Morse.
 	do {
-		if (com::diag::amigo::GPIO::base(com::diag::amigo::GPIO::PIN_B7) != &PINB) {
+		if (com::diag::amigo::GPIO::gpio2base(com::diag::amigo::GPIO::PIN_B7) != &PINB) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::GPIO::offset(com::diag::amigo::GPIO::PIN_B7) != 7) {
+		if (com::diag::amigo::GPIO::gpio2offset(com::diag::amigo::GPIO::PIN_B7) != 7) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::GPIO::mask(com::diag::amigo::GPIO::PIN_B7) != _BV(7)) {
+		if (com::diag::amigo::GPIO::gpio2mask(com::diag::amigo::GPIO::PIN_B7) != _BV(7)) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::GPIO::base(com::diag::amigo::GPIO::PIN_B4) != &PINB) {
+		if (com::diag::amigo::GPIO::gpio2base(com::diag::amigo::GPIO::PIN_B4) != &PINB) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::GPIO::offset(com::diag::amigo::GPIO::PIN_B4) != 4) {
+		if (com::diag::amigo::GPIO::gpio2offset(com::diag::amigo::GPIO::PIN_B4) != 4) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::GPIO::mask(com::diag::amigo::GPIO::PIN_B4) != _BV(4)) {
+		if (com::diag::amigo::GPIO::gpio2mask(com::diag::amigo::GPIO::PIN_B4) != _BV(4)) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::GPIO::base(com::diag::amigo::GPIO::INVALID) != 0) {
+		if (com::diag::amigo::GPIO::gpio2base(com::diag::amigo::GPIO::INVALID) != 0) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::GPIO::offset(com::diag::amigo::GPIO::INVALID) != static_cast<uint8_t>(~0)) {
+		if (com::diag::amigo::GPIO::gpio2offset(com::diag::amigo::GPIO::INVALID) != static_cast<uint8_t>(~0)) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::GPIO::mask(com::diag::amigo::GPIO::INVALID) != 0) {
+		if (com::diag::amigo::GPIO::gpio2mask(com::diag::amigo::GPIO::INVALID) != 0) {
 			FAILED(__LINE__);
 			break;
 		}
@@ -1020,9 +1020,8 @@ void UnitTestTask::task() {
 		// serial port by "bit banging" the GPIO pins. This interface is
 		// intended to facilitate this, hence the built-in delay method that
 		// can be incorporated in a method chain.
-		GPIO::Pin pin = GPIO::PIN_B7;
-		volatile void * base = GPIO::base(pin);
-		uint8_t mask = GPIO::mask(pin);
+		volatile void * base = GPIO::gpio2base(GPIO::arduino2gpio(13));
+		uint8_t mask = GPIO::gpio2mask(GPIO::arduino2gpio(13));
 		com::diag::amigo::ticks_t ticks = com::diag::amigo::Task::milliseconds2ticks(500);
 		GPIO gpio(base);
 		gpio.output(mask).set(mask).delay(ticks).clear(mask).delay(ticks).set(mask).delay(ticks).clear(mask).delay(ticks).set(mask).delay(ticks).clear(mask).delay(ticks).set(mask).delay(ticks).clear(mask).delay(ticks).set(mask).delay(ticks).clear(mask);
@@ -1034,65 +1033,65 @@ void UnitTestTask::task() {
 	UNITTEST("PWM");
 	do {
 		// Eight-bit.
-		if (com::diag::amigo::PWM::control(com::diag::amigo::PWM::PIN_2A) != &TCCR2A) {
+		if (com::diag::amigo::PWM::pwm2control(com::diag::amigo::PWM::PIN_2A) != &TCCR2A) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::PWM::outputcompare8(com::diag::amigo::PWM::PIN_2A) != &OCR2A) {
+		if (com::diag::amigo::PWM::pwm2outputcompare8(com::diag::amigo::PWM::PIN_2A) != &OCR2A) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::PWM::outputcompare16(com::diag::amigo::PWM::PIN_2A) != 0) {
+		if (com::diag::amigo::PWM::pwm2outputcompare16(com::diag::amigo::PWM::PIN_2A) != 0) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::PWM::offset(com::diag::amigo::PWM::PIN_2A) != COM2A1) {
+		if (com::diag::amigo::PWM::pwm2offset(com::diag::amigo::PWM::PIN_2A) != COM2A1) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::PWM::mask(com::diag::amigo::PWM::PIN_2A) != _BV(COM2A1)) {
+		if (com::diag::amigo::PWM::pwm2mask(com::diag::amigo::PWM::PIN_2A) != _BV(COM2A1)) {
 			FAILED(__LINE__);
 			break;
 		}
 		// Sixteen-bit.
-		if (com::diag::amigo::PWM::control(com::diag::amigo::PWM::PIN_4B) != &TCCR4B) {
+		if (com::diag::amigo::PWM::pwm2control(com::diag::amigo::PWM::PIN_4B) != &TCCR4B) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::PWM::outputcompare8(com::diag::amigo::PWM::PIN_4B) != 0) {
+		if (com::diag::amigo::PWM::pwm2outputcompare8(com::diag::amigo::PWM::PIN_4B) != 0) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::PWM::outputcompare16(com::diag::amigo::PWM::PIN_4B) != &OCR4B) {
+		if (com::diag::amigo::PWM::pwm2outputcompare16(com::diag::amigo::PWM::PIN_4B) != &OCR4B) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::PWM::offset(com::diag::amigo::PWM::PIN_4B) != COM4B1) {
+		if (com::diag::amigo::PWM::pwm2offset(com::diag::amigo::PWM::PIN_4B) != COM4B1) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::PWM::mask(com::diag::amigo::PWM::PIN_4B) != _BV(COM4B1)) {
+		if (com::diag::amigo::PWM::pwm2mask(com::diag::amigo::PWM::PIN_4B) != _BV(COM4B1)) {
 			FAILED(__LINE__);
 			break;
 		}
 		// Invalid.
-		if (com::diag::amigo::PWM::control(com::diag::amigo::PWM::INVALID) != 0) {
+		if (com::diag::amigo::PWM::pwm2control(com::diag::amigo::PWM::INVALID) != 0) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::PWM::outputcompare8(com::diag::amigo::PWM::INVALID) != 0) {
+		if (com::diag::amigo::PWM::pwm2outputcompare8(com::diag::amigo::PWM::INVALID) != 0) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::PWM::outputcompare16(com::diag::amigo::PWM::INVALID) != 0) {
+		if (com::diag::amigo::PWM::pwm2outputcompare16(com::diag::amigo::PWM::INVALID) != 0) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::PWM::offset(com::diag::amigo::PWM::INVALID) != static_cast<uint8_t>(~0)) {
+		if (com::diag::amigo::PWM::pwm2offset(com::diag::amigo::PWM::INVALID) != static_cast<uint8_t>(~0)) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::PWM::mask(com::diag::amigo::PWM::INVALID) != 0) {
+		if (com::diag::amigo::PWM::pwm2mask(com::diag::amigo::PWM::INVALID) != 0) {
 			FAILED(__LINE__);
 			break;
 		}
@@ -1104,7 +1103,7 @@ void UnitTestTask::task() {
 	} while (false);
 #endif
 
-#if 1
+#if 0
 	UNITTEST("Analog Output (uses text fixture on EtherMega)");
 	// This is a separate test because it a text fixture to be wired up on the
 	// board and an operator to watch it. It is specific to the EtherMega 2560
@@ -1119,7 +1118,11 @@ void UnitTestTask::task() {
 			FAILED(__LINE__);
 			break;
 		}
-		if (PWM::outputcompare8(pin8bit) == 0) {
+		if (PWM::pwm2outputcompare8(pin8bit) == 0) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (PWM::pwm2timer(pin8bit) != PWM::TIMER_2) {
 			FAILED(__LINE__);
 			break;
 		}
@@ -1128,12 +1131,20 @@ void UnitTestTask::task() {
 			FAILED(__LINE__);
 			break;
 		}
-		if (PWM::outputcompare16(pin16bit) == 0) {
+		if (PWM::pwm2outputcompare16(pin16bit) == 0) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (PWM::pwm2timer(pin16bit) != PWM::TIMER_4) {
 			FAILED(__LINE__);
 			break;
 		}
 		com::diag::amigo::ticks_t ticks = milliseconds2ticks(500);
 		PWM pwm8bit(pin8bit);
+		if (!pwm8bit.configure(pin8bit)) {
+			FAILED(__LINE__);
+			break;
+		}
 		for (uint16_t ii = 0; ii <= 250; ii += 25) {
 			delay(ticks);
 			pwm8bit.start(ii);

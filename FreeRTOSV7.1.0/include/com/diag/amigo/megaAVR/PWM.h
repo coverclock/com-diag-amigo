@@ -108,57 +108,59 @@ public:
 	};
 
 	enum Timer {
-		TIMER_0,
-		TIMER_1,
-		TIMER_2,
-		TIMER_3,
-		TIMER_4,
-		TIMER_5,
-		TIMER_NONE
+		TIMER_0 = 0,
+		TIMER_1 = 1,
+		TIMER_2 = 2,
+		TIMER_3 = 3,
+		TIMER_4 = 4,
+		TIMER_5 = 5,
+		NONE = 255
 	};
 
+	static const uint8_t LOW = 0;
+
+	static const uint8_t HIGH = 255;
+
 	/***************************************************************************
-	 * MAPPING AND CONFIGURATION CLASS METHODS
+	 * MAPPING CLASS METHODS
 	 **************************************************************************/
 
-	static bool map(uint8_t pin, volatile void * & mycontrolbase, volatile void * & myoutputcompare8base, volatile void * & myoutputcompare16base, uint8_t & myoffset);
+	static volatile void * pwm2control(Pin pin);
 
-	static volatile void * control(Pin pin);
+	static volatile void * pwm2outputcompare8(Pin pin);
 
-	static volatile void * outputcompare8(Pin pin);
+	static volatile void * pwm2outputcompare16(Pin pin);
 
-	static volatile void * outputcompare16(Pin pin);
+	static uint8_t pwm2offset(Pin pin);
 
-	static uint8_t offset(Pin pin);
-
-	static uint8_t mask(Pin pin);
+	static uint8_t pwm2mask(Pin pin);
 
 	static GPIO::Pin pwm2gpio(Pin pin);
 
 	static Pin arduino2pwm(uint8_t id);
 
-	static Timer setup(Pin pin);
+	static Timer pwm2timer(Pin pin);
 
 	/***************************************************************************
 	 * CREATION AND DESTRUCTION
 	 **************************************************************************/
 
 	explicit PWM(Pin mypwmpin)
-	: gpio(pwm2gpio(mypwmpin))
-	, gpiomask(GPIO::mask(pwm2gpio(mypwmpin)))
-	, controlbase(control(mypwmpin))
-	, outputcompare8base(outputcompare8(mypwmpin))
-	, outputcompare16base(outputcompare16(mypwmpin))
-	, pwmmask(mask(mypwmpin))
+	: gpio(GPIO::gpio2base(pwm2gpio(mypwmpin)))
+	, gpiomask(GPIO::gpio2mask(pwm2gpio(mypwmpin)))
+	, controlbase(pwm2control(mypwmpin))
+	, outputcompare8base(pwm2outputcompare8(mypwmpin))
+	, outputcompare16base(pwm2outputcompare16(mypwmpin))
+	, pwmmask(pwm2mask(mypwmpin))
 	{}
 
 	explicit PWM(GPIO::Pin mygpiopin, Pin mypwmpin)
-	: gpio(mygpiopin)
-	, gpiomask(GPIO::mask(mygpiopin))
-	, controlbase(control(mypwmpin))
-	, outputcompare8base(outputcompare8(mypwmpin))
-	, outputcompare16base(outputcompare16(mypwmpin))
-	, pwmmask(mask(mypwmpin))
+	: gpio(GPIO::gpio2base(mygpiopin))
+	, gpiomask(GPIO::gpio2mask(mygpiopin))
+	, controlbase(pwm2control(mypwmpin))
+	, outputcompare8base(pwm2outputcompare8(mypwmpin))
+	, outputcompare16base(pwm2outputcompare16(mypwmpin))
+	, pwmmask(pwm2mask(mypwmpin))
 	{}
 
 	~PWM() {}
@@ -169,9 +171,13 @@ public:
 	 * STARTING AND STOPPING
 	 **************************************************************************/
 
-	void start(uint16_t dutycycle /* 0..65535 or 0..255 if eightbit */, bool eightbit = false);
+	bool configure(Timer timer);
 
-	void stop(bool activelow = false);
+	bool configure(Pin pin) { return configure(pwm2timer(pin)); }
+
+	void start(uint8_t dutycycle /* 0..255 */);
+
+	void stop();
 
 protected:
 
@@ -184,29 +190,9 @@ protected:
 
 };
 
-inline volatile void * PWM::control(Pin pin) {
-	volatile void * mycontrolbase;
-	return (map(pin, mycontrolbase, unused.vvp, unused.vvp, unused.u8) ? mycontrolbase : 0);
-}
-
-inline volatile void * PWM::outputcompare8(Pin pin) {
-	volatile void * myoutputcompare8base;
-	return (map(pin, unused.vvp, myoutputcompare8base, unused.vvp, unused.u8) ? myoutputcompare8base : 0);
-}
-
-inline volatile void * PWM::outputcompare16(Pin pin) {
-	volatile void * myoutputcompare16base;
-	return (map(pin, unused.vvp, unused.vvp, myoutputcompare16base, unused.u8) ? myoutputcompare16base : 0);
-}
-
-inline uint8_t PWM::offset(Pin pin) {
-	uint8_t myoffset;
-	return (map(pin, unused.vvp, unused.vvp, unused.vvp, myoffset) ? myoffset : ~0);
-}
-
-inline uint8_t PWM::mask(Pin pin) {
-	uint8_t myoffset;
-	return (map(pin, unused.vvp, unused.vvp, unused.vvp, myoffset) ? (1 << myoffset) : 0);
+inline uint8_t PWM::pwm2mask(Pin pin) {
+	uint8_t offset = pwm2offset(pin);
+	return (offset != static_cast<uint8_t>(~0)) ? (1 << offset) : 0;
 }
 
 }

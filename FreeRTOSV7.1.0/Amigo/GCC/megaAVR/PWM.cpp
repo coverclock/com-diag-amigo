@@ -173,17 +173,17 @@ static volatile void * const CONTROL[] PROGMEM = {
 
 static volatile void * const OUTPUTCOMPARE8[] PROGMEM = {
 #if !defined(portUSE_TIMER0)
-#	if defined(OCR0)
+#	if defined(OCR0) && !defined(OCR0L)
 		&OCR0,
 #	else
 		0,
 #	endif
-#	if defined(OCR0A)
+#	if defined(OCR0A) && !defined(OCR0AL)
 		&OCR0A,
 #	else
 		0,
 #	endif
-#	if defined(OCR0B)
+#	if defined(OCR0B) && !defined(OCR0BL)
 		&OCR0B,
 #	else
 		0,
@@ -194,22 +194,22 @@ static volatile void * const OUTPUTCOMPARE8[] PROGMEM = {
 		0,
 #endif
 #if !defined(portUSE_TIMER1)
-#	if defined(OCR1A)
+#	if defined(OCR1A) && !defined(OCR1AL)
 		&OCR1A,
 #	else
 		0,
 #	endif
-#	if defined(OCR1B)
+#	if defined(OCR1B) && !defined(OCR1BL)
 		&OCR1B,
 #	else
 		0,
 #	endif
-#	if defined(OCR1C)
+#	if defined(OCR1C) && !defined(OCR1CL)
 		&OCR1C,
 #	else
 		0,
 #	endif
-#	if defined(OCR1D)
+#	if defined(OCR1D) && !defined(OCR1DL)
 		&OCR1D,
 #	else
 		0,
@@ -221,17 +221,17 @@ static volatile void * const OUTPUTCOMPARE8[] PROGMEM = {
 		0,
 #endif
 #if !defined(portUSE_TIMER2)
-#	if defined(OCR2)
+#	if defined(OCR2) && !defined(OCR2L)
 		&OCR2,
 #	else
 		0,
 #	endif
-#	if defined(OCR2A)
+#	if defined(OCR2A) && !defined(OCR2AL)
 		&OCR2A,
 #	else
 		0,
 #	endif
-#	if defined(OCR2B)
+#	if defined(OCR2B) && !defined(OCR2BL)
 		&OCR2B,
 #	else
 		0,
@@ -245,22 +245,22 @@ static volatile void * const OUTPUTCOMPARE8[] PROGMEM = {
 		0,
 		0,
 #if !defined(portUSE_TIMER4)
-#	if defined(OCR4A)
+#	if defined(OCR4A) && !defined(OCR4AL)
 		&OCR4A,
 #	else
 		0,
 #	endif
-#	if defined(OCR4B)
+#	if defined(OCR4B) && !defined(OCR4BL)
 		&OCR4B,
 #	else
 		0,
 #	endif
-#	if defined(OCR4C)
+#	if defined(OCR4C) && !defined(OCR4CL)
 		&OCR4C,
 #	else
 		0,
 #	endif
-#	if defined(OCR4D)
+#	if defined(OCR4D) && !defined(OCR4DL)
 		&OCR4D,
 #	else
 		0,
@@ -762,12 +762,12 @@ static const uint8_t TIMER[] PROGMEM = {
 #	if defined(TCCR0)
 		PWM::TIMER_0,
 #	else
-		PWM::TIMER_NONE,
+		PWM::NONE,
 #	endif
 #	if defined(TCCR0A)
 		PWM::TIMER_0,
 #	else
-		PWM::TIMER_NONE,
+		PWM::NONE,
 #	endif
 #	if defined(TCCR0B)
 		PWM::TIMER_0,
@@ -775,160 +775,147 @@ static const uint8_t TIMER[] PROGMEM = {
 		PWM::TIMER_0,
 #	endif
 #else
-		PWM::TIMER_NONE,
-		PWM::TIMER_NONE,
-		PWM::TIMER_NONE,
+		PWM::NONE,
+		PWM::NONE,
+		PWM::NONE,
 #endif
 #if !defined(portUSE_TIMER1)
 #	if defined(TCCR1A)
 		PWM::TIMER_1,
 #	else
-		PWM::TIMER_NONE,
+		PWM::NONE,
 #	endif
 #	if defined(TCCR1B)
 		PWM::TIMER_1,
 #	else
-		PWM::TIMER_NONE,
+		PWM::NONE,
 #	endif
 #	if defined(TCCR1C)
 		PWM::TIMER_1,
 #	else
-		PWM::TIMER_NONE,
+		PWM::NONE,
 #	endif
 #	if defined(TCCR1D)
 		PWM::TIMER_1,
 #	else
-		PWM::TIMER_NONE,
+		PWM::NONE,
 #	endif
 #else
-		PWM::TIMER_NONE,
-		PWM::TIMER_NONE,
-		PWM::TIMER_NONE,
-		PWM::TIMER_NONE,
+		PWM::NONE,
+		PWM::NONE,
+		PWM::NONE,
+		PWM::NONE,
 #endif
 #if !defined(portUSE_TIMER2)
 #	if defined(TCCR2)
 		PWM::TIMER_2,
 #	else
-		PWM::TIMER_NONE,
+		PWM::NONE,
 #	endif
 #	if defined(TCCR2A)
 		PWM::TIMER_2,
 #	else
-		PWM::TIMER_NONE,
+		PWM::NONE,
 #	endif
 #	if defined(TCCR2B)
 		PWM::TIMER_2,
 #	else
-		PWM::TIMER_NONE,
+		PWM::NONE,
 #	endif
 #else
-		PWM::TIMER_NONE,
-		PWM::TIMER_NONE,
-		PWM::TIMER_NONE,
+		PWM::NONE,
+		PWM::NONE,
+		PWM::NONE,
 #endif
 #if !defined(portUSE_TIMER3)
 #	if defined(TCCR3A)
 		PWM::TIMER_3,
 #	else
-		PWM::TIMER_NONE,
+		PWM::NONE,
 #	endif
 #	if defined(TCCR3B)
 		PWM::TIMER_3,
 #	else
-		PWM::TIMER_NONE,
+		PWM::NONE,
 #	endif
 #	if defined(TCCR3C)
 		PWM::TIMER_3,
 #	else
-		PWM::TIMER_NONE,
+		PWM::NONE,
 #	endif
 #else
-		PWM::TIMER_NONE,
-		PWM::TIMER_NONE,
-		PWM::TIMER_NONE,
+		PWM::NONE,
+		PWM::NONE,
+		PWM::NONE,
 #endif
 #if !defined(portUSE_TIMER4)
 #	if defined(TCCR4A)
 		PWM::TIMER_4,
 #	else
-		PWM::TIMER_NONE,
+		PWM::NONE,
 #	endif
 #	if defined(TCCR4B)
 		PWM::TIMER_4,
 #	else
-		PWM::TIMER_NONE,
+		PWM::NONE,
 #	endif
 #	if defined(TCCR4C)
 		PWM::TIMER_4,
 #	else
-		PWM::TIMER_NONE,
+		PWM::NONE,
 #	endif
 #	if defined(TCCR4D)
 		PWM::TIMER_4,
 #	else
-		PWM::TIMER_NONE,
+		PWM::NONE,
 #	endif
 #else
-		PWM::TIMER_NONE,
-		PWM::TIMER_NONE,
-		PWM::TIMER_NONE,
-		PWM::TIMER_NONE,
+		PWM::NONE,
+		PWM::NONE,
+		PWM::NONE,
+		PWM::NONE,
 #endif
 #if !defined(portUSE_TIMER5)
 #	if defined(TCCR5A)
 		PWM::TIMER_5,
 #	else
-		PWM::TIMER_NONE,
+		PWM::NONE,
 #	endif
 #	if defined(TCCR5B)
 		PWM::TIMER_5,
 #	else
-		PWM::TIMER_NONE,
+		PWM::NONE,
 #	endif
 #	if defined(TCCR5C)
 		PWM::TIMER_5,
 #	else
-		PWM::TIMER_NONE,
+		PWM::NONE,
 #	endif
 #else
-		PWM::TIMER_NONE,
-		PWM::TIMER_NONE,
-		PWM::TIMER_NONE,
+		PWM::NONE,
+		PWM::NONE,
+		PWM::NONE,
 #endif
 };
 
 /*******************************************************************************
- * IMPLEMENTATION
+ * MAPPING CLASS METHODS
  ******************************************************************************/
 
-bool PWM::map(uint8_t pin, volatile void * & mycontrolbase, volatile void * & myoutputcompare8base, volatile void * & myoutputcompare16base, uint8_t & myoffset) {
-	volatile void * controlbase = 0;
-	volatile void * outputcompare8base = 0;
-	volatile void * outputcompare16base = 0;
-	uint8_t offset = ~0;
-	if (pin >= countof(CONTROL)) {
-		// Do nothing.
-	} else if ((controlbase = reinterpret_cast<volatile void *>(pgm_read_word(&(CONTROL[pin])))) == 0) {
-		// Do nothing.
-	} if (pin >= countof(OUTPUTCOMPARE8)) {
-		// Do nothing.
-	} if (pin >= countof(OUTPUTCOMPARE16)) {
-		// Do nothing.
-	} else if (((outputcompare16base = reinterpret_cast<volatile void *>(pgm_read_word(&(OUTPUTCOMPARE16[pin])))) == 0) &&
-	           ((outputcompare8base = reinterpret_cast<volatile void *>(pgm_read_word(&(OUTPUTCOMPARE8[pin])))) == 0)) {
-		// Do nothing.
-	} if (pin >= countof(OFFSET)) {
-		// Do nothing.
-	} else if ((offset = pgm_read_byte(&(OFFSET[pin]))) == static_cast<uint8_t>(~0)) {
-		// Do nothing.
-	} else {
-		mycontrolbase = controlbase;
-		myoutputcompare8base = outputcompare8base;
-		myoutputcompare16base = outputcompare16base;
-		myoffset = offset;
-	}
-	return (controlbase != 0);
+volatile void * PWM::pwm2control(Pin pin) {
+	return (pin < countof(CONTROL)) ? reinterpret_cast<volatile void *>(pgm_read_word(&(CONTROL[pin]))) : 0;
+}
+
+volatile void * PWM::pwm2outputcompare8(Pin pin) {
+	return (pin < countof(CONTROL)) ? reinterpret_cast<volatile void *>(pgm_read_word(&(OUTPUTCOMPARE8[pin]))) : 0;
+}
+
+volatile void * PWM::pwm2outputcompare16(Pin pin) {
+	return (pin < countof(CONTROL)) ? reinterpret_cast<volatile void *>(pgm_read_word(&(OUTPUTCOMPARE16[pin]))) : 0;
+}
+
+uint8_t PWM::pwm2offset(Pin pin) {
+	return (pin < countof(CONTROL)) ? pgm_read_byte(&(OFFSET[pin])) : ~0;
 }
 
 GPIO::Pin PWM::pwm2gpio(Pin pin) {
@@ -939,9 +926,16 @@ PWM::Pin PWM::arduino2pwm(uint8_t id) {
 	return (id < countof(ARDUINOPIN)) ? static_cast<Pin>(pgm_read_byte(&ARDUINOPIN[id])) : INVALID;
 }
 
-PWM::Timer PWM::setup(Pin pin) {
-	bool result = false;
-	Timer timer = (pin < countof(TIMER)) ? TIMER_NONE : static_cast<Timer>(pgm_read_byte(&TIMER[pin]));
+PWM::Timer PWM::pwm2timer(Pin pin) {
+	return (pin < countof(TIMER)) ? static_cast<Timer>(pgm_read_byte(&TIMER[pin])) : NONE;
+}
+
+/*******************************************************************************
+ * CONTROL INSTANCE METHODS
+ ******************************************************************************/
+
+bool PWM::configure(Timer timer) {
+	bool result = true;
 
 	// The code and comments below were gatefully cribbed with minor changes
 	// directly from Arduino 1.0 wiring.c by David A. Mellis. Any flaws are
@@ -973,7 +967,7 @@ PWM::Timer PWM::setup(Pin pin) {
 		TCCR0A |= CS01;
 		TCCR0A |= CS00;
 #else
-		timer = TIMER_NONE;
+		result = false;
 #endif
 		break;
 
@@ -991,7 +985,7 @@ PWM::Timer PWM::setup(Pin pin) {
 		TCCR1 |= CS10;
 #	endif
 #else
-		timer = TIMER_NONE;
+		result = false;
 #endif
 		// Put timer 1 in 8-bit phase correct PWM mode.
 #if defined(TCCR1A) && defined(WGM10)
@@ -1010,7 +1004,7 @@ PWM::Timer PWM::setup(Pin pin) {
 #elif defined(TCCR2A) && defined(WGM20)
 		TCCR2A |= WGM20;
 #else
-		timer = TIMER_NONE;
+		result = false;
 #endif
 		break;
 
@@ -1020,7 +1014,7 @@ PWM::Timer PWM::setup(Pin pin) {
 		TCCR3B |= CS30;
 		TCCR3A |= WGM30;	// Put timer 3 in 8-bit phase correct PWM mode.
 #else
-		timer = TIMER_NONE;
+		result = false;
 #endif
 		break;
 
@@ -1030,7 +1024,7 @@ PWM::Timer PWM::setup(Pin pin) {
 		TCCR4B |= CS40;
 		TCCR4A |= WGM40;	// Put timer 4 in 8-bit phase correct PWM mode.
 #else
-		timer = TIMER_NONE;
+		result = false;
 #endif
 		break;
 
@@ -1040,63 +1034,58 @@ PWM::Timer PWM::setup(Pin pin) {
 		TCCR5B |= CS50;
 		TCCR5A |= WGM50;	// Put timer 5 in 8-bit phase correct PWM mode.
 #else
-		timer = TIMER_NONE;
+		result = false;
 #endif
 		break;
 
+	case NONE:
 	default:
-		// Do nothing.
+		result = false;
 		break;
 	}
 
-	return timer;
+	if (result) {
+		gpio.output(gpiomask);
+	}
+
+	return result;
 }
 
-void PWM::start(uint16_t dutycycle, bool eightbit) {
-	if (*this) {
-		gpio.output(gpiomask);
-		if (dutycycle == 0) {
-			// Duty cycle is 0%, which is DC low.
-			gpio.clear(gpiomask);
-		} else if (eightbit && (outputcompare8base != 0) && (dutycycle >= 0xff)) {
-			// Duty cycle is 100% for an eight-bit timer, which is DC high.
-			gpio.set(gpiomask);
-		} else if ((outputcompare16base != 0) && (dutycycle == 0xffff)) {
-			// Duty cycle is 100% for a sixteen-bit timer, which is DC high.
-			gpio.set(gpiomask);
-		} else if ((outputcompare8base != 0) && (dutycycle >= 0xff)) {
-			// Duty cycle is 100% for an eight-bit timer, which is DC high.
-			gpio.set(gpiomask);
-		} else {
-			// (0% < duty cycle < 100%) so we generate a square wave...
-			COM_DIAG_AMIGO_GPIO_TCCR |= pwmmask;
-			if (eightbit && (outputcompare8base != 0)) {
-				// ... using eight bit resolution instead of sixteen-bit.
-				COM_DIAG_AMIGO_GPIO_OCR8 = dutycycle;
-			} else if (outputcompare16base != 0) {
-				// ... using sixteen bit resolution that is available.
-				COM_DIAG_AMIGO_GPIO_OCR16 = dutycycle;
-			} else {
-				// ... using eight bit resolution that is available.
-				COM_DIAG_AMIGO_GPIO_OCR8 = dutycycle;
-			}
-		}
+void PWM::start(uint8_t dutycycle) {
+	if (!*this) {
+		// Do nothing.
+	} else if (dutycycle == LOW) {
+		// Duty cycle is 0%, which is DC low.
+		gpio.clear(gpiomask);
+	} else if (dutycycle == HIGH) {
+		// Duty cycle is 100%, which is DC high.
+		gpio.set(gpiomask);
+	} else if (outputcompare16base != 0) {
+		// (0% < duty cycle < 100%) so we generate a square wave...
+		COM_DIAG_AMIGO_GPIO_TCCR |= pwmmask;
+		// ... using sixteen bit resolution that is available.
+		COM_DIAG_AMIGO_GPIO_OCR16 = dutycycle;
+	} else if (outputcompare8base != 0) {
+		// (0% < duty cycle < 100%) so we generate a square wave...
+		COM_DIAG_AMIGO_GPIO_TCCR |= pwmmask;
+		// ... using eight bit resolution that is available.
+		COM_DIAG_AMIGO_GPIO_OCR8 = dutycycle;
+	} else {
+		// Do nothing.
 	}
 }
 
-void PWM::stop(bool activelow) {
-	if (*this) {
+void PWM::stop() {
+	if (!*this) {
+		// Do nothing.
+	} else if (outputcompare16base != 0) {
 		COM_DIAG_AMIGO_GPIO_TCCR &= ~pwmmask;
-		if (outputcompare16base != 0) {
-			COM_DIAG_AMIGO_GPIO_OCR16 = 0;
-		} else {
-			COM_DIAG_AMIGO_GPIO_OCR8 = 0;
-		}
-		if (activelow) {
-			gpio.set(gpiomask);
-		} else {
-			gpio.clear(gpiomask);
-		}
+		COM_DIAG_AMIGO_GPIO_OCR16 = 0;
+	} else if (outputcompare8base != 0) {
+		COM_DIAG_AMIGO_GPIO_TCCR &= ~pwmmask;
+		COM_DIAG_AMIGO_GPIO_OCR8 = 0;
+	} else {
+		// Do nothing.
 	}
 }
 
