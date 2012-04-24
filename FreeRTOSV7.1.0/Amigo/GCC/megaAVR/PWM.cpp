@@ -4,8 +4,8 @@
  * Licensed under the terms in README.h\n
  * Chip Overclock mailto:coverclock@diag.com\n
  * http://www.diag.com/navigation/downloads/Amigo.html\n
- * This code is gratefully inspired by and cripped from wiring_analog.c and
- * pins_arduino.h by David A. Mellis and Mark Sproul.
+ * This code is gratefully inspired by and cribbed from wiring.c,
+ * wiring_analog.c, and pins_arduino.h by David A. Mellis and Mark Sproul.
  */
 
 #include "com/diag/amigo/countof.h"
@@ -21,6 +21,10 @@
 namespace com {
 namespace diag {
 namespace amigo {
+
+/*******************************************************************************
+ * MAP PWM PIN TO CONTROL REGISTER
+ ******************************************************************************/
 
 static volatile void * const CONTROL[] PROGMEM = {
 #if !defined(portUSE_TIMER0)
@@ -163,6 +167,10 @@ static volatile void * const CONTROL[] PROGMEM = {
 #endif
 };
 
+/*******************************************************************************
+ * MAP PWM PIN TO EIGHT-BIT OUTPUT COMPARE REGISTER
+ ******************************************************************************/
+
 static volatile void * const OUTPUTCOMPARE8[] PROGMEM = {
 #if !defined(portUSE_TIMER0)
 #	if defined(OCR0)
@@ -267,6 +275,10 @@ static volatile void * const OUTPUTCOMPARE8[] PROGMEM = {
 		0,
 		0,
 };
+
+/*******************************************************************************
+ * MAP PWM PIN TO SIXTEEN-BIT OUTPUT COMPARE REGISTER
+ ******************************************************************************/
 
 static volatile void * const OUTPUTCOMPARE16[] PROGMEM = {
 #if !defined(portUSE_TIMER0)
@@ -382,6 +394,10 @@ static volatile void * const OUTPUTCOMPARE16[] PROGMEM = {
 		0,
 #endif
 };
+
+/*******************************************************************************
+ * MAP PWM PIN TO BIT OFFSET
+ ******************************************************************************/
 
 static const uint8_t OFFSET[] PROGMEM = {
 #if !defined(portUSE_TIMER0)
@@ -524,6 +540,10 @@ static const uint8_t OFFSET[] PROGMEM = {
 #endif
 };
 
+/*******************************************************************************
+ * MAP PWM PIN TO GPIO PIN
+ ******************************************************************************/
+
 static const uint8_t GPIOPIN[] PROGMEM = {
 #if defined(__AVR_ATmega2560__)
 	GPIO::INVALID,	// PIN_0
@@ -571,6 +591,10 @@ static const uint8_t GPIOPIN[] PROGMEM = {
 #	error PWM must be modified for this microcontroller!
 #endif
 };
+
+/*******************************************************************************
+ * MAP ARDUINO DIGITAL PIN TO PWM PIN
+ ******************************************************************************/
 
 static const uint8_t ARDUINOPIN[] PROGMEM = {
 #if defined(__AVR_ATmega2560__)
@@ -729,6 +753,155 @@ static const uint8_t ARDUINOPIN[] PROGMEM = {
 #endif
 };
 
+/*******************************************************************************
+ * MAP PWM PIN TO TIMER
+ ******************************************************************************/
+
+static const uint8_t TIMER[] PROGMEM = {
+#if !defined(portUSE_TIMER0)
+#	if defined(TCCR0)
+		PWM::TIMER_0,
+#	else
+		PWM::TIMER_NONE,
+#	endif
+#	if defined(TCCR0A)
+		PWM::TIMER_0,
+#	else
+		PWM::TIMER_NONE,
+#	endif
+#	if defined(TCCR0B)
+		PWM::TIMER_0,
+#	else
+		PWM::TIMER_0,
+#	endif
+#else
+		PWM::TIMER_NONE,
+		PWM::TIMER_NONE,
+		PWM::TIMER_NONE,
+#endif
+#if !defined(portUSE_TIMER1)
+#	if defined(TCCR1A)
+		PWM::TIMER_1,
+#	else
+		PWM::TIMER_NONE,
+#	endif
+#	if defined(TCCR1B)
+		PWM::TIMER_1,
+#	else
+		PWM::TIMER_NONE,
+#	endif
+#	if defined(TCCR1C)
+		PWM::TIMER_1,
+#	else
+		PWM::TIMER_NONE,
+#	endif
+#	if defined(TCCR1D)
+		PWM::TIMER_1,
+#	else
+		PWM::TIMER_NONE,
+#	endif
+#else
+		PWM::TIMER_NONE,
+		PWM::TIMER_NONE,
+		PWM::TIMER_NONE,
+		PWM::TIMER_NONE,
+#endif
+#if !defined(portUSE_TIMER2)
+#	if defined(TCCR2)
+		PWM::TIMER_2,
+#	else
+		PWM::TIMER_NONE,
+#	endif
+#	if defined(TCCR2A)
+		PWM::TIMER_2,
+#	else
+		PWM::TIMER_NONE,
+#	endif
+#	if defined(TCCR2B)
+		PWM::TIMER_2,
+#	else
+		PWM::TIMER_NONE,
+#	endif
+#else
+		PWM::TIMER_NONE,
+		PWM::TIMER_NONE,
+		PWM::TIMER_NONE,
+#endif
+#if !defined(portUSE_TIMER3)
+#	if defined(TCCR3A)
+		PWM::TIMER_3,
+#	else
+		PWM::TIMER_NONE,
+#	endif
+#	if defined(TCCR3B)
+		PWM::TIMER_3,
+#	else
+		PWM::TIMER_NONE,
+#	endif
+#	if defined(TCCR3C)
+		PWM::TIMER_3,
+#	else
+		PWM::TIMER_NONE,
+#	endif
+#else
+		PWM::TIMER_NONE,
+		PWM::TIMER_NONE,
+		PWM::TIMER_NONE,
+#endif
+#if !defined(portUSE_TIMER4)
+#	if defined(TCCR4A)
+		PWM::TIMER_4,
+#	else
+		PWM::TIMER_NONE,
+#	endif
+#	if defined(TCCR4B)
+		PWM::TIMER_4,
+#	else
+		PWM::TIMER_NONE,
+#	endif
+#	if defined(TCCR4C)
+		PWM::TIMER_4,
+#	else
+		PWM::TIMER_NONE,
+#	endif
+#	if defined(TCCR4D)
+		PWM::TIMER_4,
+#	else
+		PWM::TIMER_NONE,
+#	endif
+#else
+		PWM::TIMER_NONE,
+		PWM::TIMER_NONE,
+		PWM::TIMER_NONE,
+		PWM::TIMER_NONE,
+#endif
+#if !defined(portUSE_TIMER5)
+#	if defined(TCCR5A)
+		PWM::TIMER_5,
+#	else
+		PWM::TIMER_NONE,
+#	endif
+#	if defined(TCCR5B)
+		PWM::TIMER_5,
+#	else
+		PWM::TIMER_NONE,
+#	endif
+#	if defined(TCCR5C)
+		PWM::TIMER_5,
+#	else
+		PWM::TIMER_NONE,
+#	endif
+#else
+		PWM::TIMER_NONE,
+		PWM::TIMER_NONE,
+		PWM::TIMER_NONE,
+#endif
+};
+
+/*******************************************************************************
+ * IMPLEMENTATION
+ ******************************************************************************/
+
 bool PWM::map(uint8_t pin, volatile void * & mycontrolbase, volatile void * & myoutputcompare8base, volatile void * & myoutputcompare16base, uint8_t & myoffset) {
 	volatile void * controlbase = 0;
 	volatile void * outputcompare8base = 0;
@@ -758,12 +931,125 @@ bool PWM::map(uint8_t pin, volatile void * & mycontrolbase, volatile void * & my
 	return (controlbase != 0);
 }
 
-GPIO::Pin PWM::pwm2gpio(PWM::Pin pin) {
+GPIO::Pin PWM::pwm2gpio(Pin pin) {
 	return (pin < countof(GPIOPIN)) ? static_cast<GPIO::Pin>(pgm_read_byte(&GPIOPIN[pin])) : GPIO::INVALID;
 }
 
 PWM::Pin PWM::arduino2pwm(uint8_t id) {
 	return (id < countof(ARDUINOPIN)) ? static_cast<Pin>(pgm_read_byte(&ARDUINOPIN[id])) : INVALID;
+}
+
+PWM::Timer PWM::setup(Pin pin) {
+	bool result = false;
+	Timer timer = (pin < countof(TIMER)) ? TIMER_NONE : static_cast<Timer>(pgm_read_byte(&TIMER[pin]));
+
+	// The code and comments below were gatefully cribbed with minor changes
+	// directly from Arduino 1.0 wiring.c by David A. Mellis. Any flaws are
+	// strictly mine, introduced by my editing. Arduino does this initialization
+	// up front in its init() function. Amigo does it every time the caller
+	// wants to set up a pin for PWM.
+
+	switch (timer) {
+
+	case TIMER_0:
+#if defined(TCCR0A) && defined(WGM01)
+		TCCR0A |= WGM01;
+		TCCR0A |= WGM00;
+#endif
+		// Set timer 0 prescale factor to 64.
+#if defined(__AVR_ATmega128__)
+		// CPU specific: different values for the ATmega128.
+		TCCR0 |= CS02;
+#elif defined(TCCR0) && defined(CS01) && defined(CS00)
+		// This combination is for the standard atmega8.
+		TCCR0 |= CS01;
+		TCCR0 |= CS00;
+#elif defined(TCCR0B) && defined(CS01) && defined(CS00)
+		// This combination is for the standard 168/328/1280/2560.
+		TCCR0B |= CS01;
+		TCCR0B |= CS00;
+#elif defined(TCCR0A) && defined(CS01) && defined(CS00)
+		// This combination is for the __AVR_ATmega645__ series.
+		TCCR0A |= CS01;
+		TCCR0A |= CS00;
+#else
+		timer = TIMER_NONE;
+#endif
+		break;
+
+	case TIMER_1:
+#if defined(TCCR1B) && defined(CS11) && defined(CS10)
+		TCCR1B = 0;
+		// Set timer 1 prescale factor to 64.
+		TCCR1B |= CS11;
+#	if F_CPU >= 8000000L
+		TCCR1B |= CS10;
+#	endif
+#elif defined(TCCR1) && defined(CS11) && defined(CS10)
+		TCCR1 |= CS11;
+#	if F_CPU >= 8000000L
+		TCCR1 |= CS10;
+#	endif
+#else
+		timer = TIMER_NONE;
+#endif
+		// Put timer 1 in 8-bit phase correct PWM mode.
+#if defined(TCCR1A) && defined(WGM10)
+		TCCR1A |= WGM10;
+#endif
+		break;
+
+	case TIMER_2:
+#if defined(TCCR2) && defined(CS22)
+		TCCR2 |= CS22;
+#elif defined(TCCR2B) && defined(CS22)
+		TCCR2B |= CS22;
+#endif
+#if defined(TCCR2) && defined(WGM20)
+		TCCR2 |= WGM20;
+#elif defined(TCCR2A) && defined(WGM20)
+		TCCR2A |= WGM20;
+#else
+		timer = TIMER_NONE;
+#endif
+		break;
+
+	case TIMER_3:
+#if defined(TCCR3B) && defined(CS31) && defined(WGM30)
+		TCCR3B |= CS31;		// Set timer 3 prescale factor to 64.
+		TCCR3B |= CS30;
+		TCCR3A |= WGM30;	// Put timer 3 in 8-bit phase correct PWM mode.
+#else
+		timer = TIMER_NONE;
+#endif
+		break;
+
+	case TIMER_4:
+#if defined(TCCR4B) && defined(CS41) && defined(WGM40)
+		TCCR4B |= CS41;		// Set timer 4 prescale factor to 64.
+		TCCR4B |= CS40;
+		TCCR4A |= WGM40;	// Put timer 4 in 8-bit phase correct PWM mode.
+#else
+		timer = TIMER_NONE;
+#endif
+		break;
+
+	case TIMER_5:
+#if defined(TCCR5B) && defined(CS51) && defined(WGM50)
+		TCCR5B |= CS51;		// Set timer 5 prescale factor to 64.
+		TCCR5B |= CS50;
+		TCCR5A |= WGM50;	// Put timer 5 in 8-bit phase correct PWM mode.
+#else
+		timer = TIMER_NONE;
+#endif
+		break;
+
+	default:
+		// Do nothing.
+		break;
+	}
+
+	return timer;
 }
 
 void PWM::start(uint16_t dutycycle, bool eightbit) {

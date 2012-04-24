@@ -1105,33 +1105,49 @@ void UnitTestTask::task() {
 #endif
 
 #if 1
-	UNITTEST("Square Wave Generation (uses text fixture on EtherMega)");
+	UNITTEST("Analog Output (uses text fixture on EtherMega)");
 	// This is a separate test because it a text fixture to be wired up on the
 	// board and an operator to watch it. It is specific to the EtherMega 2560
 	// board. It is designed not to conflict with the test fixture for the
 	// Digital I/O test above.
 	// OC4C (Arduino Mega pin 8) wired to voltmeter or logic analyzer.
-	// OC2A (Arduino Mega pin 9) wired to voltmeter or logic analyzer.
+	// OC2B (Arduino Mega pin 9) wired to voltmeter or logic analyzer.
 	do {
 		typedef com::diag::amigo::PWM PWM;
-		PWM::Pin pwm16 = PWM::arduino2pwm(8);
-		if (pwm16 != PWM::PIN_4C) {
+		PWM::Pin pin8bit = PWM::arduino2pwm(9);
+		if (pin8bit != PWM::PIN_2B) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (PWM::outputcompare16(pwm16) == 0) {
+		if (PWM::outputcompare8(pin8bit) == 0) {
 			FAILED(__LINE__);
 			break;
 		}
-		PWM::Pin pwm8 = PWM::arduino2pwm(9);
-		if (pwm8 != PWM::PIN_2A) {
+		PWM::Pin pin16bit = PWM::arduino2pwm(8);
+		if (pin16bit != PWM::PIN_4C) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (PWM::outputcompare8(pwm8) == 0) {
+		if (PWM::outputcompare16(pin16bit) == 0) {
 			FAILED(__LINE__);
 			break;
 		}
+		com::diag::amigo::ticks_t ticks = milliseconds2ticks(500);
+		PWM pwm8bit(pin8bit);
+		for (uint16_t ii = 0; ii <= 250; ii += 25) {
+			delay(ticks);
+			pwm8bit.start(ii);
+		}
+		delay(ticks);
+		pwm8bit.start(255);
+		for (uint16_t ii = 250; ii > 0; ii -= 25) {
+			delay(ticks);
+			pwm8bit.start(ii);
+		}
+		delay(ticks);
+		pwm8bit.start(0);
+		delay(ticks);
+		pwm8bit.stop();
 		PASSED();
 	} while (false);
 #endif
