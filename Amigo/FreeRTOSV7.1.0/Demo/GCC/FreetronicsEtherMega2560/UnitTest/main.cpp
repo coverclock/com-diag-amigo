@@ -1067,8 +1067,21 @@ void UnitTestTask::task() {
 	// This should work on either the 2560 (Arduino Mega and compatibles) or
 	// the 328p (Arduino Uno and compatibles) since both implement PWM on
 	// timers 0, 1, and 2. Depending on what timer FreeRTOS is configured to
-	// use as the system tick timer, some of these tests have to be suppressed.
+	// use as the system tick timer, some of these tests have to be suppressed
+	// because attempts to use a PWM pin that depends on the FreeRTOS tick timer
+	// will cause the underlying code will return some deliberately invalid
+	// value like NULL or 0 or ~0. You can't actually test this because the
+	// PWM class will not even define a pin enumerated value for PWM pins
+	// on the FreeRTOS tick timer.
 	do {
+		if (com::diag::amigo::PWM::LOW != 0x00U) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::PWM::HIGH != 0xffU) {
+			FAILED(__LINE__);
+			break;
+		}
 #if defined(TCCR0B) && !defined(portUSE_TIMER0)
 		if (com::diag::amigo::PWM::pwm2control(com::diag::amigo::PWM::PIN_0B) != &TCCR0A) {
 			FAILED(__LINE__);
@@ -1569,7 +1582,7 @@ void UnitTestTask::task() {
 	// Just to make sure the regular data memory Print works.
 
 	com::diag::amigo::Print testf(serialsink);
-	testf("Type \"[control-a][control-\\]y\" to exit Mac screen utility.\n");
+	testf("Type \"<control-a><control-\\>y\" to exit Mac screen utility.\n");
 
 	serialp->flush();
 }

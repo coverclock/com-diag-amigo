@@ -1066,12 +1066,14 @@ bool PWM::configure(bool high) {
 void PWM::start(uint8_t dutycycle) {
 	if (!*this) {
 		// Do nothing.
+#if 0
 	} else if (dutycycle == LOW) {
 		// Duty cycle is 0%, which is DC low.
 		gpio.clear(gpiomask);
 	} else if (dutycycle == HIGH) {
 		// Duty cycle is 100%, which is DC high.
 		gpio.set(gpiomask);
+#endif
 	} else if (outputcompare16base != 0) {
 		// (0% < duty cycle < 100%) so we generate a outverted square wave...
 		TCCR |= pwmmask;
