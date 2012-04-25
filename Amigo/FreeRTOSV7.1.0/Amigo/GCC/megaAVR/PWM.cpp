@@ -12,11 +12,9 @@
 #include "com/diag/amigo/target/harvard.h"
 #include "com/diag/amigo/target/PWM.h"
 
-#define COM_DIAG_AMIGO_GPIO_TCCR		COM_DIAG_AMIGO_MMIO_8(controlbase, 0)
-
-#define COM_DIAG_AMIGO_GPIO_OCR8		COM_DIAG_AMIGO_MMIO_8(outputcompare8base, 0)
-
-#define COM_DIAG_AMIGO_GPIO_OCR16		COM_DIAG_AMIGO_MMIO_16(outputcompare16base, 0)
+#define TCCR		COM_DIAG_AMIGO_MMIO_8(controlbase, 0)
+#define OCR8		COM_DIAG_AMIGO_MMIO_8(outputcompare8base, 0)
+#define OCR16		COM_DIAG_AMIGO_MMIO_16(outputcompare16base, 0)
 
 namespace com {
 namespace diag {
@@ -39,7 +37,7 @@ static volatile void * const CONTROL[] PROGMEM = {
 		0,
 #	endif
 #	if defined(TCCR0B)
-		&TCCR0B,
+		&TCCR0A,
 #	else
 		0,
 #	endif
@@ -55,17 +53,17 @@ static volatile void * const CONTROL[] PROGMEM = {
 		0,
 #	endif
 #	if defined(TCCR1B)
-		&TCCR1B,
+		&TCCR1A,
 #	else
 		0,
 #	endif
 #	if defined(TCCR1C)
-		&TCCR1C,
+		&TCCR1A,
 #	else
 		0,
 #	endif
 #	if defined(TCCR1D)
-		&TCCR1D,
+		&TCCR1A,
 #	else
 		0,
 #	endif
@@ -87,7 +85,7 @@ static volatile void * const CONTROL[] PROGMEM = {
 		0,
 #	endif
 #	if defined(TCCR2B)
-		&TCCR2B,
+		&TCCR2A,
 #	else
 		0,
 #	endif
@@ -103,12 +101,12 @@ static volatile void * const CONTROL[] PROGMEM = {
 		0,
 #	endif
 #	if defined(TCCR3B)
-		&TCCR3B,
+		&TCCR3A,
 #	else
 		0,
 #	endif
 #	if defined(TCCR3C)
-		&TCCR3C,
+		&TCCR3A,
 #	else
 		0,
 #	endif
@@ -124,17 +122,17 @@ static volatile void * const CONTROL[] PROGMEM = {
 		0,
 #	endif
 #	if defined(TCCR4B)
-		&TCCR4B,
+		&TCCR4A,
 #	else
 		0,
 #	endif
 #	if defined(TCCR4C)
-		&TCCR4C,
+		&TCCR4A,
 #	else
 		0,
 #	endif
 #	if defined(TCCR4D)
-		&TCCR4D,
+		&TCCR4A,
 #	else
 		0,
 #	endif
@@ -151,12 +149,12 @@ static volatile void * const CONTROL[] PROGMEM = {
 		0,
 #	endif
 #	if defined(TCCR5B)
-		&TCCR5B,
+		&TCCR5A,
 #	else
 		0,
 #	endif
 #	if defined(TCCR5C)
-		&TCCR5C,
+		&TCCR5A,
 #	else
 		0,
 #	endif
@@ -934,8 +932,8 @@ PWM::Timer PWM::pwm2timer(Pin pin) {
  * CONTROL INSTANCE METHODS
  ******************************************************************************/
 
-PWM::Timer PWM::configure() {
-	Timer result = timer;
+bool PWM::configure(bool high) {
+	bool result = true;
 
 	// The code and comments below were gratefully cribbed with minor changes
 	// directly from Arduino 1.0 wiring.c by David A. Mellis. Any flaws are
@@ -946,117 +944,132 @@ PWM::Timer PWM::configure() {
 
 	switch (timer) {
 
+#if !defined(portUSE_TIMER0)
 	case TIMER_0:
-#if defined(TCCR0A) && defined(WGM01)
+#	if defined(TCCR0A) && defined(WGM01)
 		TCCR0A |= WGM01;
 		TCCR0A |= WGM00;
-#endif
+#	endif
 		// Set timer 0 prescale factor to 64.
-#if defined(__AVR_ATmega128__)
+#	if defined(__AVR_ATmega128__)
 		// CPU specific: different values for the ATmega128.
 		TCCR0 |= CS02;
-#elif defined(TCCR0) && defined(CS01) && defined(CS00)
+#	elif defined(TCCR0) && defined(CS01) && defined(CS00)
 		// This combination is for the standard atmega8.
 		TCCR0 |= CS01;
 		TCCR0 |= CS00;
-#elif defined(TCCR0B) && defined(CS01) && defined(CS00)
+#	elif defined(TCCR0B) && defined(CS01) && defined(CS00)
 		// This combination is for the standard 168/328/1280/2560.
 		TCCR0B |= CS01;
 		TCCR0B |= CS00;
-#elif defined(TCCR0A) && defined(CS01) && defined(CS00)
+#	elif defined(TCCR0A) && defined(CS01) && defined(CS00)
 		// This combination is for the __AVR_ATmega645__ series.
 		TCCR0A |= CS01;
 		TCCR0A |= CS00;
-#else
-		result = NONE;
-#endif
+#	else
+		result = false;
+#	endif
 		break;
+#endif
 
+#if !defined(portUSE_TIMER1)
 	case TIMER_1:
-#if defined(TCCR1B) && defined(CS11) && defined(CS10)
+#	if defined(TCCR1B) && defined(CS11) && defined(CS10)
 		TCCR1B = 0;
 		// Set timer 1 prescale factor to 64.
 		TCCR1B |= CS11;
-#	if F_CPU >= 8000000L
+#		if F_CPU >= 8000000L
 		TCCR1B |= CS10;
-#	endif
-#elif defined(TCCR1) && defined(CS11) && defined(CS10)
+#		endif
+#	elif defined(TCCR1) && defined(CS11) && defined(CS10)
 		TCCR1 |= CS11;
-#	if F_CPU >= 8000000L
+#		if F_CPU >= 8000000L
 		TCCR1 |= CS10;
+#		endif
+#	else
+		result = false;
 #	endif
-#else
-		result = NONE;
-#endif
 		// Put timer 1 in 8-bit phase correct PWM mode.
-#if defined(TCCR1A) && defined(WGM10)
+#	if defined(TCCR1A) && defined(WGM10)
 		TCCR1A |= WGM10;
-#endif
+#	endif
 		break;
+#endif
 
+#if !defined(portUSE_TIMER2)
 	case TIMER_2:
-#if defined(TCCR2) && defined(CS22)
+#	if defined(TCCR2) && defined(CS22)
 		TCCR2 |= CS22;
-#elif defined(TCCR2B) && defined(CS22)
+#	elif defined(TCCR2B) && defined(CS22)
 		TCCR2B |= CS22;
-#else
+#	else
 		result = NONE;
-#endif
-#if defined(TCCR2) && defined(WGM20)
+#	endif
+#	if defined(TCCR2) && defined(WGM20)
 		TCCR2 |= WGM20;
-#elif defined(TCCR2A) && defined(WGM20)
+#	elif defined(TCCR2A) && defined(WGM20)
 		TCCR2A |= WGM20;
-#else
-		result = NONE;
-#endif
+#	else
+		result = false;
+#	endif
 		break;
+#endif
 
+#if !defined(portUSE_TIMER3)
 	case TIMER_3:
-#if defined(TCCR3B) && defined(CS31) && defined(WGM30)
+#	if defined(TCCR3B) && defined(CS31) && defined(WGM30)
 		TCCR3B |= CS31;		// Set timer 3 prescale factor to 64.
 		TCCR3B |= CS30;
 		TCCR3A |= WGM30;	// Put timer 3 in 8-bit phase correct PWM mode.
-#else
-		result = NONE;
-#endif
+#	else
+		result = false;
+#	endif
 		break;
+#endif
 
+#if !defined(portUSE_TIMER4)
 	case TIMER_4:
-#if defined(TCCR4B) && defined(CS41) && defined(WGM40)
+#	if defined(TCCR4B) && defined(CS41) && defined(WGM40)
 		TCCR4B |= CS41;		// Set timer 4 prescale factor to 64.
 		TCCR4B |= CS40;
 		TCCR4A |= WGM40;	// Put timer 4 in 8-bit phase correct PWM mode.
-#else
-		result = NONE;
-#endif
+#	else
+		result = false;
+#	endif
 		break;
+#	endif
 
+#if !defined(portUSE_TIMER5)
 	case TIMER_5:
-#if defined(TCCR5B) && defined(CS51) && defined(WGM50)
+#	if defined(TCCR5B) && defined(CS51) && defined(WGM50)
 		TCCR5B |= CS51;		// Set timer 5 prescale factor to 64.
 		TCCR5B |= CS50;
 		TCCR5A |= WGM50;	// Put timer 5 in 8-bit phase correct PWM mode.
-#else
-		result = NONE;
-#endif
+#	else
+		result = false;
+#	endif
 		break;
+#endif
 
 	case NONE:
-		break;
-
 	default:
-		result = NONE;
+		result = false;
 		break;
 	}
 
-	if (result != NONE) {
+	if (result) {
 		gpio.output(gpiomask);
+		if (high) {
+			gpio.set(gpiomask);
+		} else {
+			gpio.clear(gpiomask);
+		}
 	}
 
-	// It should be impossible for NONE to be returned unless this code is
+	// It should be impossible for false to be returned unless this code is
 	// wrong, the Pin enumeration is wrong, the TIMER table is wrong, the
 	// <io*.h> header file provided by AVR libc for this microcontroller is
-	// wrong, or the -mmcu command line argument is somehow wrong.
+	// wrong, or the -mmcu command line argument is wrong.
 
 	return result;
 }
@@ -1072,30 +1085,35 @@ void PWM::start(uint8_t dutycycle) {
 		gpio.set(gpiomask);
 	} else if (outputcompare16base != 0) {
 		// (0% < duty cycle < 100%) so we generate a square wave...
-		COM_DIAG_AMIGO_GPIO_TCCR |= pwmmask;
-		// ... using sixteen bit resolution that is available.
-		COM_DIAG_AMIGO_GPIO_OCR16 = dutycycle;
+		TCCR |= pwmmask;
+		// ... using eight-bits out of the sixteen-bit resolution.
+		OCR16 = dutycycle;
 	} else if (outputcompare8base != 0) {
 		// (0% < duty cycle < 100%) so we generate a square wave...
-		COM_DIAG_AMIGO_GPIO_TCCR |= pwmmask;
-		// ... using eight bit resolution that is available.
-		COM_DIAG_AMIGO_GPIO_OCR8 = dutycycle;
+		TCCR |= pwmmask;
+		// ... using eight-bit resolution.
+		OCR8 = dutycycle;
 	} else {
-		// Do nothing.
+		// Should be impossible.
 	}
 }
 
-void PWM::stop() {
-	if (!*this) {
-		// Do nothing.
-	} else if (outputcompare16base != 0) {
-		COM_DIAG_AMIGO_GPIO_TCCR &= ~pwmmask;
-		COM_DIAG_AMIGO_GPIO_OCR16 = 0;
-	} else if (outputcompare8base != 0) {
-		COM_DIAG_AMIGO_GPIO_TCCR &= ~pwmmask;
-		COM_DIAG_AMIGO_GPIO_OCR8 = 0;
-	} else {
-		// Do nothing.
+void PWM::stop(bool high) {
+	if (*this) {
+		if (outputcompare16base != 0) {
+			TCCR &= ~pwmmask;
+			OCR16 = 0;
+		} else if (outputcompare8base != 0) {
+			TCCR &= ~pwmmask;
+			OCR8 = 0;
+		} else {
+			// Should be impossible.
+		}
+		if (high) {
+			gpio.set(gpiomask);
+		} else {
+			gpio.clear(gpiomask);
+		}
 	}
 }
 

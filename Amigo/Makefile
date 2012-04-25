@@ -64,13 +64,15 @@
 #	The standard Ubuntu AVR packages available via Synaptics are too old (GCC
 #	4.3.4, LIBC 1.6.7) and WILL NOT WORK!
 #
-#	Amigo has been build and tested tested with the following hardware.
+#	Amigo has been built and tested tested with the following hardware.
 #
 #		VENDOR			BOARD			CONTROLLER
 #		Freetronics		EtherMega		ATmega2560
 #
-#	I also have an Adruino Uno and an Arduino Mega ADK but haven't found the
-#	time to try those yet.
+#	I have a variety of other Arduino and compatible boards (two Arduino Unos,
+#	an Arduino Mega ADK, and a Freetronics EtherTen) but haven't had time to
+#	try them yet. I would expect the Uno and the EtherTen to be quite
+#	challenging because of their constrained program and data memory.
 #
 ################################################################################
 
@@ -560,17 +562,3 @@ pristine:	clean
 ################################################################################
 
 .PHONY:	$(PHONY)
-
-# Cribbed from verbose output of Arduino 1.0 build for the Uno to use as a working reference design.
-# avr-g++ -c -g -Os -Wall -fno-exceptions -ffunction-sections -fdata-sections -mmcu=atmega328p -DF_CPU=16000000L -DARDUINO=100 -Iarduino -Istandard PWM.cpp -oPWM.cpp.o 
-# avr-gcc -Os -Wl,--gc-sections -mmcu=atmega328p -o PWM.cpp.elf PWM.cpp.o core.a -Lbuild373539219298904089.tmp -lm 
-# avr-objcopy -O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 PWM.cpp.elf PWM.cpp.eep 
-# avr-objcopy -O ihex -R .eeprom PWM.cpp.elf PWM.cpp.hex 
-# avrdude -Cavrdude.conf -v -v -v -v -patmega328p -carduino -P/dev/tty.usbmodem26431 -b115200 -D -Uflash:w:PWM.cpp.hex:i 
-
-# Cribbed from verbose output of Arduino 1.0 build for the Mega 2560 to use as a working reference design.
-# avr-g++ -c -g -Os -Wall -fno-exceptions -ffunction-sections -fdata-sections -mmcu=atmega2560 -DF_CPU=16000000L -DARDUINO=100 -Iarduino -Imega Empty.cpp -oEmpty.cpp.o 
-# avr-gcc -Os -Wl,--gc-sections -mmcu=atmega2560 -o Empty.cpp.elf Empty.cpp.o core.a -Lbuild7537680787165628439.tmp -lm 
-# avr-objcopy -O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 Empty.cpp.elf Empty.cpp.eep 
-# avr-objcopy -O ihex -R .eeprom Empty.cpp.elf Empty.cpp.hex 
-# avrdude -Cavrdude.conf -v -v -v -v -patmega2560 -cstk500v2 -P/dev/tty.usbmodem26421 -b115200 -D -Uflash:w:Empty.cpp.hex:i
