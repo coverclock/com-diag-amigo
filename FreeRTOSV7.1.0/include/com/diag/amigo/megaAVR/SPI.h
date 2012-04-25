@@ -133,10 +133,6 @@ public:
 	 */
 	static void initialize();
 
-protected:
-
-	static SPI * spi[MAXSPI + 1];
-
 public:
 
 	/**

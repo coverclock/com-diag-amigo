@@ -59,6 +59,7 @@ public:
 
 	/**
 	 * This returns a reference to a pre-built Console object.
+	 * @return a reference to a pre-built Console object.
 	 */
 	static Console & instance();
 
