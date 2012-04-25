@@ -1363,11 +1363,12 @@ void UnitTestTask::task() {
 				FAILED(__LINE__);
 				break;
 			}
-			if (!pwm.configure()) {
+			if (!pwm.configure(true)) {
 				FAILED(__LINE__);
 				break;
 			}
 			static const com::diag::amigo::ticks_t DELAY = milliseconds2ticks(5000);
+			delay(DELAY);
 			printf(LOW);
 			pwm.start(PWM::LOW);
 			delay(DELAY);
@@ -1383,7 +1384,7 @@ void UnitTestTask::task() {
 			printf(LOW);
 			pwm.start(PWM::LOW);
 			delay(DELAY);
-			pwm.stop();
+			pwm.stop(true);
 			PASSED();
 		} while (false);
 	}

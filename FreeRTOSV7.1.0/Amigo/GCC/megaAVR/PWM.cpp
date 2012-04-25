@@ -920,13 +920,14 @@ GPIO::Pin PWM::pwm2gpio(Pin pin) {
 	return (pin < countof(GPIOPIN)) ? static_cast<GPIO::Pin>(pgm_read_byte(&GPIOPIN[pin])) : GPIO::INVALID;
 }
 
-PWM::Pin PWM::arduino2pwm(uint8_t id) {
-	return (id < countof(ARDUINOPIN)) ? static_cast<Pin>(pgm_read_byte(&ARDUINOPIN[id])) : INVALID;
+PWM::Pin PWM::arduino2pwm(uint8_t number) {
+	return (number < countof(ARDUINOPIN)) ? static_cast<Pin>(pgm_read_byte(&ARDUINOPIN[number])) : INVALID;
 }
 
 PWM::Timer PWM::pwm2timer(Pin pin) {
 	return (pin < countof(TIMER)) ? static_cast<Timer>(pgm_read_byte(&TIMER[pin])) : NONE;
 }
+
 
 /*******************************************************************************
  * CONTROL INSTANCE METHODS
