@@ -40,13 +40,9 @@ namespace amigo {
  * be instantiated; otherwise it will overwrite the this pointer of any previous
  * SPI object for that same port.
  */
-SPI * SPI::spi[] = {
+static SPI * spi[] = {
 	0
 };
-
-void SPI::initialize() {
-	memset(spi, 0, sizeof(spi));
-}
 
 SPI::SPI(Controller mycontroller, size_t transmits, size_t receives)
 : spibase(0)

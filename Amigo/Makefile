@@ -454,11 +454,11 @@ interrogate:
 
 # To exit out of screen: control-a control-\ y.
 screen:
-	stty sane
+	stty sane dec
 	stty -f $(SERIAL) hupcl
 	# control-A control-\ y to exit.
 	screen -L $(SERIAL) $(BAUD) $(FORMAT)
-	stty sane erase 
+	stty sane dec
 
 # This uses the bootloader to load the application.
 upload:	$(BUILD_PLATFORM).hex

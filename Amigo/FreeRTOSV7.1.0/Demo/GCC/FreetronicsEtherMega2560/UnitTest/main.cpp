@@ -43,6 +43,11 @@ extern "C" void vApplicationStackOverflowHook(xTaskHandle pxTask, signed char * 
 
 static const char VINTAGE[] PROGMEM = "COM_DIAG_AMIGO_VINTAGE=" COM_DIAG_AMIGO_VINTAGE;
 
+// Note that this is global and is initialized in main(). Hence it can be
+// referenced in other translation units for debugging by having them create
+// their own local SerialSink and Print objects.
+com::diag::amigo::Serial * serialp = 0;
+
 /*******************************************************************************
  * UNIT TEST FRAMEWORK (SUCH AS IT IS)
  ******************************************************************************/
@@ -54,11 +59,11 @@ static const char CUNITTEST_FAILED_AT_LINE[] PROGMEM = "FAILED at line 0x";
 static const char CUNITTEST_FAILED_EOL[] PROGMEM = "!\r\n";
 static const char CUNITTEST_PASSED[] PROGMEM = "PASSED.\r\n";
 
-#define UNITTEST(_NAME_) do { printf(PSTR("Unit Test " _NAME_ " ")); serial.flush(); } while (false)
-#define UNITTESTLN(_NAME_) do { printf(PSTR("Unit Test " _NAME_ "\n")); serial.flush(); } while (false)
-#define FAILED(_LINE_) do { printf(UNITTEST_FAILED_AT_LINE, _LINE_); serial.flush(); ++errors; } while (false)
-#define PASSED() do { printf(UNITTEST_PASSED); serial.flush(); } while (false)
-#define TRACE(_LINE_) do { printf(UNITTEST_TRACE, _LINE_); serial.flush(); } while (false)
+#define UNITTEST(_NAME_) do { printf(PSTR("Unit Test " _NAME_ " ")); serialp->flush(); } while (false)
+#define UNITTESTLN(_NAME_) do { printf(PSTR("Unit Test " _NAME_ "\n")); serialp->flush(); } while (false)
+#define FAILED(_LINE_) do { printf(UNITTEST_FAILED_AT_LINE, _LINE_); serialp->flush(); ++errors; } while (false)
+#define PASSED() do { printf(UNITTEST_PASSED); serialp->flush(); } while (false)
+#define TRACE(_LINE_) do { printf(UNITTEST_TRACE, _LINE_); serialp->flush(); } while (false)
 
 #define CUNITTEST(_NAME_) com::diag::amigo::Console::instance().start().write_P(PSTR("Unit Test " _NAME_ " ")).flush().stop()
 #define CUNITTESTLN(_NAME_) com::diag::amigo::Console::instance().start().write_P(PSTR("Unit Test " _NAME_ "\r\n")).flush().stop()
@@ -233,11 +238,9 @@ public:
 } static unittesttask("UnitTest");
 
 void UnitTestTask::task() {
-	com::diag::amigo::Serial serial;
-	com::diag::amigo::SerialSink serialsink(serial);
-	com::diag::amigo::SerialSource serialsource(serial);
+	com::diag::amigo::SerialSink serialsink(*serialp);
+	com::diag::amigo::SerialSource serialsource(*serialp);
 	com::diag::amigo::Print printf(serialsink, true);
-	serial.start();
 
 #if 1
 	UNITTESTLN("Sink");
@@ -1231,6 +1234,9 @@ void UnitTestTask::task() {
 			}
 			PASSED();
 		} while (false);
+		static const char LOW[] PROGMEM = "L ";
+		static const char MEDIUM[] PROGMEM = "M ";
+		static const char HIGH[] PROGMEM = "H ";
 		do {
 			UNITTEST("Analog Output (uses pin 9 on EtherMega)");
 			// Zero-volts for a few seconds, half-voltage for a few seconds,
@@ -1281,14 +1287,19 @@ void UnitTestTask::task() {
 				break;
 			}
 			static const com::diag::amigo::ticks_t DELAY = milliseconds2ticks(5000);
+			printf(LOW);
 			pwm.start(PWM::LOW);
 			delay(DELAY);
+			printf(MEDIUM);
 			pwm.start(PWM::HIGH / 2);
 			delay(DELAY);
+			printf(HIGH);
 			pwm.start(PWM::HIGH);
 			delay(DELAY);
+			printf(MEDIUM);
 			pwm.start(PWM::HIGH / 2);
 			delay(DELAY);
+			printf(LOW);
 			pwm.start(PWM::LOW);
 			delay(DELAY);
 			pwm.stop();
@@ -1344,14 +1355,19 @@ void UnitTestTask::task() {
 				break;
 			}
 			static const com::diag::amigo::ticks_t DELAY = milliseconds2ticks(5000);
+			printf(LOW);
 			pwm.start(PWM::LOW);
 			delay(DELAY);
+			printf(MEDIUM);
 			pwm.start(PWM::HIGH / 2);
 			delay(DELAY);
+			printf(HIGH);
 			pwm.start(PWM::HIGH);
 			delay(DELAY);
+			printf(MEDIUM);
 			pwm.start(PWM::HIGH / 2);
 			delay(DELAY);
+			printf(LOW);
 			pwm.start(PWM::LOW);
 			delay(DELAY);
 			pwm.stop();
@@ -1555,7 +1571,7 @@ void UnitTestTask::task() {
 	com::diag::amigo::Print testf(serialsink);
 	testf("Type \"[control-a][control-\\]y\" to exit Mac screen utility.\n");
 
-	serial.flush();
+	serialp->flush();
 }
 
 /*******************************************************************************
@@ -1620,23 +1636,15 @@ int main() {
 	} while (false);
 #endif
 
-#if 1
-	CUNITTEST("initialize");
-	com::diag::amigo::Serial::initialize();
-	com::diag::amigo::SPI::initialize();
-	{
-		com::diag::amigo::Serial serial;
-		com::diag::amigo::SPI spi;
-	}
-	CPASSED();
-#endif
-
 	// The fact that main() never exits means local variables allocated on
 	// its stack in its outermost braces never go out of scope. That means we
-	// can take advantage of main to allocate objects on its stack that are
-	// persist until the system is rebooted and pass pointers to them to tasks.
-	// That's useful to know, especially in light of the fact that the memory
-	// allocated for main's stack is never otherwise recovered or used.
+	// can take advantage of main to allocate objects on its stack that persist
+	// until the system is rebooted and pass pointers to them to tasks. That's
+	// useful to know, especially in light of the fact that the memory allocated
+	// for main's stack is never otherwise recovered or used.
+
+	com::diag::amigo::Serial serial;
+	serialp = &serial;
 
 	com::diag::amigo::BinarySemaphore binarysemaphore;
 	binarysemaphorep = &binarysemaphore;
@@ -1658,6 +1666,7 @@ int main() {
 		}
 		CPASSED();
 		com::diag::amigo::Task::enable();
+		serial.start();
 		com::diag::amigo::Task::begin();
 	} while (false);
 
