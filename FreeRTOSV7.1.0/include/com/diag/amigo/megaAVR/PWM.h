@@ -39,7 +39,7 @@ public:
 #	if defined(TCCR0A) && defined(COM0A1)
 		PIN_0A = 1,
 #	endif
-#	if defined(TCCR0B) && defined(COM0B1)
+#	if defined(TCCR0A) && defined(COM0B1)
 		PIN_0B = 2,
 #	endif
 #endif
@@ -47,13 +47,13 @@ public:
 #	if defined(TCCR1A) && defined(COM1A1)
 		PIN_1A = 3,
 #	endif
-#	if defined(TCCR1B) && defined(COM1B1)
+#	if defined(TCCR1A) && defined(COM1B1)
 		PIN_1B = 4,
 #	endif
-#	if defined(TCCR1C) && defined(COM1C1)
+#	if defined(TCCR1A) && defined(COM1C1)
 		PIN_1C = 5,
 #	endif
-#	if defined(TCCR1D) && defined(COM1D1)
+#	if defined(TCCR1A) && defined(COM1D1)
 		PIN_1D = 6,
 #	endif
 #endif
@@ -64,7 +64,7 @@ public:
 #	if defined(TCCR2A) && defined(COM2A1)
 		PIN_2A = 8,
 #	endif
-#	if defined(TCCR2B) && defined(COM2B1)
+#	if defined(TCCR2A) && defined(COM2B1)
 		PIN_2B = 9,
 #	endif
 #endif
@@ -72,10 +72,10 @@ public:
 #	if defined(TCCR3A) && defined(COM3A1)
 		PIN_3A = 10,
 #	endif
-#	if defined(TCCR3B) && defined(COM3B1)
+#	if defined(TCCR3A) && defined(COM3B1)
 		PIN_3B = 11,
 #	endif
-#	if defined(TCCR3C) && defined(COM3C1)
+#	if defined(TCCR3A) && defined(COM3C1)
 		PIN_3C = 12,
 #	endif
 #endif
@@ -83,13 +83,13 @@ public:
 #	if defined(TCCR4A) && defined(COM4A1)
 		PIN_4A = 13,
 #	endif
-#	if defined(TCCR4B) && defined(COM4B1)
+#	if defined(TCCR4A) && defined(COM4B1)
 		PIN_4B = 14,
 #	endif
-#	if defined(TCCR4C) && defined(COM4C1)
+#	if defined(TCCR4A) && defined(COM4C1)
 		PIN_4C = 15,
 #	endif
-#	if defined(TCCR4D) && defined(COM4D1)
+#	if defined(TCCR4A) && defined(COM4D1)
 		PIN_4D = 16,
 #	endif
 #endif
@@ -97,10 +97,10 @@ public:
 #	if defined(TCCR5A) && defined(COM5A1)
 		PIN_5A = 17,
 #endif
-#	if defined(TCCR5B) && defined(COM5B1)
+#	if defined(TCCR5A) && defined(COM5B1)
 		PIN_5B = 18,
 #endif
-#	if defined(TCCR5C) && defined(COM5C1)
+#	if defined(TCCR5A) && defined(COM5C1)
 		PIN_5C = 19,
 #	endif
 #endif
@@ -173,11 +173,11 @@ public:
 	 * STARTING AND STOPPING
 	 **************************************************************************/
 
-	Timer configure();
+	bool configure(bool high = false);
 
 	void start(uint8_t dutycycle /* 0..255 */);
 
-	void stop();
+	void stop(bool high = false);
 
 protected:
 

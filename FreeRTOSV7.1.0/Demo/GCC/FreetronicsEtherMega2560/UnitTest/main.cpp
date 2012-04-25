@@ -201,7 +201,9 @@ static bool brightnesscontrol(com::diag::amigo::PWM::Pin pin, com::diag::amigo::
 	if (!pwm) {
 		return false;
 	}
-	pwm.configure();
+	if (!pwm.configure()) {
+		return false;
+	}
 	for (uint16_t ii = 0; ii <= 250; ii += 25) {
 		com::diag::amigo::Task::delay(ticks);
 		pwm.start(ii);
@@ -1065,7 +1067,7 @@ void UnitTestTask::task() {
 	// use as the system tick timer, some of these tests have to be suppressed.
 	do {
 #if defined(TCCR0B) && !defined(portUSE_TIMER0)
-		if (com::diag::amigo::PWM::pwm2control(com::diag::amigo::PWM::PIN_0B) != &TCCR0B) {
+		if (com::diag::amigo::PWM::pwm2control(com::diag::amigo::PWM::PIN_0B) != &TCCR0A) {
 			FAILED(__LINE__);
 			break;
 		}
@@ -1085,7 +1087,7 @@ void UnitTestTask::task() {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::PWM::pwm2timer(com::diag::amigo::PWM::PIN_0B) != com::diag::amigo::PWM::PWM::TIMER_0) {
+		if (com::diag::amigo::PWM::pwm2timer(com::diag::amigo::PWM::PIN_0B) != com::diag::amigo::PWM::TIMER_0) {
 			FAILED(__LINE__);
 			break;
 		}
@@ -1111,7 +1113,7 @@ void UnitTestTask::task() {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::PWM::pwm2timer(com::diag::amigo::PWM::PIN_1A) != com::diag::amigo::PWM::PWM::TIMER_1) {
+		if (com::diag::amigo::PWM::pwm2timer(com::diag::amigo::PWM::PIN_1A) != com::diag::amigo::PWM::TIMER_1) {
 			FAILED(__LINE__);
 			break;
 		}
@@ -1137,7 +1139,7 @@ void UnitTestTask::task() {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::PWM::pwm2timer(com::diag::amigo::PWM::PIN_2A) != com::diag::amigo::PWM::PWM::TIMER_2) {
+		if (com::diag::amigo::PWM::pwm2timer(com::diag::amigo::PWM::PIN_2A) != com::diag::amigo::PWM::TIMER_2) {
 			FAILED(__LINE__);
 			break;
 		}
@@ -1162,7 +1164,7 @@ void UnitTestTask::task() {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::PWM::pwm2timer(com::diag::amigo::PWM::INVALID) != com::diag::amigo::PWM::PWM::NONE) {
+		if (com::diag::amigo::PWM::pwm2timer(com::diag::amigo::PWM::INVALID) != com::diag::amigo::PWM::NONE) {
 			FAILED(__LINE__);
 			break;
 		}
@@ -1183,6 +1185,7 @@ void UnitTestTask::task() {
 	// OC2B (Arduino Mega pin 9) wired to voltmeter or logic analyzer.
 	{
 		typedef com::diag::amigo::PWM PWM;
+		typedef com::diag::amigo::GPIO GPIO;
 		do {
 			UNITTEST("Analog Output (uses red LED on EtherMega)");
 			// LED turns off (if it was on), slowly brightens to its maximum
@@ -1190,6 +1193,38 @@ void UnitTestTask::task() {
 			// common application of Pulse Width Modulation. I'm betting it's
 			// how your Mac laptop pulses its power LED when it's charging.
 			// Yet I never fail to be amazed by it.
+			if (PWM::arduino2pwm(13) != PWM::PIN_0A) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (PWM::pwm2gpio(PWM::PIN_0A) != GPIO::PIN_B7) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (PWM::pwm2control(PWM::PIN_0A) != &TCCR0A) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (PWM::pwm2outputcompare8(PWM::PIN_0A) != &OCR0A) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (PWM::pwm2outputcompare16(PWM::PIN_0A) != 0) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (PWM::pwm2offset(PWM::PIN_0A) != COM0A1) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (PWM::pwm2mask(PWM::PIN_0A) != _BV(COM0A1)) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (PWM::pwm2timer(PWM::PIN_0A) != PWM::TIMER_0) {
+				FAILED(__LINE__);
+				break;
+			}
 			if (!brightnesscontrol(PWM::arduino2pwm(13), milliseconds2ticks(500))) {
 				FAILED(__LINE__);
 				break;
@@ -1203,25 +1238,59 @@ void UnitTestTask::task() {
 			// seconds, then back to zero-volts. For most Arduinos, like the
 			// Mega and compatibles and the Uno, full-voltage is 5V, but there
 			// are 3.3V Arduinos too.
-			PWM pwm(PWM::arduino2pwm(9));
+			PWM::Pin pin = PWM::arduino2pwm(9);
+			if (pin != PWM::PIN_2B) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (PWM::pwm2gpio(pin) != GPIO::PIN_H6) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (PWM::pwm2control(pin) != &TCCR2A) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (PWM::pwm2outputcompare8(pin) != &OCR2B) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (PWM::pwm2outputcompare16(pin) != 0) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (PWM::pwm2offset(pin) != COM2B1) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (PWM::pwm2mask(pin) != _BV(COM2B1)) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (PWM::pwm2timer(pin) != PWM::TIMER_2) {
+				FAILED(__LINE__);
+				break;
+			}
+			PWM pwm(pin);
 			if (!pwm) {
 				FAILED(__LINE__);
 				break;
 			}
-			if (pwm.configure() == PWM::NONE) {
+			if (!pwm.configure()) {
 				FAILED(__LINE__);
 				break;
 			}
+			static const com::diag::amigo::ticks_t DELAY = milliseconds2ticks(5000);
 			pwm.start(PWM::LOW);
-			delay(milliseconds2ticks(2000));
+			delay(DELAY);
 			pwm.start(PWM::HIGH / 2);
-			delay(milliseconds2ticks(2000));
+			delay(DELAY);
 			pwm.start(PWM::HIGH);
-			delay(milliseconds2ticks(2000));
+			delay(DELAY);
 			pwm.start(PWM::HIGH / 2);
-			delay(milliseconds2ticks(2000));
+			delay(DELAY);
 			pwm.start(PWM::LOW);
-			delay(milliseconds2ticks(2000));
+			delay(DELAY);
 			pwm.stop();
 			PASSED();
 		} while (false);
@@ -1232,25 +1301,59 @@ void UnitTestTask::task() {
 			// seconds, then back to zero-volts. For most Arduinos, like the
 			// Mega and compatibles and the Uno, full-voltage is 5V, but there
 			// are 3.3V Arduinos too.
-			PWM pwm(PWM::arduino2pwm(8));
+			PWM::Pin pin = PWM::arduino2pwm(8);
+			if (pin != PWM::PIN_4C) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (PWM::pwm2gpio(pin) != GPIO::PIN_H5) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (PWM::pwm2control(pin) != &TCCR4A) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (PWM::pwm2outputcompare8(pin) != 0) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (PWM::pwm2outputcompare16(pin) != &OCR4C) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (PWM::pwm2offset(pin) != COM4C1) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (PWM::pwm2mask(pin) != _BV(COM4C1)) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (PWM::pwm2timer(pin) != PWM::TIMER_4) {
+				FAILED(__LINE__);
+				break;
+			}
+			PWM pwm(pin);
 			if (!pwm) {
 				FAILED(__LINE__);
 				break;
 			}
-			if (pwm.configure() == PWM::NONE) {
+			if (!pwm.configure()) {
 				FAILED(__LINE__);
 				break;
 			}
+			static const com::diag::amigo::ticks_t DELAY = milliseconds2ticks(5000);
 			pwm.start(PWM::LOW);
-			delay(milliseconds2ticks(2000));
+			delay(DELAY);
 			pwm.start(PWM::HIGH / 2);
-			delay(milliseconds2ticks(2000));
+			delay(DELAY);
 			pwm.start(PWM::HIGH);
-			delay(milliseconds2ticks(2000));
+			delay(DELAY);
 			pwm.start(PWM::HIGH / 2);
-			delay(milliseconds2ticks(2000));
+			delay(DELAY);
 			pwm.start(PWM::LOW);
-			delay(milliseconds2ticks(2000));
+			delay(DELAY);
 			pwm.stop();
 			PASSED();
 		} while (false);
@@ -1258,7 +1361,7 @@ void UnitTestTask::task() {
 #endif
 
 #if 1
-	UNITTEST("SPI (specific to WIZnet W5100 on EtherMega etc.)");
+	UNITTEST("SPI (requires WIZnet W5100)");
 	do {
 		com::diag::amigo::SPI spi;
 		spi.start();
@@ -1290,7 +1393,7 @@ void UnitTestTask::task() {
 #endif
 
 #if 1
-	UNITTEST("W5100 (specific to EtherMega etc.)");
+	UNITTEST("W5100 (requires WIZnet W5100)");
 	do {
 		com::diag::amigo::SPI spi;
 		com::diag::amigo::W5100::W5100 w5100(*mutexsemaphorep, com::diag::amigo::GPIO::arduino2gpio(10), spi);
