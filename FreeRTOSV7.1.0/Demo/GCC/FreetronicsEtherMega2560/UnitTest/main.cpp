@@ -9,6 +9,7 @@
 
 #include <string.h>
 #include <avr/io.h>
+#include "com/diag/amigo/configuration.h"
 #include "com/diag/amigo/types.h"
 #include "com/diag/amigo/fatal.h"
 #include "com/diag/amigo/littleendian.h"
@@ -157,7 +158,7 @@ void TakerTask::task() {
 static bool source2sink(com::diag::amigo::Source & source, com::diag::amigo::Sink & sink) {
 	static const int CONTROL_D = 0x04;
 	char buffer[20];
-	int have;
+	unsigned int have;
 	size_t in;
 	size_t out;
 	char * controld;
@@ -192,10 +193,10 @@ static bool source2sink(com::diag::amigo::Source & source, com::diag::amigo::Sin
 }
 
 /*******************************************************************************
- * SQUARE WAVE GENERATOR
+ * BRIGHTNESS CONTROL
  ******************************************************************************/
 
-static bool squarewavegenerator(com::diag::amigo::PWM::Pin pin, com::diag::amigo::ticks_t ticks) {
+static bool brightnesscontrol(com::diag::amigo::PWM::Pin pin, com::diag::amigo::ticks_t ticks) {
 	com::diag::amigo::PWM pwm(pin);
 	if (!pwm) {
 		return false;
@@ -1058,9 +1059,38 @@ void UnitTestTask::task() {
 
 #if 1
 	UNITTEST("PWM");
-	// This should work on either the 2560 (Mega etc.) or the 328p (Uno).
+	// This should work on either the 2560 (Arduino Mega and compatibles) or
+	// the 328p (Arduino Uno and compatibles) since both implement PWM on
+	// timers 0, 1, and 2. Depending on what timer FreeRTOS is configured to
+	// use as the system tick timer, some of these tests have to be suppressed.
 	do {
-		// Sixteen-bit.
+#if defined(TCCR0B) && !defined(portUSE_TIMER0)
+		if (com::diag::amigo::PWM::pwm2control(com::diag::amigo::PWM::PIN_0B) != &TCCR0B) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::PWM::pwm2outputcompare8(com::diag::amigo::PWM::PIN_0B) != &OCR0B) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::PWM::pwm2outputcompare16(com::diag::amigo::PWM::PIN_0B) != 0) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::PWM::pwm2offset(com::diag::amigo::PWM::PIN_0B) != COM0B1) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::PWM::pwm2mask(com::diag::amigo::PWM::PIN_0B) != _BV(COM0B1)) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::PWM::pwm2timer(com::diag::amigo::PWM::PIN_0B) != com::diag::amigo::PWM::PWM::TIMER_0) {
+			FAILED(__LINE__);
+			break;
+		}
+#endif
+#if defined(TCCR1A) && !defined(portUSE_TIMER1)
 		if (com::diag::amigo::PWM::pwm2control(com::diag::amigo::PWM::PIN_1A) != &TCCR1A) {
 			FAILED(__LINE__);
 			break;
@@ -1085,7 +1115,8 @@ void UnitTestTask::task() {
 			FAILED(__LINE__);
 			break;
 		}
-		// Eight-bit.
+#endif
+#if defined(TCCR2A) && !defined(portUSE_TIMER2)
 		if (com::diag::amigo::PWM::pwm2control(com::diag::amigo::PWM::PIN_2A) != &TCCR2A) {
 			FAILED(__LINE__);
 			break;
@@ -1110,7 +1141,7 @@ void UnitTestTask::task() {
 			FAILED(__LINE__);
 			break;
 		}
-		// Invalid.
+#endif
 		if (com::diag::amigo::PWM::pwm2control(com::diag::amigo::PWM::INVALID) != 0) {
 			FAILED(__LINE__);
 			break;
@@ -1144,18 +1175,22 @@ void UnitTestTask::task() {
 #endif
 
 #if 1
-	// This is a separate test because it a text fixture to be wired up on the
-	// board and an operator to watch it. It is specific to the EtherMega 2560
-	// board. It is designed not to conflict with the test fixture for the
-	// Digital I/O test above.
-	// OC0A (Arduino Mega pin 13) wired to fixed red LED on EtherMega.
+	// This is a separate test because it requires a test fixture, an operator
+	// to watch it, and is specific to the EtherMega 2560 board. It is designed
+	// not to conflict with the test fixture for the Digital I/O (GPIO) test.
+	// OC0A (Arduino Mega pin 13) pre-hard-wired to the red LED on EtherMega.
 	// OC4C (Arduino Mega pin 8) wired to voltmeter or logic analyzer.
 	// OC2B (Arduino Mega pin 9) wired to voltmeter or logic analyzer.
 	{
 		typedef com::diag::amigo::PWM PWM;
 		do {
 			UNITTEST("Analog Output (uses red LED on EtherMega)");
-			if (!squarewavegenerator(PWM::arduino2pwm(13), milliseconds2ticks(500))) {
+			// LED turns off (if it was on), slowly brightens to its maximum
+			// intensity, then slowly dims until it is off. This is the simplest
+			// common application of Pulse Width Modulation. I'm betting it's
+			// how your Mac laptop pulses its power LED when it's charging.
+			// Yet I never fail to be amazed by it.
+			if (!brightnesscontrol(PWM::arduino2pwm(13), milliseconds2ticks(500))) {
 				FAILED(__LINE__);
 				break;
 			}
@@ -1163,18 +1198,60 @@ void UnitTestTask::task() {
 		} while (false);
 		do {
 			UNITTEST("Analog Output (uses pin 9 on EtherMega)");
-			if (!squarewavegenerator(PWM::arduino2pwm(9), milliseconds2ticks(500))) {
+			// Zero-volts for a few seconds, half-voltage for a few seconds,
+			// full-voltage for a few seconds, back to half-voltage for a few
+			// seconds, then back to zero-volts. For most Arduinos, like the
+			// Mega and compatibles and the Uno, full-voltage is 5V, but there
+			// are 3.3V Arduinos too.
+			PWM pwm(PWM::arduino2pwm(9));
+			if (!pwm) {
 				FAILED(__LINE__);
 				break;
 			}
+			if (pwm.configure() == PWM::NONE) {
+				FAILED(__LINE__);
+				break;
+			}
+			pwm.start(PWM::LOW);
+			delay(milliseconds2ticks(2000));
+			pwm.start(PWM::HIGH / 2);
+			delay(milliseconds2ticks(2000));
+			pwm.start(PWM::HIGH);
+			delay(milliseconds2ticks(2000));
+			pwm.start(PWM::HIGH / 2);
+			delay(milliseconds2ticks(2000));
+			pwm.start(PWM::LOW);
+			delay(milliseconds2ticks(2000));
+			pwm.stop();
 			PASSED();
 		} while (false);
 		do {
 			UNITTEST("Analog Output (uses pin 8 on EtherMega)");
-			if (!squarewavegenerator(PWM::arduino2pwm(8), milliseconds2ticks(500))) {
+			// Zero-volts for a few seconds, half-voltage for a few seconds,
+			// full-voltage for a few seconds, back to half-voltage for a few
+			// seconds, then back to zero-volts. For most Arduinos, like the
+			// Mega and compatibles and the Uno, full-voltage is 5V, but there
+			// are 3.3V Arduinos too.
+			PWM pwm(PWM::arduino2pwm(8));
+			if (!pwm) {
 				FAILED(__LINE__);
 				break;
 			}
+			if (pwm.configure() == PWM::NONE) {
+				FAILED(__LINE__);
+				break;
+			}
+			pwm.start(PWM::LOW);
+			delay(milliseconds2ticks(2000));
+			pwm.start(PWM::HIGH / 2);
+			delay(milliseconds2ticks(2000));
+			pwm.start(PWM::HIGH);
+			delay(milliseconds2ticks(2000));
+			pwm.start(PWM::HIGH / 2);
+			delay(milliseconds2ticks(2000));
+			pwm.start(PWM::LOW);
+			delay(milliseconds2ticks(2000));
+			pwm.stop();
 			PASSED();
 		} while (false);
 	}

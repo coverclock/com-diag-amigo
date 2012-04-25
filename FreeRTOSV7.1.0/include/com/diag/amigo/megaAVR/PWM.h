@@ -173,7 +173,7 @@ public:
 	 * STARTING AND STOPPING
 	 **************************************************************************/
 
-	void configure();
+	Timer configure();
 
 	void start(uint8_t dutycycle /* 0..255 */);
 
