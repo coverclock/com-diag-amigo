@@ -194,8 +194,8 @@ uint8_t GPIO::gpio2offset(Pin pin) {
 	return (index < countof(BASE)) ? (pin % 8) : ~0;
 }
 
-GPIO::Pin GPIO::arduino2gpio(uint8_t id) {
-	return (id < countof(ARDUINOPIN)) ? static_cast<Pin>(pgm_read_byte(&ARDUINOPIN[id])) : INVALID;
+GPIO::Pin GPIO::arduino2gpio(uint8_t number) {
+	return (number < countof(ARDUINOPIN)) ? static_cast<Pin>(pgm_read_byte(&ARDUINOPIN[number])) : INVALID;
 }
 
 }
