@@ -119,7 +119,7 @@ public:
 
 	static const uint8_t LOW = 0;
 
-	static const uint8_t HIGH = 255;
+	static const uint8_t HIGH = ~0;
 
 	/***************************************************************************
 	 * MAPPING CLASS METHODS
