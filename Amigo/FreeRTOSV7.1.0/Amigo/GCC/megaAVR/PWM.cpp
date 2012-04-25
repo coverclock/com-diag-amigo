@@ -934,9 +934,10 @@ PWM::Timer PWM::pwm2timer(Pin pin) {
  * CONTROL INSTANCE METHODS
  ******************************************************************************/
 
-void PWM::configure() {
+PWM::Timer PWM::configure() {
+	Timer result = timer;
 
-	// The code and comments below were gatefully cribbed with minor changes
+	// The code and comments below were gratefully cribbed with minor changes
 	// directly from Arduino 1.0 wiring.c by David A. Mellis. Any flaws are
 	// strictly mine, introduced by my editing. Arduino initializes every
 	// available timer up front in its init() function. Amigo requires the
@@ -966,6 +967,8 @@ void PWM::configure() {
 		// This combination is for the __AVR_ATmega645__ series.
 		TCCR0A |= CS01;
 		TCCR0A |= CS00;
+#else
+		result = NONE;
 #endif
 		break;
 
@@ -982,6 +985,8 @@ void PWM::configure() {
 #	if F_CPU >= 8000000L
 		TCCR1 |= CS10;
 #	endif
+#else
+		result = NONE;
 #endif
 		// Put timer 1 in 8-bit phase correct PWM mode.
 #if defined(TCCR1A) && defined(WGM10)
@@ -994,11 +999,15 @@ void PWM::configure() {
 		TCCR2 |= CS22;
 #elif defined(TCCR2B) && defined(CS22)
 		TCCR2B |= CS22;
+#else
+		result = NONE;
 #endif
 #if defined(TCCR2) && defined(WGM20)
 		TCCR2 |= WGM20;
 #elif defined(TCCR2A) && defined(WGM20)
 		TCCR2A |= WGM20;
+#else
+		result = NONE;
 #endif
 		break;
 
@@ -1007,6 +1016,8 @@ void PWM::configure() {
 		TCCR3B |= CS31;		// Set timer 3 prescale factor to 64.
 		TCCR3B |= CS30;
 		TCCR3A |= WGM30;	// Put timer 3 in 8-bit phase correct PWM mode.
+#else
+		result = NONE;
 #endif
 		break;
 
@@ -1015,6 +1026,8 @@ void PWM::configure() {
 		TCCR4B |= CS41;		// Set timer 4 prescale factor to 64.
 		TCCR4B |= CS40;
 		TCCR4A |= WGM40;	// Put timer 4 in 8-bit phase correct PWM mode.
+#else
+		result = NONE;
 #endif
 		break;
 
@@ -1023,15 +1036,29 @@ void PWM::configure() {
 		TCCR5B |= CS51;		// Set timer 5 prescale factor to 64.
 		TCCR5B |= CS50;
 		TCCR5A |= WGM50;	// Put timer 5 in 8-bit phase correct PWM mode.
+#else
+		result = NONE;
 #endif
 		break;
 
 	case NONE:
+		break;
+
 	default:
+		result = NONE;
 		break;
 	}
 
-	gpio.output(gpiomask);
+	if (result != NONE) {
+		gpio.output(gpiomask);
+	}
+
+	// It should be impossible for NONE to be returned unless this code is
+	// wrong, the Pin enumeration is wrong, the TIMER table is wrong, the
+	// <io*.h> header file provided by AVR libc for this microcontroller is
+	// wrong, or the -mmcu command line argument is somehow wrong.
+
+	return result;
 }
 
 void PWM::start(uint8_t dutycycle) {
