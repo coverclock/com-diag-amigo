@@ -294,10 +294,8 @@ void SPI::complete() {
 
 extern "C" {
 
-#if defined(SPI_STC_vect)
 ISR(SPI_STC_vect) {
 	com::diag::amigo::SPI::complete(com::diag::amigo::SPI::SPI0);
 }
-#endif
 
 }

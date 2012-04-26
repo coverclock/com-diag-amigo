@@ -195,8 +195,8 @@ public:
 	static GPIO::Pin pwm2gpio(Pin pin);
 
 	/**
-	 * Map an Arduino pin number (which is typically printed right on the
-	 * printed circuit board) to a Pin enumerated value. The mapping will be
+	 * Map an Arduino digital pin number (which is typically printed right on
+	 * the printed circuit board) to a Pin enumerated value. The mapping will be
 	 * different for different models of Arduinos and AVR microcontrollers.
 	 * @param number is an Arduino digital pin number.
 	 * @return a Pin enumerated value or INVALID if not a valid pin number.

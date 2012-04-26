@@ -322,12 +322,12 @@ extern "C" {
 ISR(USART_RX_vect) {
 	com::diag::amigo::Serial::receive(com::diag::amigo::Serial::USART0);
 }
-#endif
-
-#if defined(USART0_RX_vect)
+#elif defined(USART0_RX_vect)
 ISR(USART0_RX_vect) {
 	com::diag::amigo::Serial::receive(com::diag::amigo::Serial::USART0);
 }
+#else
+#	error Serial must be modified for this microcontroller!
 #endif
 
 #if defined(USART1_RX_vect)
@@ -352,12 +352,12 @@ ISR(USART3_RX_vect) {
 ISR(USART_UDRE_vect) {
 	com::diag::amigo::Serial::transmit(com::diag::amigo::Serial::USART0);
 }
-#endif
-
-#if defined(USART0_UDRE_vect)
+#elif defined(USART0_UDRE_vect)
 ISR(USART0_UDRE_vect) {
 	com::diag::amigo::Serial::transmit(com::diag::amigo::Serial::USART0);
 }
+#else
+#	error Serial must be modified for this microcontroller!
 #endif
 
 #if defined(USART1_UDRE_vect)
