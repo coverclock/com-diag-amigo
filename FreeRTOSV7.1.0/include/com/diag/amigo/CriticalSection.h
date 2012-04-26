@@ -33,13 +33,33 @@ public:
 	 * Constructor. This object saves a pointer to the MutexSemaphore in an
 	 * instance variable. The MutexSemaphore is taken, blocking the allocating
 	 * task.
-	 * @param mutex refers to the MutexSemaphore to give and take.
+	 * @param mymutex refers to the MutexSemaphore to give and take.
 	 */
-	CriticalSection(MutexSemaphore & mutex)
-	: mutexp(&mutex)
+	CriticalSection(MutexSemaphore & mymutex)
+	: mutex(&mymutex)
 	{
-		if (!mutexp->take()) {
-			mutexp = 0;
+		if (!mutex->take()) {
+			mutex = 0;
+		}
+	}
+
+	/**
+	 * Constructor. This object saves a pointer to the MutexSemaphore in an
+	 * instance variable. If the pointer is not NULL, MutexSemaphore is taken,
+	 * blocking the allocating task. This constructor is useful when the use
+	 * of the semaphore is optional in an application; passing a NULL pointer
+	 * causes this constructor, and the common destructor, to do nothing.
+	 * @param mymutexp points to the MutexSemaphore or NULL if none.
+	 */
+	CriticalSection(MutexSemaphore * mymutexp)
+	: mutex(mymutexp)
+	{
+		if (mutex == 0) {
+			// Do nothing: optional semaphore not provided.
+		} else if (!mutex->take()) {
+			mutex = 0;
+		} else {
+			// Do nothing: nominal case.
 		}
 	}
 
@@ -47,8 +67,8 @@ public:
 	 * Destructor. The MutexSemaphore is given, unblocking any waiting tasks.
 	 */
 	~CriticalSection() {
-		if (mutexp != 0) {
-			mutexp->give();
+		if (mutex != 0) {
+			mutex->give();
 		}
 	}
 
@@ -56,11 +76,11 @@ public:
 	 * Return true if construction was successful.
 	 * @return true if construction was successful, false otherwise.
 	 */
-	operator bool() { return (mutexp != 0); }
+	operator bool() { return (mutex != 0); }
 
 protected:
 
-	MutexSemaphore * mutexp;
+	MutexSemaphore * mutex;
 
 private:
 
