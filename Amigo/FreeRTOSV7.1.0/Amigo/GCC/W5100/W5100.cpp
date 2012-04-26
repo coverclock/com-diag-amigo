@@ -26,12 +26,7 @@ namespace W5100 {
  * CREATION AND DESTRUCTION
  ******************************************************************************/
 
-W5100::W5100(MutexSemaphore & mymutex, GPIO::Pin myss, SPI & myspi)
-: mutex(&mymutex)
-, spi(&myspi)
-, gpio(GPIO::gpio2base(myss))
-, mask(GPIO::gpio2mask(myss))
-{
+void W5100::initialize() {
 	for (uint8_t ii = 0; ii < SOCKETS; ++ii) {
 		sbase[ii] = TXBUF_BASE + (SSIZE * ii);
 		rbase[ii] = RXBUF_BASE + (RSIZE * ii);
@@ -60,7 +55,7 @@ void W5100::stop() {
  ******************************************************************************/
 
 void W5100::write(address_t address, uint8_t datum) {
-	CriticalSection cs(*mutex);
+	CriticalSection cs(mutex);
 	SPISlaveSelect ss(gpio, mask);
 	spi->master(0xf0);
 	spi->master(address >> 8);
@@ -69,7 +64,7 @@ void W5100::write(address_t address, uint8_t datum) {
 }
 
 void W5100::write(address_t address, const void * data, size_t length) {
-	CriticalSection cs(*mutex);
+	CriticalSection cs(mutex);
 	const uint8_t * here = static_cast<const uint8_t *>(data);
 	for (; length > 0; --length) {
 		SPISlaveSelect ss(gpio, mask);
@@ -81,7 +76,7 @@ void W5100::write(address_t address, const void * data, size_t length) {
 }
 
 uint8_t W5100::read(address_t address) {
-	CriticalSection cs(*mutex);
+	CriticalSection cs(mutex);
 	SPISlaveSelect ss(gpio, mask);
 	spi->master(0x0f);
 	spi->master(address >> 8);
@@ -91,7 +86,7 @@ uint8_t W5100::read(address_t address) {
 }
 
 void W5100::read(address_t address, void * buffer, size_t length) {
-	CriticalSection cs(*mutex);
+	CriticalSection cs(mutex);
 	uint8_t * here = static_cast<uint8_t *>(buffer);
 	for (; length > 0; --length) {
 		SPISlaveSelect ss(gpio, mask);

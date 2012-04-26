@@ -614,8 +614,18 @@ void UnitTestTask::task() {
 				FAILED(__LINE__);
 				break;
 			}
+			uint8_t sreg = amigo_uninterruptible_begin();
+			if ((SREG & _BV(SREG_I)) != 0) {
+				FAILED(__LINE__);
+				break;
+			}
+			amigo_uninterruptible_end(sreg);
+			if ((SREG & _BV(SREG_I)) == 0) {
+				FAILED(__LINE__);
+				break;
+			}
 			com::diag::amigo::Uninterruptible uninterruptible1;
-			if (static_cast<int8_t>(uninterruptible1) >= 0) {
+			if ((static_cast<int8_t>(uninterruptible1) & _BV(SREG_I)) == 0) {
 				FAILED(__LINE__);
 				break;
 			}
@@ -623,10 +633,16 @@ void UnitTestTask::task() {
 				FAILED(__LINE__);
 				break;
 			}
-			com::diag::amigo::Uninterruptible uninterruptible2;
-			if (static_cast<int8_t>(uninterruptible2) < 0) {
-				FAILED(__LINE__);
-				break;
+			{
+				com::diag::amigo::Uninterruptible uninterruptible2;
+				if ((static_cast<int8_t>(uninterruptible2) & _BV(SREG_I)) != 0) {
+					FAILED(__LINE__);
+					break;
+				}
+				if ((SREG & _BV(SREG_I)) != 0) {
+					FAILED(__LINE__);
+					break;
+				}
 			}
 			if ((SREG & _BV(SREG_I)) != 0) {
 				FAILED(__LINE__);
@@ -766,17 +782,50 @@ void UnitTestTask::task() {
 			FAILED(__LINE__);
 			break;
 		}
-		PASSED();
-		UNITTEST("CriticalSection");
-		com::diag::amigo::CriticalSection criticalsection1(mutexsemaphore);
-		if (!criticalsection1) {
+		if (!mutexsemaphore.take(com::diag::amigo::MutexSemaphore::IMMEDIATELY)) {
 			FAILED(__LINE__);
 			break;
 		}
-		com::diag::amigo::CriticalSection criticalsection2(mutexsemaphore);
-		if (!criticalsection2) {
+		if (!mutexsemaphore.take(com::diag::amigo::MutexSemaphore::IMMEDIATELY)) {
 			FAILED(__LINE__);
 			break;
+		}
+		if (!mutexsemaphore.give()) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (!mutexsemaphore.give()) {
+			FAILED(__LINE__);
+			break;
+		}
+		PASSED();
+	} while (false);
+#endif
+
+#if 1
+	UNITTEST("CriticalSection");
+	do {
+		com::diag::amigo::MutexSemaphore mutexsemaphore;
+		{
+			com::diag::amigo::CriticalSection criticalsection1(mutexsemaphore);
+			if (!criticalsection1) {
+				FAILED(__LINE__);
+				break;
+			}
+			{
+				com::diag::amigo::CriticalSection criticalsection2(mutexsemaphore);
+				if (!criticalsection2) {
+					FAILED(__LINE__);
+					break;
+				}
+			}
+			{
+				com::diag::amigo::CriticalSection criticalsection3(0);
+				if (criticalsection3) {
+					FAILED(__LINE__);
+					break;
+				}
+			}
 		}
 		PASSED();
 	} while (false);
@@ -1536,6 +1585,8 @@ void UnitTestTask::task() {
 				FAILED(__LINE__);
 				break;
 			}
+			// If WEBSERVER ever updates their HTTP version to something other
+			// than 1.1 this will have to change.
 			static const char EXPECTED[] = "HTTP/1.1 404 Not Found";
 			char buffer[sizeof(EXPECTED)];
 			ssize_t received = socket.recv(buffer, sizeof(buffer) - 1 /* Not including terminating NUL. */);
@@ -1570,7 +1621,7 @@ void UnitTestTask::task() {
 	printf(PSTR("Unit Test errors=%d (so far)\n"), errors);
 
 #if 1
-	UNITTESTLN("Source (type control-D to exit)");
+	UNITTESTLN("Source (type <control d> to exit)");
 	if (!source2sink(serialsource, serialsink)) {
 		FAILED(__LINE__);
 	} else {
@@ -1583,7 +1634,7 @@ void UnitTestTask::task() {
 	// Just to make sure the regular data memory Print works.
 
 	com::diag::amigo::Print testf(serialsink);
-	testf("Type \"<control-a><control-\\>y\" to exit Mac screen utility.\n");
+	testf("Type <control a><control \\>y to exit Mac screen utility.\n");
 
 	serialp->flush();
 }
@@ -1651,10 +1702,10 @@ int main() {
 #endif
 
 	// The fact that main() never exits means local variables allocated on
-	// its stack in its outermost braces never go out of scope. That means we
-	// can take advantage of main to allocate objects on its stack that persist
-	// until the system is rebooted and pass pointers to them to tasks. That's
-	// useful to know, especially in light of the fact that the memory allocated
+	// its stack in its outermost braces never go out of scope. We can take
+	// advantage of main to allocate objects on its stack that persist until
+	// the system is rebooted and pass pointers to them to tasks. That's useful
+	// to know, especially in light of the fact that the memory allocated
 	// for main's stack is never otherwise recovered or used.
 
 	com::diag::amigo::Serial serial;

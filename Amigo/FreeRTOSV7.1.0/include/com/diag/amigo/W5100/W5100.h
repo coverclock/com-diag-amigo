@@ -57,6 +57,15 @@ public:
 	explicit W5100(MutexSemaphore & mymutex, GPIO::Pin myss, SPI & myspi);
 
 	/**
+	 * Constructor. This version of the constructor does not require a
+	 * MutexSemaphore and should only be used when the W5100 is the only
+	 * SPI slave device. Doing so can save a little memory.
+	 * @param myss specifies the Slave Select pin for the W5100.
+	 * @param myspi refers to the SPI.
+	 */
+	explicit W5100(GPIO::Pin myss, SPI & myspi);
+
+	/**
 	 * Destructor.
 	 */
 	virtual ~W5100();
@@ -215,6 +224,8 @@ private:
 	static const uint16_t CH_BASE = 0x0400;
 
 	static const uint16_t CH_SIZE = 0x0100;
+
+	void initialize();
 
 	/***************************************************************************
 	 * GENERAL PURPOSE REGISTER ACTIONS
@@ -507,6 +518,24 @@ protected:
 	address_t rbase[SOCKETS]; // Rx buffer base address
 
 };
+
+inline W5100::W5100(MutexSemaphore & mymutex, GPIO::Pin myss, SPI & myspi)
+: mutex(&mymutex)
+, spi(&myspi)
+, gpio(GPIO::gpio2base(myss))
+, mask(GPIO::gpio2mask(myss))
+{
+	initialize();
+}
+
+inline W5100::W5100(GPIO::Pin myss, SPI & myspi)
+: mutex(0)
+, spi(&myspi)
+, gpio(GPIO::gpio2base(myss))
+, mask(GPIO::gpio2mask(myss))
+{
+	initialize();
+}
 
 }
 }
