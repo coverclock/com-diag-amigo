@@ -597,155 +597,155 @@ static const uint8_t GPIOPIN[] PROGMEM = {
 static const uint8_t ARDUINOPIN[] PROGMEM = {
 #if defined(__AVR_ATmega2560__)
 	// Gratefully adapted from variants/mega/pins_arduino.h in Arduino 1.0.
-	PWM::INVALID,
-	PWM::INVALID,
+	PWM::INVALID,   // 0
+	PWM::INVALID,   // 1
 #if !defined(portUSE_TIMER3)
-	PWM::PIN_3B,
-	PWM::PIN_3C,
+	PWM::PIN_3B,    // 2
+	PWM::PIN_3C,    // 3
 #else
-	PWM::INVALID,
-	PWM::INVALID,
+	PWM::INVALID,   // 2
+	PWM::INVALID,   // 3
 #endif
 #if !defined(portUSE_TIMER0)
-	PWM::PIN_0B,
+	PWM::PIN_0B,    // 4
 #else
-	PWM::INVALID,
+	PWM::INVALID,   // 4
 #endif
 #if !defined(portUSE_TIMER3)
-	PWM::PIN_3A,
+	PWM::PIN_3A,    // 5
 #else
-	PWM::INVALID,
+	PWM::INVALID,   // 5
 #endif
 #if !defined(portUSE_TIMER4)
-	PWM::PIN_4A,
-	PWM::PIN_4B,
-	PWM::PIN_4C,
+	PWM::PIN_4A,    // 6
+	PWM::PIN_4B,    // 7
+	PWM::PIN_4C,    // 8
 #else
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
+	PWM::INVALID,   // 6
+	PWM::INVALID,   // 7
+	PWM::INVALID,   // 8
 #endif
 #if !defined(portUSE_TIMER2)
-	PWM::PIN_2B,
-	PWM::PIN_2A,
+	PWM::PIN_2B,    // 9
+	PWM::PIN_2A,    // 10
 #else
-	PWM::INVALID,
-	PWM::INVALID,
+	PWM::INVALID,   // 9
+	PWM::INVALID,   // 10
 #endif
 #if !defined(portUSE_TIMER1)
-	PWM::PIN_1A,
-	PWM::PIN_1B,
+	PWM::PIN_1A,    // 11
+	PWM::PIN_1B,    // 12
 #else
-	PWM::INVALID,
-	PWM::INVALID,
+	PWM::INVALID,   // 11
+	PWM::INVALID,   // 12
 #endif
 #if !defined(portUSE_TIMER0)
-	PWM::PIN_0A,
+	PWM::PIN_0A,    // 13
 #else
-	PWM::INVALID,
+	PWM::INVALID,   // 13
 #endif
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
+	PWM::INVALID,	// 14
+	PWM::INVALID,	// 15
+	PWM::INVALID,	// 16
+	PWM::INVALID,	// 17
+	PWM::INVALID,	// 18
+	PWM::INVALID,	// 19
+	PWM::INVALID,	// 20
+	PWM::INVALID,	// 21
+	PWM::INVALID,	// 22
+	PWM::INVALID,	// 23
+	PWM::INVALID,	// 24
+	PWM::INVALID,	// 25
+	PWM::INVALID,	// 26
+	PWM::INVALID,	// 27
+	PWM::INVALID,	// 28
+	PWM::INVALID,	// 29
+	PWM::INVALID,	// 30
+	PWM::INVALID,	// 31
+	PWM::INVALID,	// 32
+	PWM::INVALID,	// 33
+	PWM::INVALID,	// 34
+	PWM::INVALID,	// 35
+	PWM::INVALID,	// 36
+	PWM::INVALID,	// 37
+	PWM::INVALID,	// 38
+	PWM::INVALID,	// 39
+	PWM::INVALID,	// 40
+	PWM::INVALID,	// 41
+	PWM::INVALID,	// 42
+	PWM::INVALID,	// 43
 #if !defined(portUSE_TIMER5)
-	PWM::PIN_5C,
-	PWM::PIN_5B,
-	PWM::PIN_5A,
+	PWM::PIN_5C,    // 44
+	PWM::PIN_5B,    // 45
+	PWM::PIN_5A,    // 46
 #else
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
+	PWM::INVALID,   // 44
+	PWM::INVALID,   // 45
+	PWM::INVALID,   // 46
 #endif
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
+	PWM::INVALID,	// 47
+	PWM::INVALID,	// 48
+	PWM::INVALID,	// 49
+	PWM::INVALID,	// 50
+	PWM::INVALID,	// 51
+	PWM::INVALID,	// 52
+	PWM::INVALID,	// 53
+	PWM::INVALID,	// 54
+	PWM::INVALID,	// 55
+	PWM::INVALID,	// 56
+	PWM::INVALID,	// 57
+	PWM::INVALID,	// 58
+	PWM::INVALID,	// 59
+	PWM::INVALID,	// 60
+	PWM::INVALID,	// 61
+	PWM::INVALID,	// 62
+	PWM::INVALID,	// 63
+	PWM::INVALID,	// 64
+	PWM::INVALID,	// 65
+	PWM::INVALID,	// 66
+	PWM::INVALID,	// 67
+	PWM::INVALID,	// 68
+	PWM::INVALID,	// 69
 #elif defined(__AVR_ATmega328P__)
 	// Gratefully adapted from variants/standard/pins_arduino.h in Arduino 1.0.
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
+	PWM::INVALID,   // 0
+	PWM::INVALID,   // 1
+	PWM::INVALID,   // 2
 #if !defined(portUSE_TIMER2)
-	PWM::PIN_2B,
+	PWM::PIN_2B,    // 3
 #else
-	PWM::INVALID,
+	PWM::INVALID,   // 3
 #endif
-	PWM::INVALID,
+	PWM::INVALID,   // 4
 #if !defined(portUSE_TIMER0)
-	PWM::PIN_0B,
-	PWM::PIN_0A,
+	PWM::PIN_0B,    // 5
+	PWM::PIN_0A,    // 6
 #else
-	PWM::INVALID,
-	PWM::INVALID,
+	PWM::INVALID,   // 5
+	PWM::INVALID,   // 6
 #endif
-	PWM::INVALID,
-	PWM::INVALID,
+	PWM::INVALID,   // 7
+	PWM::INVALID,   // 8
 #if !defined(portUSE_TIMER1)
-	PWM::PIN_1A,
-	PWM::PIN_1B,
+	PWM::PIN_1A,    // 9
+	PWM::PIN_1B,    // 10
 #else
-	PWM::INVALID,
-	PWM::INVALID,
+	PWM::INVALID,   // 9
+	PWM::INVALID,   // 10
 #endif
 #if !defined(portUSE_TIMER2)
-	PWM::PIN_2A,
+	PWM::PIN_2A,    // 11
 #else
-	PWM::INVALID,
+	PWM::INVALID,   // 11
 #endif
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
-	PWM::INVALID,
+	PWM::INVALID,   // 12
+	PWM::INVALID,   // 13
+	PWM::INVALID,   // 14
+	PWM::INVALID,   // 15
+	PWM::INVALID,   // 16
+	PWM::INVALID,   // 17
+	PWM::INVALID,   // 18
+	PWM::INVALID,   // 19
 #else
 #	error PWM must be modified for this microcontroller!
 #endif
@@ -905,15 +905,15 @@ volatile void * PWM::pwm2control(Pin pin) {
 }
 
 volatile void * PWM::pwm2outputcompare8(Pin pin) {
-	return (pin < countof(CONTROL)) ? reinterpret_cast<volatile void *>(pgm_read_word(&(OUTPUTCOMPARE8[pin]))) : 0;
+	return (pin < countof(OUTPUTCOMPARE8)) ? reinterpret_cast<volatile void *>(pgm_read_word(&(OUTPUTCOMPARE8[pin]))) : 0;
 }
 
 volatile void * PWM::pwm2outputcompare16(Pin pin) {
-	return (pin < countof(CONTROL)) ? reinterpret_cast<volatile void *>(pgm_read_word(&(OUTPUTCOMPARE16[pin]))) : 0;
+	return (pin < countof(OUTPUTCOMPARE16)) ? reinterpret_cast<volatile void *>(pgm_read_word(&(OUTPUTCOMPARE16[pin]))) : 0;
 }
 
 uint8_t PWM::pwm2offset(Pin pin) {
-	return (pin < countof(CONTROL)) ? pgm_read_byte(&(OFFSET[pin])) : ~0;
+	return (pin < countof(OFFSET)) ? pgm_read_byte(&(OFFSET[pin])) : ~0;
 }
 
 GPIO::Pin PWM::pwm2gpio(Pin pin) {
@@ -930,7 +930,7 @@ PWM::Timer PWM::pwm2timer(Pin pin) {
 
 
 /*******************************************************************************
- * CONTROL INSTANCE METHODS
+ * INSTANCE METHODS
  ******************************************************************************/
 
 bool PWM::configure(bool high) {
