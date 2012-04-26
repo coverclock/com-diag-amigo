@@ -1440,6 +1440,25 @@ void UnitTestTask::task() {
 #endif
 
 #if 1
+	UNITTEST("SPI (sanity)");
+	do {
+		com::diag::amigo::SPI spi;
+		if (!spi) {
+			CFAILED(__LINE__);
+			break;
+		}
+		{
+			com::diag::amigo::SPI bogus(static_cast<com::diag::amigo::SPI::Controller>(~0));
+			if (bogus) {
+				CFAILED(__LINE__);
+				break;
+			}
+		}
+		CPASSED();
+	} while (false);
+#endif
+
+#if 1
 	UNITTEST("SPI (requires WIZnet W5100)");
 	do {
 		com::diag::amigo::SPI spi;
@@ -1710,6 +1729,24 @@ int main() {
 
 	com::diag::amigo::Serial serial;
 	serialp = &serial;
+
+#if 1
+	CUNITTEST("Serial (sanity)");
+	do {
+		if (!serial) {
+			CFAILED(__LINE__);
+			break;
+		}
+		{
+			com::diag::amigo::Serial bogus(static_cast<com::diag::amigo::Serial::Port>(~0));
+			if (bogus) {
+				CFAILED(__LINE__);
+				break;
+			}
+		}
+		CPASSED();
+	} while (false);
+#endif
 
 	com::diag::amigo::BinarySemaphore binarysemaphore;
 	binarysemaphorep = &binarysemaphore;

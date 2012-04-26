@@ -20,7 +20,7 @@ namespace amigo {
 
 /**
  * SPI is an interrupt-driven device driver with an asynchronous producer
- * and consumer API or one or more Serial Peripheral Interface devices.
+ * and consumer API for one or more Serial Peripheral Interface devices.
  * Characters received from the SPI by the interrupt service routine are pushed
  * into a fixed-size ring buffer in memory until the application can consume
  * them. Characters produced by the application to be transmitted are pushed
@@ -125,14 +125,6 @@ public:
 	 */
 	static void complete(Controller controller);
 
-	/**
-	 * This class method exists just for debugging. It reinitializes all static
-	 * variables in this class back to their initial states. This is sometimes
-	 * useful when debugging a "jump to reset vector" bug, but should never be
-	 * necessary in practice.
-	 */
-	static void initialize();
-
 public:
 
 	/**
@@ -149,6 +141,12 @@ public:
 	 * interrupt service routine for this SPI is deinstalled.
 	 */
 	virtual ~SPI();
+
+	/**
+	 * Return true if construction was successful false otherwise.
+	 * @return true if construction was successful, false otherwise.
+	 */
+	operator bool() const { return ((gpiobase != 0) && (spibase != 0)); }
 
 	/**
 	 * Initialize the SPI and start interrupt driven I/O operations on it.

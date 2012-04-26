@@ -22,6 +22,16 @@ namespace diag {
 namespace amigo {
 namespace W5100 {
 
+/**
+ * Socket implements the Amigo Socket interface for the WizNET W5100 chip.
+ * The W5100 provides not just the Ethernet physical (PHY) and Media Access
+ * Control (MAC) layers but the lowest layers of the Internet Protocol (IP)
+ * stack for the connection-oriented reliable Transmission Control Protocol
+ * (TCP) and the connection-less best-effort User Datagram Protocol (UDP) as
+ * well. Socket provides an API on top of this for sending and receiving byte
+ * streams or datagrams. A Client or Server layer would be implemented on top
+ * of Socket.
+ */
 class Socket
 : public com::diag::amigo::Socket
 {
@@ -92,6 +102,7 @@ public:
 
 	/*
 	 * See <com/diag/amigo/Socket.h> for descriptions of these methods.
+	 * (Doxygen automatically imports the comments from the base class.)
 	 */
 
 	virtual State state();

@@ -208,6 +208,12 @@ public:
 	virtual ~Serial();
 
 	/**
+	 * Return true if construction was successful false otherwise.
+	 * @return true if construction was successful, false otherwise.
+	 */
+	operator bool() const { return (usartbase != 0); }
+
+	/**
 	 * Initialize the USART and start interrupt driven I/O operations on it.
 	 * @param baud specifies the desired baud rate.
 	 * @param data specifies the desired number of data bits per character.
@@ -320,7 +326,7 @@ public:
 
 protected:
 
-	volatile void * base;
+	volatile void * usartbase;
 	TypedQueue<uint8_t> received;
 	TypedQueue<uint8_t> transmitting;
 	Port port;
