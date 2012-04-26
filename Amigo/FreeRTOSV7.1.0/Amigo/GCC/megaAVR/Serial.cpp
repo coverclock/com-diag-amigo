@@ -17,6 +17,7 @@
 #include "com/diag/amigo/target/Uninterruptible.h"
 #include "com/diag/amigo/io.h"
 #include "com/diag/amigo/Task.h"
+#include "com/diag/amigo/countof.h"
 
 namespace com {
 namespace diag {
@@ -26,13 +27,13 @@ namespace amigo {
 // from the base address identifying the specific USART. This makes this code
 // independent of the specific USART.
 
-#define UCSRA		COM_DIAG_AMIGO_MMIO_8(base, 0)
-#define UCSRB		COM_DIAG_AMIGO_MMIO_8(base, 1)
-#define UCSRC		COM_DIAG_AMIGO_MMIO_8(base, 2)
-//      RESERVED	AMIGO_MMIO_8(base, 3)
-#define UBRRL		COM_DIAG_AMIGO_MMIO_8(base, 4)
-#define UBRRH		COM_DIAG_AMIGO_MMIO_8(base, 5)
-#define UDR			COM_DIAG_AMIGO_MMIO_8(base, 6)
+#define UCSRA		COM_DIAG_AMIGO_MMIO_8(usartbase, 0)
+#define UCSRB		COM_DIAG_AMIGO_MMIO_8(usartbase, 1)
+#define UCSRC		COM_DIAG_AMIGO_MMIO_8(usartbase, 2)
+//      RESERVED	                                 3
+#define UBRRL		COM_DIAG_AMIGO_MMIO_8(usartbase, 4)
+#define UBRRH		COM_DIAG_AMIGO_MMIO_8(usartbase, 5)
+#define UDR			COM_DIAG_AMIGO_MMIO_8(usartbase, 6)
 
 /**
  * This table in SRAM will be filled in with the this pointer from a specific
@@ -54,7 +55,7 @@ static Serial * serial[] = {
 };
 
 Serial::Serial(Port myport, size_t transmits, size_t receives, uint8_t mybad)
-: base(0)
+: usartbase(0)
 , received(receives)
 , transmitting(transmits)
 , port(myport)
@@ -62,6 +63,11 @@ Serial::Serial(Port myport, size_t transmits, size_t receives, uint8_t mybad)
 , bad(mybad)
 , errors(0)
 {
+	if (port >= countof(serial)) {
+		// FAIL!
+		return;
+	}
+
 	serial[port] = this;
 
 	// Important safety tip: placing the code below in a static function
@@ -73,24 +79,28 @@ Serial::Serial(Port myport, size_t transmits, size_t receives, uint8_t mybad)
 	// on Windows using AVR Studio 5.1 with GCC 4.5.1 and AVR libc 1.7.1.
 
 	switch (port) {
+
 	default:
-	case USART0:	base = &UCSR0A;	break;
+	case USART0:	usartbase = &UCSR0A;	break;
 #if defined(UCSR1A)
-	case USART1:	base = &UCSR1A;	break;
+	case USART1:	usartbase = &UCSR1A;	break;
 #if defined(UCSR2A)
-	case USART2:	base = &UCSR2A;	break;
+	case USART2:	usartbase = &UCSR2A;	break;
 #if defined(UCSR3A)
-	case USART3:	base = &UCSR3A;	break;
+	case USART3:	usartbase = &UCSR3A;	break;
 #endif
 #endif
 #endif
+
 	}
 }
 
 Serial::~Serial() {
-	Uninterruptible uninterruptible;
-	UCSRB = 0;
-	serial[port] = 0;
+	if (port < countof(serial)) {
+		Uninterruptible uninterruptible;
+		UCSRB = 0;
+		serial[port] = 0;
+	}
 }
 
 void Serial::start(Baud baud, Data data, Parity parity, Stop stop) {

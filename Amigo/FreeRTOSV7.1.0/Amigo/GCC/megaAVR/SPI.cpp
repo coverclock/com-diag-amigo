@@ -15,6 +15,7 @@
 #include "com/diag/amigo/target/Uninterruptible.h"
 #include "com/diag/amigo/io.h"
 #include "com/diag/amigo/Task.h"
+#include "com/diag/amigo/countof.h"
 
 namespace com {
 namespace diag {
@@ -56,9 +57,15 @@ SPI::SPI(Controller mycontroller, size_t transmits, size_t receives)
 , miso(0)
 , errors(0)
 {
+	if (controller >= countof(spi)) {
+		// FAIL!
+		return;
+	}
+
 	spi[controller] = this;
 
 	switch (controller) {
+
 	default:
 	case SPI0:
 		spibase = &SPCR;
@@ -78,13 +85,16 @@ SPI::SPI(Controller mycontroller, size_t transmits, size_t receives)
 #	error SPI must be modified for this microcontroller!
 #endif
 		break;
+
 	}
 }
 
 SPI::~SPI() {
-	Uninterruptible uninterruptible;
-	SPICR &= ~(_BV(SPIE) | _BV(SPE));
-	spi[controller] = 0;
+	if (controller < countof(spi)) {
+		Uninterruptible uninterruptible;
+		SPICR &= ~(_BV(SPIE) | _BV(SPE));
+		spi[controller] = 0;
+	}
 }
 
 void SPI::start(Divisor divisor, Role role, Order order, Polarity polarity, Phase phase) {
