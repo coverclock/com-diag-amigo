@@ -104,6 +104,7 @@ Serial::~Serial() {
 }
 
 void Serial::start(Baud baud, Data data, Parity parity, Stop stop) {
+
 	uint32_t rate;
 	switch (baud) {
 	case B50:		rate = 50UL;		break;

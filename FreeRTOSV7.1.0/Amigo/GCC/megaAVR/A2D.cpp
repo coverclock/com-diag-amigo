@@ -27,10 +27,7 @@ namespace amigo {
 #define A2DCSRA		COM_DIAG_AMIGO_MMIO_8(adcbase, 2)
 #define A2DCSRB		COM_DIAG_AMIGO_MMIO_8(adcbase, 3)
 #define A2DMUX		COM_DIAG_AMIGO_MMIO_8(adcbase, 4)
-#if defined(DIDR2)
-// Not present on, for example, the ATmega328p, but the address is reserved.
-#define A2DIDR2		COM_DIAG_AMIGO_MMIO_8(adcbase, 5)
-#endif
+#define A2DIDR2		COM_DIAG_AMIGO_MMIO_8(adcbase, 5) // Not present on, for example, the ATmega328p, but the address is reserved.
 #define A2DIDR0		COM_DIAG_AMIGO_MMIO_8(adcbase, 6)
 #define A2DIDR1		COM_DIAG_AMIGO_MMIO_8(adcbase, 7)
 
@@ -43,132 +40,6 @@ namespace amigo {
  */
 static A2D * a2d[] = {
 	0
-};
-
-/*******************************************************************************
- * MAP A2D PIN TO DISABLE REGISTER
- ******************************************************************************/
-
-static volatile void * const DISABLE[] PROGMEM = {
-#if defined(ADC3D) && defined(DIDR0)
-	&DIDR0,
-	&DIDR0,
-	&DIDR0,
-	&DIDR0,
-#else
-	0,
-	0,
-	0,
-	0,
-#endif
-#if defined(ADC5D) && defined(DIDR0)
-	&DIDR0,
-	&DIDR0,
-#else
-	0,
-	0,
-#endif
-#if defined(ADC6D) && defined(DIDR0)
-	&DIDR0,
-#else
-	0,
-#endif
-#if defined(ADC7D) && defined(DIDR0)
-	&DIDR0,
-#else
-	0,
-#endif
-#if defined(ADC10D) && defined(DIDR2)
-	&DIDR2,
-	&DIDR2,
-	&DIDR2,
-#else
-	0,
-	0,
-	0,
-#endif
-#if defined(ADC11D) && defined(DIDR2)
-	&DIDR2,
-#else
-	0,
-#endif
-#if defined(ADC13D) && defined(DIDR2)
-	&DIDR2,
-	&DIDR2,
-#else
-	0,
-	0,
-#endif
-#if defined(ADC15D) && defined(DIDR2)
-	&DIDR2,
-	&DIDR2
-#else
-	0,
-	0,
-#endif
-};
-
-/*******************************************************************************
- * MAP A2D PIN TO BIT OFFSET
- ******************************************************************************/
-
-static const uint8_t OFFSET[] PROGMEM = {
-#if defined(ADC3D)
-	ADC0D,
-	ADC1D,
-	ADC2D,
-	ADC3D,
-#else
-	~0,
-	~0,
-	~0,
-	~0,
-#endif
-#if defined(ADC5D)
-	ADC4D,
-	ADC5D,
-#else
-	~0,
-	~0,
-#endif
-#if defined(ADC6D)
-	ADC6D,
-#else
-	~0,
-#endif
-#if defined(ADC7D)
-	ADC7D,
-#else
-	~0,
-#endif
-#if defined(ADC10D)
-	ADC8D,
-	ADC9D,
-	ADC10D,
-#else
-	~0,
-	~0,
-	~0,
-#endif
-#if defined(ADC11D)
-	ADC11D,
-#else
-	~0,
-#endif
-#if defined(ADC13D)
-	ADC12D,
-	ADC13D,
-#else
-	~0,
-	~0,
-#endif
-#if defined(ADC15D)
-	ADC14D,
-	ADC15D,
-#else
-	~0,
-	~0,
-#endif
 };
 
 /*******************************************************************************
@@ -313,14 +184,6 @@ static const uint8_t ARDUINOPIN[] PROGMEM = {
  * MAPPING CLASS METHODS
  ******************************************************************************/
 
-volatile void * A2D::a2d2disable(Pin pin) {
-	return (pin < countof(DISABLE)) ? reinterpret_cast<volatile void *>(pgm_read_word(&(DISABLE[pin]))) : 0;
-}
-
-uint8_t A2D::a2d2offset(Pin pin) {
-	return (pin < countof(OFFSET)) ? pgm_read_byte(&(OFFSET[pin])) : ~0;
-}
-
 GPIO::Pin A2D::a2d2gpio(Pin pin) {
 	return (pin < countof(GPIOPIN)) ? static_cast<GPIO::Pin>(pgm_read_byte(&GPIOPIN[pin])) : GPIO::INVALID;
 }
@@ -356,6 +219,208 @@ A2D::A2D(Converter myconverter, size_t requests, size_t conversions)
 	}
 }
 
+void A2D::start(Reference reference, Trigger trigger, Divisor divisor) {
+
+	uint8_t refs;
+	switch (reference) {
+
+	case AREF:
+#if defined(__AVR_ATtiny24__) || defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__) || defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
+		refs = _BV(REFS0);
+#else
+		refs = 0;
+#endif
+		break;
+
+	default:
+	case AVCC:
+#if defined(__AVR_ATtiny24__) || defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__) || defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
+		refs = 0;
+#else
+		refs = _BV(REFS0);
+#endif
+		break;
+
+#if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
+	case V_1_1:
+		refs = _BV(REFS1);
+		break;
+
+	case V_2_56:
+		refs = _BV(REFS1) | _BV(REFS0);
+		break;
+#endif
+
+	case V_INTERNAL:
+#if defined(__AVR_ATtiny24__) || defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__) || defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
+		refs = _BV(REFS1);
+#else
+		refs = _BV(REFS1) | _BV(REFS0);
+#endif
+		break;
+
+	}
+
+	uint8_t adts;
+	uint8_t adate;
+	switch (trigger) {
+
+	default:
+	case FREE_RUNNING:
+		adts = 0;
+		break;
+
+	case ANALOG_COMPARATOR:
+		adts = _BV(ADTS0);
+		break;
+
+	case EXTINT0:
+		adts = _BV(ADTS1);
+		break;
+
+	case MATCH0A:
+		adts = _BV(ADTS1) | _BV(ADTS0);
+		break;
+
+	case OVERFLOW0:
+		adts = _BV(ADTS2);
+		break;
+
+	case MATCH1B:
+		adts = _BV(ADTS2) | _BV(ADTS0);
+		break;
+
+	case OVERFLOW1:
+		adts = _BV(ADTS2) | _BV(ADTS1);
+		break;
+
+	case CAPTURE1:
+		adts = _BV(ADTS2) | _BV(ADTS1) | _BV(ADTS0);
+		break;
+
+	}
+	adate = (adts == 0) ? 0 : _BV(ADATE);
+
+	uint8_t adps;
+	switch (divisor) {
+
+	case D2:
+		adps = _BV(ADPS0);
+		break;
+
+	case D4:
+		adps = _BV(ADPS1);
+		break;
+
+	case D8:
+		adps = _BV(ADPS1) | _BV(ADPS0);
+		break;
+
+	case D16:
+		adps = _BV(ADPS2);
+		break;
+
+	case D32:
+		adps = _BV(ADPS2) | _BV(ADPS0);
+		break;
+
+	case D64:
+		adps = _BV(ADPS2) | _BV(ADPS1);
+		break;
+
+	default:
+	case D128:
+		adps = _BV(ADPS2) | _BV(ADPS1) | _BV(ADPS0);
+		break;
+
+	}
+
+	Uninterruptible uninterruptible;
+
+	A2DMUX = refs;
+	A2DCSRA = adate | adps;
+	A2DCSRB = adts;
+
+	A2DCSRA |= _BV(ADEN) | _BV(ADIE);
+}
+
+void A2D::stop() {
+	Uninterruptible uninterruptible;
+	A2DCSRA &= ~(_BV(ADEN) | _BV(ADIE));
+
+}
+
+void A2D::restart() {
+	Uninterruptible uninterruptible;
+	A2DCSRA |= _BV(ADEN) | _BV(ADIE);
+	uint8_t ch;
+	if (transmitting.receive(&ch, IMMEDIATELY)) {
+		SPIDR = ch;
+	}
+}
+
+void SPI::begin() {
+	Uninterruptible uninterruptible;
+	A2DCSRA |= _BV(ADEN) | _BV(ADIE);
+	uint8_t ch;
+	if (transmitting.receive(&ch, IMMEDIATELY)) {
+		SPIDR = ch;
+	}
+}
+
+uint16_t foo() {
+	uint8_t low, high;
+
+#if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
+	if (pin >= 54) pin -= 54; // allow for channel or pin numbers
+#elif defined(__AVR_ATmega32U4__)
+	if (pin >= 18) pin -= 18; // allow for channel or pin numbers
+#else
+	if (pin >= 14) pin -= 14; // allow for channel or pin numbers
+#endif
+
+#if defined(__AVR_ATmega32U4__)
+	pin = analogPinToChannel(pin);
+	ADCSRB = (ADCSRB & ~(1 << MUX5)) | (((pin >> 3) & 0x01) << MUX5);
+#elif defined(ADCSRB) && defined(MUX5)
+	// the MUX5 bit of ADCSRB selects whether we're reading from channels
+	// 0 to 7 (MUX5 low) or 8 to 15 (MUX5 high).
+	ADCSRB = (ADCSRB & ~(1 << MUX5)) | (((pin >> 3) & 0x01) << MUX5);
+#endif
+
+	// set the analog reference (high two bits of ADMUX) and select the
+	// channel (low 4 bits).  this also sets ADLAR (left-adjust result)
+	// to 0 (the default).
+#if defined(ADMUX)
+	ADMUX = (analog_reference << 6) | (pin & 0x07);
+#endif
+
+	// without a delay, we seem to read from the wrong channel
+	//delay(1);
+
+#if defined(ADCSRA) && defined(ADCL)
+	// start the conversion
+	sbi(ADCSRA, ADSC);
+
+	// ADSC is cleared when the conversion finishes
+	while (bit_is_set(ADCSRA, ADSC));
+
+	// we have to read ADCL first; doing so locks both ADCL
+	// and ADCH until ADCH is read.  reading ADCL second would
+	// cause the results of each conversion to be discarded,
+	// as ADCL and ADCH would be locked when it completed.
+	low  = ADCL;
+	high = ADCH;
+#else
+	// we dont have an ADC, return 0
+	low  = 0;
+	high = 0;
+#endif
+
+	// combine the two bytes
+	return (high << 8) | low;
+}
+
 inline void A2D::complete(Converter converter) {
 	// Only called from an ISR hence implicitly uninterruptible.
 	if (a2d[converter] != 0) {
@@ -364,6 +429,36 @@ inline void A2D::complete(Converter converter) {
 }
 
 void A2D::complete() {
+	uint8_t adcl  = ADCL; // Must read ADCL, then ADCH.
+	uint8_t adch = ADCH;
+	uint16_t result = (adch << 8) | adcl;
+
+	uint16_t request;
+	if (requesting.receive(&request, IMMEDIATELY)) {
+#if defined(__AVR_ATmega32U4__)
+	pin = analogPinToChannel(pin);
+	ADCSRB = (ADCSRB & ~(1 << MUX5)) | (((pin >> 3) & 0x01) << MUX5);
+#elif defined(ADCSRB) && defined(MUX5)
+	// the MUX5 bit of ADCSRB selects whether we're reading from channels
+	// 0 to 7 (MUX5 low) or 8 to 15 (MUX5 high).
+	ADCSRB = (ADCSRB & ~(1 << MUX5)) | (((pin >> 3) & 0x01) << MUX5);
+#endif
+
+	// set the analog reference (high two bits of ADMUX) and select the
+	// channel (low 4 bits).  this also sets ADLAR (left-adjust result)
+	// to 0 (the default).
+#if defined(ADMUX)
+	ADMUX = (analog_reference << 6) | (pin & 0x07);
+#endif
+
+	// without a delay, we seem to read from the wrong channel
+	//delay(1);
+
+#if defined(ADCSRA) && defined(ADCL)
+	// start the conversion
+	sbi(ADCSRA, ADSC);
+	}
+
 }
 
 }

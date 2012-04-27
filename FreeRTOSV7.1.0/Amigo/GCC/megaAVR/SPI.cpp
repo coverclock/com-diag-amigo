@@ -98,8 +98,10 @@ SPI::~SPI() {
 }
 
 void SPI::start(Divisor divisor, Role role, Order order, Polarity polarity, Phase phase) {
+
 	uint8_t spi2x;
 	switch (divisor) {
+
 	default:
 	case D4:
 	case D16:
@@ -107,15 +109,18 @@ void SPI::start(Divisor divisor, Role role, Order order, Polarity polarity, Phas
 	case D128:
 		spi2x = 0;
 		break;
+
 	case D2:
 	case D8:
 	case D32:
 		spi2x = _BV(SPI2X);
 		break;
+
 	}
 
 	uint8_t spr1;
 	switch (divisor) {
+
 	default:
 	case D2:
 	case D4:
@@ -123,15 +128,18 @@ void SPI::start(Divisor divisor, Role role, Order order, Polarity polarity, Phas
 	case D16:
 		spr1 = 0;
 		break;
+
 	case D32:
 	case D64:
 	case D128:
 		spr1 = _BV(SPR1);
 		break;
+
 	}
 
 	uint8_t spr0;
 	switch (divisor) {
+
 	default:
 	case D2:
 	case D4:
@@ -139,50 +147,62 @@ void SPI::start(Divisor divisor, Role role, Order order, Polarity polarity, Phas
 	case D64:
 		spr0 = 0;
 		break;
+
 	case D8:
 	case D16:
 	case D128:
 		spr0 = _BV(SPR0);
 		break;
+
 	}
 
 	uint8_t dord;
 	switch (order) {
+
 	default:
 	case MSB:
 		dord = 0;
 		break;
+
 	case LSB:
 		dord = _BV(DORD);
 		break;
+
 	}
 
 	uint8_t cpol;
 	switch (polarity) {
+
 	default:
 	case NORMAL:
 		cpol = 0;
 		break;
+
 	case INVERTED:
 		cpol = _BV(CPOL);
 		break;
+
 	}
 
 	uint8_t cpha;
 	switch (phase) {
+
 	default:
 	case LEADING:
 		cpha = 0;
 		break;
+
 	case TRAILING:
 		cpha = _BV(CPHA);
 		break;
+
 	}
 
 	Uninterruptible uninterruptible;
 
 	uint8_t mstr;
 	switch (role) {
+
 	default:
 	case MASTER:
 		DDR &= ~miso;
@@ -191,21 +211,25 @@ void SPI::start(Divisor divisor, Role role, Order order, Polarity polarity, Phas
 		PORT |= ss;
 		mstr = _BV(MSTR);
 		break;
+
 	case SLAVE:
 		DDR &= ~(ss | sck | mosi);
 		DDR |= miso;
 		mstr = 0;
 		break;
+
 	}
 
-	SPICR = dord | mstr | cpol | cpha | spr1 | spr0;
-
+	SPICR = dord | mstr | cpol | cpha | spr1 | spr0 | _BV(SPE);
 	SPISR |= spi2x;
 
-	SPICR |= _BV(SPIE) | _BV(SPE);
+	begin();
+}
 
+void SPI::begin() {
 	uint8_t ch;
 	if (transmitting.receive(&ch, IMMEDIATELY)) {
+		SPICR |= _BV(SPIE);
 		SPIDR = ch;
 	}
 }
@@ -215,20 +239,35 @@ void SPI::stop() {
 	SPICR &= ~(_BV(SPIE) | _BV(SPE));
 }
 
-void SPI::begin() {
-	Uninterruptible uninterruptible;
-	uint8_t ch;
-	if (transmitting.receive(&ch, IMMEDIATELY)) {
-		SPIDR = ch;
-	}
-}
-
 void SPI::restart() {
 	Uninterruptible uninterruptible;
-	SPICR |= _BV(SPIE) | _BV(SPE);
-	uint8_t ch;
-	if (transmitting.receive(&ch, IMMEDIATELY)) {
-		SPIDR = ch;
+	SPICR |= _BV(SPE);
+	begin();
+}
+
+int SPI::master(uint8_t ch, ticks_t timeout) {
+	if (!transmitting.send(&ch, timeout)) {
+		return -1;
+	} else {
+		// Weird, huh? Why do we put something on the transmit queue then
+		// try to immediately take it off? Because the SPI may be stopped. If
+		// it is, the caller will block on the receive waiting for the SPI,
+		// and when the SPI is restarted (presumably by another task), the
+		// begin() will be done to stimulate everything to spin back up
+		// If the SPI is started and is in the middle of a transaction,
+		// then there is also no reason to do the begin() because the ISR
+		// will take care of starting this transaction automatically.
+		{
+			Uninterruptible uninterruptible;
+			if ((SPICR & (_BV(SPIE) | _BV(SPE))) == _BV(SPE)) {
+				begin();
+			}
+		}
+		if (!received.receive(&ch, timeout)) {
+			return -2;
+		} else {
+			return ch;
+		}
 	}
 }
 
@@ -266,6 +305,8 @@ void SPI::complete() {
 	}
 	if (transmitting.receiveFromISR(&ch)) {
 		SPIDR = ch;
+	} else {
+		SPICR &= ~_BV(SPIE);
 	}
 	if (woken) {
 		// Doing a context switch from inside an ISR seems wrong, both from an

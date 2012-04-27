@@ -247,19 +247,6 @@ private:
 
 };
 
-inline int SPI::master(uint8_t ch, ticks_t timeout) {
-	if (!transmitting.send(&ch, timeout)) {
-		return -1;
-	} else {
-		begin();
-		if (!received.receive(&ch, timeout)) {
-			return -2;
-		} else {
-			return ch;
-		}
-	}
-}
-
 inline int SPI::slave(ticks_t timeout) {
 	uint8_t ch;
 	return (received.receive(&ch, timeout) ? ch : -1);

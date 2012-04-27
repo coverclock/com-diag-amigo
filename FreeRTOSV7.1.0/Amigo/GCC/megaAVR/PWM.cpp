@@ -928,20 +928,20 @@ PWM::Timer PWM::pwm2timer(Pin pin) {
 	return (pin < countof(TIMER)) ? static_cast<Timer>(pgm_read_byte(&TIMER[pin])) : NONE;
 }
 
-
 /*******************************************************************************
- * INSTANCE METHODS
+ * CLASS METHODS
  ******************************************************************************/
 
-bool PWM::configure(bool high) {
-	bool result = true;
+PWM::Timer PWM::prestart(Timer timer) {
+	Timer result = timer;
 
-	// The code and comments below were gratefully cribbed with minor changes
-	// directly from Arduino 1.0 wiring.c by David A. Mellis. Any flaws are
-	// strictly mine, introduced by my editing. Arduino initializes every
-	// available timer up front in its init() function. Amigo requires the
-	// application to do this, and only configures the one timer used by this
-	// object.
+	// Arduino initializes every available timer up front in its init()
+	// function. Amigo requires the application to do this, and only configures
+	// the the timer specified (or in the instance method version, the timer
+	// associated with the object's pin). I would like to have specified the
+	// prescale factor as an argument and then have it be a default. But this
+	// code borrowed from Arduino 1.0 supports a lot of platforms that I do not
+	// have and hence cannot test.
 
 	switch (timer) {
 
@@ -959,7 +959,7 @@ bool PWM::configure(bool high) {
 #	elif defined(TCCR0A) && defined(CS01) && defined(CS00)
 		TCCR0A |= _BV(CS01) | _BV(CS00);	// Set timer 0 prescale factor to 64.
 #	else
-		result = false;
+		result = NONE;
 #	endif
 		break;
 #endif
@@ -979,7 +979,7 @@ bool PWM::configure(bool high) {
 		TCCR1 = _BV(CS11);					// Set timer 1 prescale factor to 64.
 #		endif
 #	else
-		result = false;
+		result = NONE;
 #	endif
 #	if defined(TCCR1A) && defined(WGM10)
 		TCCR1A = _BV(WGM10);				// Put timer 1 in 8-bit phase correct PWM mode.
@@ -994,14 +994,14 @@ bool PWM::configure(bool high) {
 #	elif defined(TCCR2B) && defined(CS22)
 		TCCR2B = _BV(CS22);					// Set timer 2 prescale factor to 64.
 #	else
-		result = false;
+		result = NONE;
 #	endif
 #	if defined(TCCR2) && defined(WGM20)
 		TCCR2 = _BV(WGM20);					// Put timer 2 in 8-bit phase correct PWM mode.
 #	elif defined(TCCR2A) && defined(WGM20)
 		TCCR2A = _BV(WGM20);				// Put timer 2 in 8-bit phase correct PWM mode.
 #	else
-		result = false;
+		result = NONE;
 #	endif
 		break;
 #endif
@@ -1012,7 +1012,7 @@ bool PWM::configure(bool high) {
 		TCCR3B = _BV(CS31) | _BV(CS30);		// Set timer 3 prescale factor to 64.
 		TCCR3A = _BV(WGM30);				// Put timer 3 in 8-bit phase correct PWM mode.
 #	else
-		result = false;
+		result = NONE;
 #	endif
 		break;
 #endif
@@ -1023,7 +1023,7 @@ bool PWM::configure(bool high) {
 		TCCR4B = _BV(CS41) | _BV(CS40);		// Set timer 4 prescale factor to 64.
 		TCCR4A = _BV(WGM40);				// Put timer 4 in 8-bit phase correct PWM mode.
 #	else
-		result = false;
+		result = NONE;
 #	endif
 		break;
 #	endif
@@ -1034,48 +1034,41 @@ bool PWM::configure(bool high) {
 		TCCR5B = _BV(CS51) | _BV(CS50);		// Set timer 5 prescale factor to 64.
 		TCCR5A = _BV(WGM50);				// Put timer 5 in 8-bit phase correct PWM mode.
 #	else
-		result = false;
+		result = NONE;
 #	endif
 		break;
 #endif
 
 	case NONE:
-	default:
-		result = false;
 		break;
+
+	default:
+		result = NONE;
+		break;
+
 	}
 
-	if (result) {
-		gpio.output(gpiomask);
-		if (high) {
-			gpio.set(gpiomask);
-		} else {
-			gpio.clear(gpiomask);
-		}
-	}
-
-	// It should be impossible for false to be returned unless this code is
+	// It should be impossible this to fail unless this code is somehow
 	// wrong, the Pin enumeration is wrong, the TIMER table is wrong, the
 	// <io*.h> header file provided by AVR libc for this microcontroller is
-	// wrong, or the -mmcu command line argument is wrong. But I have enough
-	// fear, uncertainty, and doubt, that I return the value to the caller and
-	// check it in the the unit test.
+	// wrong, or the -mmcu command line argument is wrong.
 
 	return result;
 }
 
+/*******************************************************************************
+ * INSTANCE METHODS
+ ******************************************************************************/
+
 void PWM::start(uint8_t dutycycle) {
 	if (!*this) {
-		// Do nothing.
-#if 0
-	} else if (dutycycle == LOW) {
-		// Duty cycle is 0%, which is DC low.
-		gpio.clear(gpiomask);
-	} else if (dutycycle == HIGH) {
-		// Duty cycle is 100%, which is DC high.
-		gpio.set(gpiomask);
-#endif
-	} else if (outputcompare16base != 0) {
+		// FAIL!
+		return;
+	}
+
+	gpio.output(gpiomask);
+
+	if (outputcompare16base != 0) {
 		// (0% < duty cycle < 100%) so we generate a outverted square wave...
 		TCCR |= pwmmask;
 		// ... using eight-bits out of the sixteen-bit resolution.
@@ -1091,21 +1084,25 @@ void PWM::start(uint8_t dutycycle) {
 }
 
 void PWM::stop(bool high) {
-	if (*this) {
-		if (outputcompare16base != 0) {
-			TCCR &= ~pwmmask;
-			OCR16 = 0;
-		} else if (outputcompare8base != 0) {
-			TCCR &= ~pwmmask;
-			OCR8 = 0;
-		} else {
-			// Should be impossible.
-		}
-		if (high) {
-			gpio.set(gpiomask);
-		} else {
-			gpio.clear(gpiomask);
-		}
+	if (!*this) {
+		// FAIL!
+		return;
+	}
+
+	if (outputcompare16base != 0) {
+		TCCR &= ~pwmmask;
+		OCR16 = 0;
+	} else if (outputcompare8base != 0) {
+		TCCR &= ~pwmmask;
+		OCR8 = 0;
+	} else {
+		// Should be impossible.
+	}
+
+	if (high) {
+		gpio.set(gpiomask);
+	} else {
+		gpio.clear(gpiomask);
 	}
 }
 

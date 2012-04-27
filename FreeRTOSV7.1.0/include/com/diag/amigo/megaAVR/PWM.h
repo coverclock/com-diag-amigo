@@ -119,6 +119,20 @@ public:
 	};
 
 	/**
+	 * This is the minimum duty cycle and is equivalent to a DC low signal.
+	 * (I actually haven't tested this with a logic analyzer yet to verify
+	 * that it's DC low.)
+	 */
+	static const uint8_t LOW = 0;
+
+	/**
+	 * This is the maximum duty cycle and is equivalent to a DC high signal.
+	 * (I actually haven't tested this with a logic analyzer yet to verify
+	 * that it's DC high.)
+	 */
+	static const uint8_t HIGH = ~0;
+
+	/**
 	 * Every PIN pin is associated with a hardware timer that is used to
 	 * automatically generate the square wave for Pulse Code Modulation without
 	 * any software involvement. This is an numeration of the timers that may
@@ -137,16 +151,18 @@ public:
 	};
 
 	/**
-	 * This is the minimum duty cycle and is equivalent to a DC low signal.
-	 * (I actually haven't tested this with a logic analyzer yet.)
+	 * Configure the specified hardware timer for PWM operation.
+	 * This overrides any other configuration the timer may have, and will
+	 * disrupt operation on any other PWN pin using the same timer. This
+	 * only needs to be done once per timer, and some pins share timers. The
+	 * pwm2timer() mapping function will tell you what timer a pin uses, and
+	 * this method returns the timer it just configured. It can also be inferred
+	 * from the pin name, e.g. PIN_0A and PIN_0B both use timer 0. While this
+	 * method can return NONE, that should only happen if something is seriously
+	 * hosed up with this code or in a AVR libc header file.
+	 * @return the timer that was configured or NONE if unsuccessful.
 	 */
-	static const uint8_t LOW = 0;
-
-	/**
-	 * This is the maximum duty cycle and is equivalent to a DC high signal.
-	 * (I actually haven't tested this with a logic analyzer yet.)
-	 */
-	static const uint8_t HIGH = ~0;
+	static Timer prestart(Timer timer);
 
 	/***************************************************************************
 	 * MAPPING CLASS METHODS
@@ -245,16 +261,18 @@ public:
 	 **************************************************************************/
 
 	/**
-	 * Configure the GPIO pin and applicable timer for this pin for PWM
-	 * operation. This overrides any other configuration the timer may have.
-	 * The only way this method should fail is if the underlying code is wrong
-	 * for the microcontroller model on which it is running. This operation
-	 * only needs to be done once per pin, but it does need to be done for each
-	 * pin even if the pins share a timer.
-	 * @param high if true initializes the GPIO pin to high, otherwise low.
-	 * @return true if successful, false otherwise.
+	 * Configure the hardware timer associated with this pin for PWM operation.
+	 * This overrides any other configuration the timer may have, and will
+	 * disrupt operation on any other PWN pin using the same timer. This
+	 * only needs to be done once per timer, and some pins share timers. The
+	 * pwm2timer() mapping function will tell you what timer a pin uses, and
+	 * this method returns the timer it just configured. It can also be inferred
+	 * from the pin name, e.g. PIN_0A and PIN_0B both use timer 0. While this
+	 * method can return NONE, that should only happen if something is seriously
+	 * hosed up with this code or in a AVR libc header file.
+	 * @return the timer associated with this pin that was configured or NONE.
 	 */
-	bool configure(bool high = false);
+	Timer prestart() { return prestart(timer); }
 
 	/**
 	 * Start generating square wave for Pulse Width Modulation at the specified
