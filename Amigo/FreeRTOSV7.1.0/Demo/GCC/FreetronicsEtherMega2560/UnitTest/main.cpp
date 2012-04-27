@@ -206,7 +206,7 @@ static bool brightnesscontrol(com::diag::amigo::PWM::Pin pin, com::diag::amigo::
 	if (!pwm) {
 		return false;
 	}
-	if (!pwm.configure()) {
+	if (pwm.prestart() == com::diag::amigo::PWM::NONE) {
 		return false;
 	}
 	for (uint16_t ii = 0; ii <= 250; ii += 25) {
@@ -1344,7 +1344,7 @@ void UnitTestTask::task() {
 				FAILED(__LINE__);
 				break;
 			}
-			if (!pwm.configure()) {
+			if (pwm.prestart() == PWM::NONE) {
 				FAILED(__LINE__);
 				break;
 			}
@@ -1412,12 +1412,11 @@ void UnitTestTask::task() {
 				FAILED(__LINE__);
 				break;
 			}
-			if (!pwm.configure(true)) {
+			if (pwm.prestart() == PWM::NONE) {
 				FAILED(__LINE__);
 				break;
 			}
 			static const com::diag::amigo::ticks_t DELAY = milliseconds2ticks(5000);
-			delay(DELAY);
 			printf(LOW);
 			pwm.start(PWM::LOW);
 			delay(DELAY);

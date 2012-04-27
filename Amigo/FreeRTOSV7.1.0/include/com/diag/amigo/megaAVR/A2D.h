@@ -7,7 +7,8 @@
  * Licensed under the terms in README.h\n
  * Chip Overclock mailto:coverclock@diag.com\n
  * http://www.diag.com/navigation/downloads/Amigo.html\n
- * This code is gratefully inspired by FreeRTOS lib_spi and Arduino SPI.
+ * This code is gratefully inspired by and cribbed from wiring.c,
+ * wiring_analog.c and pins_arduino.h by David A. Mellis and Mark Sproul.
  */
 
 #include <avr/io.h>
@@ -35,40 +36,40 @@ public:
 	 * for example, translating PIN_0 to ADC0. The conditional compilation
 	 * below is based on the actual values in the AVR libc <io*.h> header files.
 	 * The header file <io90pwm81.h> defines ADC6D and ADC8D but not ADC7D. I
-	 * suspect that's a typo, but it hoses up this implementation for that model
-	 * of microcontroller. If you're porting this code to that model, you might
+	 * suspect that's a typo, but it hoses up PIN_7 and PIN_8 for that
+	 * microcontroller. If you're porting this code to that model, you might
 	 * consider fixing that header file instead of changing this code.
 	 */
 	enum Pin {
-#if defined(ADC3D)
+#if defined(ADC3D) && defined(DIDR0)
 		PIN_0 = 0,
 		PIN_1 = 1,
 		PIN_2 = 2,
 		PIN_3 = 3,
 #endif
-#if defined(ADC5D)
+#if defined(ADC5D) && defined(DIDR0)
 		PIN_4 = 4,
 		PIN_5 = 5,
 #endif
-#if defined(ADC6D)
+#if defined(ADC6D) && defined(DIDR0)
 		PIN_6 = 6,
 #endif
-#if defined(ADC7D)
+#if defined(ADC7D) && defined(DIDR0)
 		PIN_7 = 7,
 #endif
-#if defined(ADC10D)
+#if defined(ADC10D) && defined(DIDR2)
 		PIN_8 = 8,
 		PIN_9 = 9,
 		PIN_10 = 10,
 #endif
-#if defined(ADC11D)
+#if defined(ADC11D) && defined(DIDR2)
 		PIN_11 = 11,
 #endif
-#if defined(ADC13D)
+#if defined(ADC13D) && defined(DIDR2)
 		PIN_12 = 12,
 		PIN_13 = 13,
 #endif
-#if defined(ADC15D)
+#if defined(ADC15D) && defined(DIDR2)
 		PIN_14 = 14,
 		PIN_15 = 15,
 #endif
@@ -80,6 +81,51 @@ public:
 	 */
 	enum Converter {
 		CONVERTER0
+	};
+
+	/**
+	 * These are the possible reference voltages against which the ADC measures
+	 * the pin. The internal Vcc is the most typical, followed by a voltage
+	 * applied to the external AREF analog reference pin. Some megaAVR models
+	 * offer other internal voltage choices.
+	 */
+	enum Reference {
+		AREF,
+		AVCC,
+#if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
+		V_1_1,
+		V_2_56,
+#endif
+		V_INTERNAL
+	};
+
+	/**
+	 * These are the events that can trigger the start of an ADC conversion
+	 * once it has been enabled. Most typically it is free running, occurring a
+	 * soon as the ADC is enabled. But I can easily see applications for
+	 * triggering it on an pulse on the external interrupt 0 (INT0) pin. For
+	 * any of the other choices, the application has to do its own setup on
+	 * the timer/counters or the analog comparator.
+	 */
+	enum Trigger {
+		FREE_RUNNING,
+		ANALOG_COMPARATOR,
+		EXTINT0,
+		MATCH0A,
+		OVERFLOW0,
+		MATCH1B,
+		OVERFLOW1,
+		CAPTURE1
+	};
+
+	enum Divisor {
+		D2,
+		D4,
+		D8,
+		D16,
+		D32,
+		D64,
+		D128
 	};
 
 	/**
@@ -115,26 +161,9 @@ public:
 	 */
 	static void complete(Converter converter);
 
-	/**
-	 * Map a pin to a digital input disable register address.
-	 * @param pin is a Pin enumerated value.
-	 * @return a disable register address or NULL if invalid.
-	 */
-	static volatile void * a2d2disable(Pin pin);
-
-	/**
-	 * Map a pin to a ADC bit offset.
-	 * @param pin is a Pin enumerated value.
-	 * @return a control bit offset or ~0 if invalid.
-	 */
-	static uint8_t a2d2offset(Pin pin);
-
-	/**
-	 * Map a pin to a ADC bit mask.
-	 * @param pin is a Pin enumerated value.
-	 * @return a control bit mask or 0 if invalid.
-	 */
-	static uint8_t a2d2mask(Pin pin);
+	/***************************************************************************
+	 * MAPPING CLASS METHODS
+	 **************************************************************************/
 
 	/**
 	 * Map a pin to its equivalent GPIO pin.
@@ -153,6 +182,10 @@ public:
 	 * @return a Pin enumerated value or INVALID if not a valid pin number.
 	 */
 	static Pin arduino2a2d(uint8_t number);
+
+	/***************************************************************************
+	 * CREATION AND DESTRUCTION
+	 **************************************************************************/
 
 public:
 
@@ -177,15 +210,14 @@ public:
 	 */
 	operator bool() const { return (adcbase != 0); }
 
+	/***************************************************************************
+	 * STARTING, STOPPING, AND READING
+	 **************************************************************************/
+
 	/**
 	 * Initialize the ADC and start interrupt driven I/O operations on it.
-	 * @param divisor specifies the oscillator frequency divisor.
-	 * @param role specifies whether this SPI controller is Master or Slave.
-	 * @param order specifies Most or Least Significant Bit transmission order.
-	 * @param polarity specifies Positive or Negative signal polarity.
-	 * @param phase specifies signal phase Leading or Trailing.
 	 */
-	//void start(Divisor divisor = D4, Role role = MASTER, Order order = MSB, Polarity polarity = NORMAL, Phase phase = LEADING);
+	void start(Reference reference = AVCC, Trigger trigger = FREE_RUNNING, Divisor divisor = D128);
 
 	/**
 	 * The ADC is disabled and all further interrupt driven I/O operations
@@ -230,11 +262,6 @@ private:
 	A2D & operator=(const A2D& that);
 
 };
-
-inline uint8_t A2D::a2d2mask(Pin pin) {
-	uint8_t offset = a2d2offset(pin);
-	return (offset != static_cast<uint8_t>(~0)) ? (1 << offset) : 0;
-}
 
 }
 }
