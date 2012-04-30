@@ -163,7 +163,7 @@ public:
 	};
 
 	/***************************************************************************
-	 * MAPPING CLASS METHODS
+	 * MAPPING
 	 **************************************************************************/
 
 	/**
@@ -199,7 +199,34 @@ public:
 	static Pin arduino2gpio(uint8_t number);
 
 	/***************************************************************************
-	 * CONFIGURATION CLASS METHODS
+	 * CREATING AND DESTROYING
+	 **************************************************************************/
+
+	/**
+	 * Constructor.
+	 * @param mybase is the base address for the first GPIO register.
+	 */
+	explicit GPIO(volatile void * mybase)
+	: gpiobase(mybase)
+	{}
+
+	explicit GPIO(Pin pin)
+	: gpiobase(gpio2base(pin))
+	{}
+
+	/**
+	 * Destructor.
+	 */
+	~GPIO() {}
+
+	/**
+	 * Return true if construction was successful false otherwise.
+	 * @return true if construction was successful, false otherwise.
+	 */
+	operator bool() const { return (gpiobase != 0); }
+
+	/***************************************************************************
+	 * CONFIGURING
 	 **************************************************************************/
 
 	/**
@@ -234,66 +261,6 @@ public:
 	 */
 	static void output(Pin pin, bool initial);
 
-	/***************************************************************************
-	 * OPERATIONAL CLASS METHODS
-	 **************************************************************************/
-
-	/**
-	 * Set a GPIO pin to one (high).
-	 * @param pin is a Pin enumerated value.
-	 */
-	static void set(Pin pin);
-
-	/**
-	 * Set a GPIO pin to zero (low).
-	 * @param pin is a Pin enumerated value.
-	 */
-	static void clear(Pin pin);
-
-	/**
-	 * Toggle a GPIO pin.
-	 * @param pin is a Pin enumerated value.
-	 */
-	static void toggle(Pin pin);
-
-	/**
-	 * Get the value of GPIO pins.
-	 * @param pin is a Pin enumerated value.
-	 * @return true if the value is high (one), false if it is low (zero).
-	 */
-	static bool get(Pin pin);
-
-	/***************************************************************************
-	 * CREATION AND DESTRUCTION
-	 **************************************************************************/
-
-	/**
-	 * Constructor.
-	 * @param mybase is the base address for the first GPIO register.
-	 */
-	explicit GPIO(volatile void * mybase)
-	: gpiobase(mybase)
-	{}
-
-	explicit GPIO(Pin pin)
-	: gpiobase(gpio2base(pin))
-	{}
-
-	/**
-	 * Destructor.
-	 */
-	~GPIO() {}
-
-	/**
-	 * Return true if construction was successful false otherwise.
-	 * @return true if construction was successful, false otherwise.
-	 */
-	operator bool() const { return (gpiobase != 0); }
-
-	/***************************************************************************
-	 * CONFIGURATION INSTANCE METHODS
-	 **************************************************************************/
-
 	/**
 	 * Set GPIO pins to inputs with no pull-ups enabled.
 	 * @param mymask indicates input pins with bits set to one.
@@ -325,8 +292,33 @@ public:
 	const GPIO & output(uint8_t mymask, uint8_t initial) const;
 
 	/***************************************************************************
-	 * OPERATIONAL INSTANCE METHODS
+	 * READING AND WRITING
 	 **************************************************************************/
+
+	/**
+	 * Set a GPIO pin to one (high).
+	 * @param pin is a Pin enumerated value.
+	 */
+	static void set(Pin pin);
+
+	/**
+	 * Set a GPIO pin to zero (low).
+	 * @param pin is a Pin enumerated value.
+	 */
+	static void clear(Pin pin);
+
+	/**
+	 * Toggle a GPIO pin.
+	 * @param pin is a Pin enumerated value.
+	 */
+	static void toggle(Pin pin);
+
+	/**
+	 * Get the value of GPIO pins.
+	 * @param pin is a Pin enumerated value.
+	 * @return true if the value is high (one), false if it is low (zero).
+	 */
+	static bool get(Pin pin);
 
 	/**
 	 * Set GPIO pins to one (high).
@@ -363,6 +355,10 @@ public:
 	 * @return the value of the GPIO pins with ones indicating high.
 	 */
 	uint8_t get(uint8_t mymask) const;
+
+	/***************************************************************************
+	 * DELAYING
+	 **************************************************************************/
 
 	/**
 	 * Delay the calling task for the specified number of ticks by yielding the

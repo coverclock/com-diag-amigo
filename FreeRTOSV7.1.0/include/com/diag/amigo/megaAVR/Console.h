@@ -57,6 +57,10 @@ public:
 	 */
 	static const uint32_t RATE = 115200UL;
 
+	/***************************************************************************
+	 * CREATING AND DESTROYING
+	 **************************************************************************/
+
 	/**
 	 * This returns a reference to a pre-built Console object.
 	 * @return a reference to a pre-built Console object.
@@ -72,6 +76,10 @@ public:
 	 * Destructor.
 	 */
 	virtual ~Console();
+
+	/***************************************************************************
+	 * STARTING AND STOPPING
+	 **************************************************************************/
 
 	/**
 	 * Initialize USART0 to the specified baud rate, one start bit, eight data
@@ -90,6 +98,10 @@ public:
 	 * @return a reference to this Console object.
 	 */
 	Console & stop();
+
+	/***************************************************************************
+	 * READING AND WRITING
+	 **************************************************************************/
 
 	/**
 	 * Display a character on USART0.

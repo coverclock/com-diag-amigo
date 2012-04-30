@@ -150,22 +150,8 @@ public:
 		NONE = 255
 	};
 
-	/**
-	 * Configure the specified hardware timer for PWM operation.
-	 * This overrides any other configuration the timer may have, and will
-	 * disrupt operation on any other PWN pin using the same timer. This
-	 * only needs to be done once per timer, and some pins share timers. The
-	 * pwm2timer() mapping function will tell you what timer a pin uses, and
-	 * this method returns the timer it just configured. It can also be inferred
-	 * from the pin name, e.g. PIN_0A and PIN_0B both use timer 0. While this
-	 * method can return NONE, that should only happen if something is seriously
-	 * hosed up with this code or in a AVR libc header file.
-	 * @return the timer that was configured or NONE if unsuccessful.
-	 */
-	static Timer prestart(Timer timer);
-
 	/***************************************************************************
-	 * MAPPING CLASS METHODS
+	 * MAPPING
 	 **************************************************************************/
 
 	/**
@@ -228,7 +214,7 @@ public:
 	static Timer pwm2timer(Pin pin);
 
 	/***************************************************************************
-	 * CREATION AND DESTRUCTION
+	 * CREATING AND DESTROYING
 	 **************************************************************************/
 
 	/**
@@ -259,6 +245,24 @@ public:
 	/***************************************************************************
 	 * STARTING AND STOPPING
 	 **************************************************************************/
+
+	/**
+	 * Configure the specified hardware timer for PWM operation.
+	 * This overrides any other configuration the timer may have, and will
+	 * disrupt operation on any other PWN pin using the same timer. This
+	 * only needs to be done once per timer, and some pins share timers. The
+	 * pwm2timer() mapping function will tell you what timer a pin uses, and
+	 * this method returns the timer it just configured. It can also be inferred
+	 * from the pin name, e.g. PIN_0A and PIN_0B both use timer 0. While this
+	 * method can return NONE, that should only happen if something is seriously
+	 * hosed up with this code or in a AVR libc header file. Note that timer 0
+	 * supports Fast PWM mode and this is what it is configured for; the other
+	 * timers are all configured for phase-correct PWM mode. All timers are
+	 * configured for eight-bit resolution even if they are capable of sixteen-
+	 * bit.
+	 * @return the timer that was configured or NONE if unsuccessful.
+	 */
+	static Timer prestart(Timer timer);
 
 	/**
 	 * Configure the hardware timer associated with this pin for PWM operation.
