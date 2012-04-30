@@ -18,12 +18,19 @@ static const char HEX[] PROGMEM = "0123456789ABCDEF";
 
 static const double MICROSECONDS = 100.0;
 
+// See comments on the constructor below for caveats.
 static Console console;
 
+// See comments on the constructor below for caveats.
 Console & Console::instance() {
 	return console;
 }
 
+// For this to avoid the dreaded "static initialization order fiasco" it
+// absolutely cannot refer to a static member of any other class. This is
+// pretty simple however since the role of Console is to provide a way to
+// debug code when just about nothing else is working. Since this constructor
+// merely zeros out its interger-type fields, this isn't an issue.
 Console::Console()
 : ubrrl(0)
 , ubrrh(0)
@@ -151,6 +158,9 @@ Console & Console::flush() {
 	_delay_us(MICROSECONDS);
 	return *this;
 }
+
+// Below are the functions that provide C-linkage access to Console for C
+// translation units.
 
 CXXCAPI void amigo_console_start() {
 	Console::instance().start();

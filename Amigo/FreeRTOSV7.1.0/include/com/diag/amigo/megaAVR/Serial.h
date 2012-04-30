@@ -189,6 +189,10 @@ public:
 	 */
 	static void transmit(Port port);
 
+	/***************************************************************************
+	 * CREATING AND DESTROYING
+	 **************************************************************************/
+
 public:
 
 	/**
@@ -212,6 +216,10 @@ public:
 	 * @return true if construction was successful, false otherwise.
 	 */
 	operator bool() const { return (usartbase != 0); }
+
+	/***************************************************************************
+	 * STARTING AND STOPPING
+	 **************************************************************************/
 
 	/**
 	 * Initialize the USART and start interrupt driven I/O operations on it.
@@ -248,6 +256,10 @@ public:
 	 * reinitializing the USART.
 	 */
 	void restart();
+
+	/***************************************************************************
+	 * READING AND WRITING
+	 **************************************************************************/
 
 	/**
 	 * Return the number of characters in the receive ring buffer available to
@@ -308,6 +320,10 @@ public:
 	 */
 	size_t express(uint8_t ch, ticks_t timeout = NEVER);
 
+	/***************************************************************************
+	 * CHECKING
+	 **************************************************************************/
+
 	/**
 	 * Cast this object to an integer by returning the error counter. The error
 	 * counter is cumulative. The application is responsible for interrogating
@@ -334,9 +350,10 @@ protected:
 	uint8_t bad;
 	uint8_t errors;
 
+	/**
+	 * Start an interrupt-driven I/O.
+	 */
 	void begin();
-
-private:
 
 	/**
 	 * Implement the instance receive interrupt service routine.
@@ -347,6 +364,8 @@ private:
 	 * Implement the instance transmit interrupt service routine.
 	 */
 	void transmit();
+
+private:
 
     /**
      *  Copy constructor. POISONED.

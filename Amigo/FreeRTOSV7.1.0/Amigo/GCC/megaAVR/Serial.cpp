@@ -255,36 +255,27 @@ inline void Serial::receive(Port port) {
 
 void Serial::receive() {
 	// Only called from an ISR hence implicitly uninterruptible;
-	bool success = true;
 	uint8_t ch;
 	if ((UCSRA & (_BV(FE0) | _BV(DOR0) | _BV(UPE0))) == 0) {
 		ch = UDR;
+	} else if (errors < ~static_cast<uint8_t>(0)) {
+		++errors;
+		ch = bad;
 	} else {
 		ch = bad;
-		success = false;
 	}
+
 	bool woken = false;
-	if (!received.sendFromISR(&ch, woken)) {
-		success = false;
-	} else if (woken) {
-		// Doing a context switch from inside an ISR seems wrong, both from an
-		// architectural POV and a correctness POV. But that's what happens in
-		// other FreeRTOS code, and I understand the rationale for it. Careful
-		// perusal of the underlying code has _mostly_ convinced me that this
-		// works as intended. Interrupts will be re-enabled in the next task
-		// when its SREG is restored from the context frame on its stack. They
-		// will be reenabled in the new task when it is returned from this ISR.
-		// It still seems like a violation against the laws of Man and God.
-		Task::yield();
-	} else {
-		// Do nothing.
-	}
-	if (success) {
+	if (received.sendFromISR(&ch, woken)) {
 		// Do nothing.
 	} else if (errors < ~static_cast<uint8_t>(0)) {
 		++errors;
 	} else {
 		// Do nothing.
+	}
+
+	if (woken) {
+		Task::yield();
 	}
 }
 

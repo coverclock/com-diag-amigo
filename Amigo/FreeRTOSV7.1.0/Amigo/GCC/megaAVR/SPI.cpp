@@ -294,6 +294,7 @@ void SPI::complete() {
 	} else {
 		// Do nothing.
 	}
+
 	uint8_t ch = SPIDR;
 	bool woken = false;
 	if (received.sendFromISR(&ch, woken)) {
@@ -303,11 +304,13 @@ void SPI::complete() {
 	} else {
 		// Do nothing.
 	}
+
 	if (transmitting.receiveFromISR(&ch)) {
 		SPIDR = ch;
 	} else {
 		SPICR &= ~_BV(SPIE);
 	}
+
 	if (woken) {
 		// Doing a context switch from inside an ISR seems wrong, both from an
 		// architectural POV and a correctness POV. But that's what happens in

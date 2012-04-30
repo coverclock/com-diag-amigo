@@ -211,13 +211,13 @@ public:
 	operator bool() const { return (adcbase != 0); }
 
 	/***************************************************************************
-	 * STARTING, STOPPING, AND READING
+	 * STARTING AND STOPPING
 	 **************************************************************************/
 
 	/**
 	 * Initialize the ADC and start interrupt driven I/O operations on it.
 	 */
-	void start(Reference reference = AVCC, Trigger trigger = FREE_RUNNING, Divisor divisor = D128);
+	void start(Trigger trigger = FREE_RUNNING, Divisor divisor = D128);
 
 	/**
 	 * The ADC is disabled and all further interrupt driven I/O operations
@@ -231,21 +231,92 @@ public:
 	 */
 	void restart();
 
+	/***************************************************************************
+	 * READING AND WRITING
+	 **************************************************************************/
+
+	/**
+	 * Return the number of samples in the conversion ring buffer available to
+	 * be read.
+	 * @return the number of samples available or <0 if fail.
+	 */
+	int available() const;
+
+	/**
+	 * Append a pin number to the end of the request ring buffer.
+	 * @param request is the pin number to append.
+	 * @param timeout is the number of ticks to wait when the buffer is full.
+	 * @return one if the function was successful, zero otherwise.
+	 */
+	size_t request(Pin pin, Reference reference = AVCC, ticks_t timeout = NEVER);
+
+	/**
+	 * Return the first sample in the conversion ring buffer and remove it from
+	 * the buffer. The sample will be an unsigned quantity in the lower ten-bits
+	 * of the returned value. If the returned value is not negative, you can
+	 * simply assigned it to an uint16_t.
+	 * @param timeout is the number of ticks to wait when the buffer is empty.
+	 * @return the first sample or <0 if fail.
+	 */
+	int conversion(ticks_t timeout = NEVER);
+
+	/**
+	 * Combine the sending of a request and the receiving of its conversion
+	 * in single method. If there are multiple tasks using the ADC (whether
+	 * they are using the same A2D pin or different pins), use of this method
+	 * should be serialized with a MutexSemaphore semaphore; this is the
+	 * responsibility of the application.
+	 * @param request is the pin to sample and convert.
+	 * @param timeout is the number of ticks to wait when the buffer is empty.
+	 * @return the first sample or <0 if fail.
+	 */
+	int convert(Pin pin, Reference reference = AVCC, ticks_t timeout = NEVER);
+
+	/***************************************************************************
+	 * CHECKING
+	 **************************************************************************/
+
+	/**
+	 * Cast this object to an integer by returning the error counter. The error
+	 * counter is cumulative. The application is responsible for interrogating
+	 * it using this operator and resetting it.
+	 * @return the error counter.
+	 */
+	operator uint8_t() const { return errors; }
+
+	/**
+	 * Set the error counter to the specified integer value. Zero is a good
+	 * value, which resets the error counter.
+	 * @param value is the new error counter value.
+	 * @return a reference to this object.
+	 */
+	A2D & operator=(uint8_t value);
+
 protected:
 
 	volatile void * adcbase;
 	TypedQueue<uint16_t> converted; // An incoming queue of ten-bit conversions.
 	TypedQueue<uint8_t> requesting; // An outgoing queue of requests.
 	Converter converter;
+	uint8_t errors;
 
+	/**
+	 * Start an interrupt-driven I/O.
+	 */
 	void begin();
 
-private:
+	/**
+	 * Start an analog-to-digital conversion.
+	 * @param request combines a reference enumerated value with a pin enumerated value.
+	 */
+	void adc(uint8_t request);
 
 	/**
 	 * Implement the instance conversion complete interrupt service routine.
 	 */
 	void complete();
+
+private:
 
     /**
      *  Copy constructor. POISONED.
@@ -262,6 +333,26 @@ private:
 	A2D & operator=(const A2D& that);
 
 };
+
+inline int A2D::available() const {
+	return converted.available();
+}
+
+inline size_t A2D::request(Pin pin, Reference reference, ticks_t timeout) {
+	uint8_t request = (reference << 4) | (pin & 0x0f);
+	if (!requesting.send(&request, timeout)) {
+		return 0;
+	} else {
+		begin();
+		return 1;
+	}
+}
+
+inline int A2D::conversion(ticks_t timeout) {
+	uint16_t sample;
+	return (converted.receive(&sample, timeout) ? sample : -1);
+
+}
 
 }
 }

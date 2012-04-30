@@ -125,6 +125,10 @@ public:
 	 */
 	static void complete(Controller controller);
 
+	/***************************************************************************
+	 * CREATING AND DESTROYING
+	 **************************************************************************/
+
 public:
 
 	/**
@@ -148,6 +152,10 @@ public:
 	 */
 	operator bool() const { return ((gpiobase != 0) && (spibase != 0)); }
 
+	/***************************************************************************
+	 * STARTING AND STOPPING
+	 **************************************************************************/
+
 	/**
 	 * Initialize the SPI and start interrupt driven I/O operations on it.
 	 * @param divisor specifies the oscillator frequency divisor.
@@ -170,12 +178,20 @@ public:
 	 */
 	void restart();
 
+	/***************************************************************************
+	 * READING AND WRITING
+	 **************************************************************************/
+
 	/**
 	 * Append a byte to the end of the transmit ring buffer and remove the byte
 	 * at the beginning of the receive ring buffer and return it. This is only
 	 * meaningful (I think) when acting as a master. All SPI I/O operations
 	 * performed by a master are always a transmit of a byte coupled with a
-	 * receive of a byte, although the received byte may be ignored.
+	 * receive of a byte, although the received byte may be ignored. If there
+	 * are multiple tasks using the SPI bus (whether they are using the same
+	 * SPI slave device or different devices), use of this method should be
+	 * serialized with a MutexSemaphore semaphore; this is the responsibility
+	 * of the application.
 	 * @param ch is the byte to append.
 	 * @param timeout is the number of ticks to wait when the buffer is full.
 	 * @return the first character or <0 if fail.
@@ -192,6 +208,10 @@ public:
 	 * @return the first character or <0 if fail.
 	 */
 	int slave(ticks_t timeout = NEVER);
+
+	/***************************************************************************
+	 * CHECKING
+	 **************************************************************************/
 
 	/**
 	 * Cast this object to an integer by returning the error counter. The error
@@ -222,14 +242,17 @@ protected:
 	uint8_t miso;
 	uint8_t errors;
 
+	/**
+	 * Start an interrupt-driven I/O.
+	 */
 	void begin();
-
-private:
 
 	/**
 	 * Implement the instance transfer complete interrupt service routine.
 	 */
 	void complete();
+
+private:
 
     /**
      *  Copy constructor. POISONED.

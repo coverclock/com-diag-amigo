@@ -201,6 +201,7 @@ A2D::A2D(Converter myconverter, size_t requests, size_t conversions)
 , converted(conversions)
 , requesting(requests)
 , converter(myconverter)
+, errors(0)
 {
 	if (converter >= countof(a2d)) {
 		// FAIL!
@@ -219,47 +220,7 @@ A2D::A2D(Converter myconverter, size_t requests, size_t conversions)
 	}
 }
 
-void A2D::start(Reference reference, Trigger trigger, Divisor divisor) {
-
-	uint8_t refs;
-	switch (reference) {
-
-	case AREF:
-#if defined(__AVR_ATtiny24__) || defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__) || defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
-		refs = _BV(REFS0);
-#else
-		refs = 0;
-#endif
-		break;
-
-	default:
-	case AVCC:
-#if defined(__AVR_ATtiny24__) || defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__) || defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
-		refs = 0;
-#else
-		refs = _BV(REFS0);
-#endif
-		break;
-
-#if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
-	case V_1_1:
-		refs = _BV(REFS1);
-		break;
-
-	case V_2_56:
-		refs = _BV(REFS1) | _BV(REFS0);
-		break;
-#endif
-
-	case V_INTERNAL:
-#if defined(__AVR_ATtiny24__) || defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__) || defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
-		refs = _BV(REFS1);
-#else
-		refs = _BV(REFS1) | _BV(REFS0);
-#endif
-		break;
-
-	}
+void A2D::start(Trigger trigger, Divisor divisor) {
 
 	uint8_t adts;
 	uint8_t adate;
@@ -337,88 +298,118 @@ void A2D::start(Reference reference, Trigger trigger, Divisor divisor) {
 
 	Uninterruptible uninterruptible;
 
-	A2DMUX = refs;
-	A2DCSRA = adate | adps;
+	A2DCSRA = adate | adps | _BV(ADEN);
 	A2DCSRB = adts;
 
-	A2DCSRA |= _BV(ADEN) | _BV(ADIE);
+	begin();
+}
+
+void A2D::begin() {
+	uint8_t request;
+	if (requesting.receive(&request, IMMEDIATELY)) {
+		adc(request);
+	}
+}
+
+void A2D::adc(uint8_t request) {
+	uint8_t reference = request >> 4;
+	uint8_t channel = request & 0x0f;
+
+#if defined(__AVR_ATmega32U4__)
+	switch (channel) {
+	case PIN_0:		channel = 7;	break;
+	case PIN_1:		channel = 6;	break;
+	case PIN_2:		channel = 5;	break;
+	case PIN_3:		channel = 4;	break;
+	case PIN_4:		channel = 1;	break;
+	case PIN_5:		channel = 0;	break;
+	case PIN_6:		channel = 8;	break;
+	case PIN_7:		channel = 10;	break;
+	case PIN_8:		channel = 11;	break;
+	case PIN_9:		channel = 12;	break;
+	case PIN_10:	channel = 13;	break;
+	case PIN_11:	channel = 9;	break;
+	default:		return;			break;
+	}
+#endif
+
+	uint8_t refs;
+	switch (reference) {
+
+	case AREF:
+#if defined(__AVR_ATtiny24__) || defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__) || defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
+		refs = _BV(REFS0);
+#else
+		refs = 0;
+#endif
+		break;
+
+	default:
+	case AVCC:
+#if defined(__AVR_ATtiny24__) || defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__) || defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
+		refs = 0;
+#else
+		refs = _BV(REFS0);
+#endif
+		break;
+
+#if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
+	case V_1_1:
+		refs = _BV(REFS1);
+		break;
+
+	case V_2_56:
+		refs = _BV(REFS1) | _BV(REFS0);
+		break;
+#endif
+
+	case V_INTERNAL:
+#if defined(__AVR_ATtiny24__) || defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__) || defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
+		refs = _BV(REFS1);
+#else
+		refs = _BV(REFS1) | _BV(REFS0);
+#endif
+		break;
+
+	}
+
+	ADCSRB = (ADCSRB & ~(1 << MUX5)) | (((channel >> 3) & 0x01) << MUX5);
+	ADMUX = refs | (channel & 0x07);
+	A2DCSRA |= _BV(ADIE);
+	A2DCSRA |= _BV(ADSC);
 }
 
 void A2D::stop() {
 	Uninterruptible uninterruptible;
 	A2DCSRA &= ~(_BV(ADEN) | _BV(ADIE));
-
 }
 
 void A2D::restart() {
 	Uninterruptible uninterruptible;
-	A2DCSRA |= _BV(ADEN) | _BV(ADIE);
-	uint8_t ch;
-	if (transmitting.receive(&ch, IMMEDIATELY)) {
-		SPIDR = ch;
-	}
+	A2DCSRA |= _BV(ADEN);
+	begin();
 }
 
-void SPI::begin() {
-	Uninterruptible uninterruptible;
-	A2DCSRA |= _BV(ADEN) | _BV(ADIE);
-	uint8_t ch;
-	if (transmitting.receive(&ch, IMMEDIATELY)) {
-		SPIDR = ch;
+inline int A2D::convert(Pin pin, Reference reference, ticks_t timeout) {
+	int result;
+	uint8_t request = (reference << 4) | (pin & 0x0f);
+	if (!requesting.send(&request, timeout)) {
+		result = -1;
+	} else {
+		{
+			Uninterruptible uninterruptible;
+			if ((A2DCSRA & _BV(ADEN)) == _BV(ADEN)) {
+				begin();
+			}
+		}
+		uint16_t sample;
+		if (!converted.receive(&sample, timeout)) {
+			result = -2;
+		} else {
+			result = sample;
+		}
 	}
-}
-
-uint16_t foo() {
-	uint8_t low, high;
-
-#if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
-	if (pin >= 54) pin -= 54; // allow for channel or pin numbers
-#elif defined(__AVR_ATmega32U4__)
-	if (pin >= 18) pin -= 18; // allow for channel or pin numbers
-#else
-	if (pin >= 14) pin -= 14; // allow for channel or pin numbers
-#endif
-
-#if defined(__AVR_ATmega32U4__)
-	pin = analogPinToChannel(pin);
-	ADCSRB = (ADCSRB & ~(1 << MUX5)) | (((pin >> 3) & 0x01) << MUX5);
-#elif defined(ADCSRB) && defined(MUX5)
-	// the MUX5 bit of ADCSRB selects whether we're reading from channels
-	// 0 to 7 (MUX5 low) or 8 to 15 (MUX5 high).
-	ADCSRB = (ADCSRB & ~(1 << MUX5)) | (((pin >> 3) & 0x01) << MUX5);
-#endif
-
-	// set the analog reference (high two bits of ADMUX) and select the
-	// channel (low 4 bits).  this also sets ADLAR (left-adjust result)
-	// to 0 (the default).
-#if defined(ADMUX)
-	ADMUX = (analog_reference << 6) | (pin & 0x07);
-#endif
-
-	// without a delay, we seem to read from the wrong channel
-	//delay(1);
-
-#if defined(ADCSRA) && defined(ADCL)
-	// start the conversion
-	sbi(ADCSRA, ADSC);
-
-	// ADSC is cleared when the conversion finishes
-	while (bit_is_set(ADCSRA, ADSC));
-
-	// we have to read ADCL first; doing so locks both ADCL
-	// and ADCH until ADCH is read.  reading ADCL second would
-	// cause the results of each conversion to be discarded,
-	// as ADCL and ADCH would be locked when it completed.
-	low  = ADCL;
-	high = ADCH;
-#else
-	// we dont have an ADC, return 0
-	low  = 0;
-	high = 0;
-#endif
-
-	// combine the two bytes
-	return (high << 8) | low;
+	return result;
 }
 
 inline void A2D::complete(Converter converter) {
@@ -433,32 +424,33 @@ void A2D::complete() {
 	uint8_t adch = ADCH;
 	uint16_t result = (adch << 8) | adcl;
 
-	uint16_t request;
-	if (requesting.receive(&request, IMMEDIATELY)) {
-#if defined(__AVR_ATmega32U4__)
-	pin = analogPinToChannel(pin);
-	ADCSRB = (ADCSRB & ~(1 << MUX5)) | (((pin >> 3) & 0x01) << MUX5);
-#elif defined(ADCSRB) && defined(MUX5)
-	// the MUX5 bit of ADCSRB selects whether we're reading from channels
-	// 0 to 7 (MUX5 low) or 8 to 15 (MUX5 high).
-	ADCSRB = (ADCSRB & ~(1 << MUX5)) | (((pin >> 3) & 0x01) << MUX5);
-#endif
-
-	// set the analog reference (high two bits of ADMUX) and select the
-	// channel (low 4 bits).  this also sets ADLAR (left-adjust result)
-	// to 0 (the default).
-#if defined(ADMUX)
-	ADMUX = (analog_reference << 6) | (pin & 0x07);
-#endif
-
-	// without a delay, we seem to read from the wrong channel
-	//delay(1);
-
-#if defined(ADCSRA) && defined(ADCL)
-	// start the conversion
-	sbi(ADCSRA, ADSC);
+	bool woken = false;
+	if (converted.sendFromISR(&result, woken)) {
+		// Do nothing.
+	} else if (errors < ~static_cast<uint8_t>(0)) {
+		++errors;
+	} else {
+		// Do nothing.
 	}
 
+	uint8_t request;
+	if (requesting.receive(&request, IMMEDIATELY)) {
+		adc(request);
+	} else {
+		A2DCSRA &= ~_BV(ADIE);
+	}
+
+	if (woken) {
+		Task::yield();
+	}
+
+}
+
+A2D & A2D::operator=(uint8_t value) {
+	// It is fun to think about why this has to be uninterruptible.
+	Uninterruptible uninterruptible;
+	errors = value;
+	return *this;
 }
 
 }

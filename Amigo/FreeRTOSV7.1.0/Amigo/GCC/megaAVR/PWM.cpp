@@ -970,13 +970,13 @@ PWM::Timer PWM::prestart(Timer timer) {
 #		if F_CPU >= 8000000L
 		TCCR1B = _BV(CS11) | _BV(CS10);		// Set timer 1 prescale factor to 64.
 #		else
-		TCCR1B = _BV(CS11);					// Set timer 1 prescale factor to 64.
+		TCCR1B = _BV(CS11);					// Set timer 1 prescale factor to 8.
 #		endif
 #	elif defined(TCCR1) && defined(CS11) && defined(CS10)
 #		if F_CPU >= 8000000L
 		TCCR1 = _BV(CS11) | _BV(CS10);		// Set timer 1 prescale factor to 64.
 #		else
-		TCCR1 = _BV(CS11);					// Set timer 1 prescale factor to 64.
+		TCCR1 = _BV(CS11);					// Set timer 1 prescale factor to 8.
 #		endif
 #	else
 		result = NONE;
