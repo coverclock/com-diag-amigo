@@ -143,14 +143,14 @@ public:
 	static const ticks_t NEVER = Queue::NEVER;
 
 	/**
-	 * Defines the default conversion ring buffer size in bytes.
-	 */
-	static const size_t CONVERSIONS = 1;
-
-	/**
 	 * Defines the default request ring buffer size in bytes.
 	 */
-	static const size_t REQUESTS = 1;
+	static const size_t REQUESTS = 8;
+
+	/**
+	 * Defines the default conversion ring buffer size in bytes.
+	 */
+	static const size_t CONVERSIONS = 8;
 
 	/**
 	 * This class method is called by the conversion complete interrupt vector
@@ -353,7 +353,21 @@ inline size_t A2D::request(Pin pin, Reference reference, ticks_t timeout) {
 inline int A2D::conversion(ticks_t timeout) {
 	uint16_t sample;
 	return (converted.receive(&sample, timeout) ? sample : -1);
+}
 
+inline int A2D::convert(Pin pin, Reference reference, ticks_t timeout) {
+	uint8_t request = (reference << 4) | (pin & 0x0f);
+	if (!requesting.send(&request, timeout)) {
+		return -1;
+	} else {
+		begin();
+		uint16_t sample;
+		if (!converted.receive(&sample, timeout)) {
+			return -2;
+		} else {
+			return sample; // Ten-bit sample should never have top bit set.
+		}
+	}
 }
 
 }

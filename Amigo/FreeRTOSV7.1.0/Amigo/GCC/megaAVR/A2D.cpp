@@ -18,6 +18,8 @@
 #include "com/diag/amigo/Task.h"
 #include "com/diag/amigo/countof.h"
 
+#include "com/diag/amigo/target/Console.h"
+
 namespace com {
 namespace diag {
 namespace amigo {
@@ -221,6 +223,11 @@ A2D::A2D(Converter myconverter, size_t requests, size_t conversions)
 }
 
 A2D::~A2D() {
+	if (converter < countof(a2d)) {
+		Uninterruptible uninterruptible;
+		A2DCSRA = 0;
+		a2d[converter] = 0;
+	}
 }
 
 void A2D::start(Trigger trigger, Divisor divisor) {
@@ -310,14 +317,34 @@ void A2D::start(Trigger trigger, Divisor divisor) {
 	begin();
 }
 
+void A2D::stop() {
+	Uninterruptible uninterruptible;
+	A2DCSRA &= ~(_BV(ADEN) | _BV(ADIE));
+}
+
+void A2D::restart() {
+	Uninterruptible uninterruptible;
+	A2DCSRA |= _BV(ADEN);
+	begin();
+}
+
+int a2d_starts = 0;
+int a2d_completions = 0;
+
 void A2D::begin() {
+	Uninterruptible uninterruptible;
 	uint8_t request;
-	if (requesting.receive(&request, IMMEDIATELY)) {
+	if ((A2DCSRA & (_BV(ADEN) & _BV(ADIE))) != _BV(ADEN)) {
+		// Do nothing: stopped or busy.
+	} else if (!requesting.receive(&request, IMMEDIATELY)) {
+		// Do nothing: stalled.
+	} else {
 		adc(request);
 	}
 }
 
 void A2D::adc(uint8_t request) {
+++a2d_starts;
 	uint8_t reference = request >> 4;
 	uint8_t channel = request & 0x0f;
 
@@ -381,40 +408,8 @@ void A2D::adc(uint8_t request) {
 
 	A2DCSRB = (A2DCSRB & ~(1 << MUX5)) | (((channel >> 3) & 0x01) << MUX5);
 	A2DMUX = refs | (channel & 0x07);
-	A2DCSRA |= _BV(ADIE) | _BV(ADSC);
-}
-
-void A2D::stop() {
-	Uninterruptible uninterruptible;
-	A2DCSRA &= ~(_BV(ADEN) | _BV(ADIE));
-}
-
-void A2D::restart() {
-	Uninterruptible uninterruptible;
-	A2DCSRA |= _BV(ADEN);
-	begin();
-}
-
-int A2D::convert(Pin pin, Reference reference, ticks_t timeout) {
-	int result;
-	uint8_t request = (reference << 4) | (pin & 0x0f);
-	if (!requesting.send(&request, timeout)) {
-		result = -1;
-	} else {
-		{
-			Uninterruptible uninterruptible;
-			if ((A2DCSRA & _BV(ADEN)) == _BV(ADEN)) {
-				begin();
-			}
-		}
-		uint16_t sample;
-		if (!converted.receive(&sample, timeout)) {
-			result = -2;
-		} else {
-			result = sample;
-		}
-	}
-	return result;
+	A2DCSRA |= _BV(ADIE);
+	A2DCSRA |= _BV(ADSC);
 }
 
 inline void A2D::complete(Converter converter) {
@@ -425,6 +420,7 @@ inline void A2D::complete(Converter converter) {
 }
 
 void A2D::complete() {
+++a2d_completions;
 	uint8_t adcl = ADCL; // Must read ADCL, then ADCH.
 	uint8_t adch = ADCH;
 	uint16_t sample = (adch << 8) | adcl;

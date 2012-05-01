@@ -199,11 +199,12 @@ public:
 	int master(uint8_t ch = 0, ticks_t timeout = NEVER);
 
 	/**
+	 * UNTESTED!
 	 * Return the first character in the receive ring buffer and remove it from
 	 * the buffer. This is only meaningful (I think) when acting as a slave.
 	 * Transmits and receives are still coupled, but the slave SPI just
 	 * transmits whatever is in the SPDR at the time a byte is received, and
-	 * the master just ignores it. UNTESTED.
+	 * the master just ignores it.
 	 * @param timeout is the number of ticks to wait when the buffer is empty.
 	 * @return the first character or <0 if fail.
 	 */
@@ -269,6 +270,19 @@ private:
 	SPI & operator=(const SPI& that);
 
 };
+
+inline int SPI::master(uint8_t ch, ticks_t timeout) {
+	if (!transmitting.send(&ch, timeout)) {
+		return -1;
+	} else {
+		begin();
+		if (!received.receive(&ch, timeout)) {
+			return -2;
+		} else {
+			return ch;
+		}
+	}
+}
 
 inline int SPI::slave(ticks_t timeout) {
 	uint8_t ch;

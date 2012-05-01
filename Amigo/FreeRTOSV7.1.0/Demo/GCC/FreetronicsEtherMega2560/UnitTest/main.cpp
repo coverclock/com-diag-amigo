@@ -290,6 +290,11 @@ static bool brightnesscontrol(com::diag::amigo::PWM::Pin pin, com::diag::amigo::
  * UNIT TEST TASK
  ******************************************************************************/
 
+namespace com { namespace diag { namespace amigo {
+extern int a2d_starts;
+extern int a2d_completions;
+}}}
+
 class UnitTestTask : public com::diag::amigo::Task {
 public:
 	explicit UnitTestTask(const char * name) : com::diag::amigo::Task(name) {}
@@ -302,7 +307,7 @@ void UnitTestTask::task() {
 	com::diag::amigo::Print printf(serialsink, true);
 
 #if 1
-	UNITTEST("Serial (sanity)");
+	UNITTEST("Serial");
 	do {
 		if (!(*serialp)) {
 			FAILED(__LINE__);
@@ -310,7 +315,7 @@ void UnitTestTask::task() {
 		}
 		{
 			com::diag::amigo::Serial bogus(static_cast<com::diag::amigo::Serial::Port>(~0));
-			if (bogus) {
+			if (static_cast<bool>(bogus)) {
 				FAILED(__LINE__);
 				break;
 			}
@@ -1599,7 +1604,7 @@ void UnitTestTask::task() {
 	} while (false);
 #endif
 
-#if 1
+#if 0
 	UNITTEST("Analog Input (requires test fixture on EtherMega)");
 	// This is a separate test because it requires a simple text fixture to be
 	// wired up on the board. It is specific to the EtherMega 2560 board.
@@ -1641,6 +1646,10 @@ void UnitTestTask::task() {
 		}
 		uint16_t sample0 = conversion;
 		// Nominally: (3.3V * 1023) / 5.0V = 675 +/- 10% = 607 .. 742.
+		// Note that the data sheet specifies 1024 instead of 1023. I can't
+		// quite reconcile this in my head, unless it's impossible (and maybe
+		// it is) to read 100% of the reference voltage.
+		// Reference: ATmega2560 data sheet, 2549N-AVR-05/11, pp. 288-289
 		if (!((607 <= sample0) && (sample0 <= 742))) {
 			FAILED(__LINE__);
 			break;
@@ -1653,6 +1662,73 @@ void UnitTestTask::task() {
 		uint16_t sample15 = conversion;
 		// Nominally: (0V * 1023) / 5.0V = 0.
 		if (sample15 != 0) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (a2d.request(a0) != 1) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (a2d.request(a15) != 1) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (a2d.request(a0) != 1) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (a2d.request(a15) != 1) {
+			FAILED(__LINE__);
+			break;
+		}
+		// Worst case for an ADC appears to be about half a millisecond.
+		// 25 cycles @ 50KHz ~= 500 microseconds.
+		// On the 16MHz ATmega2560 with a divisor of 128 I'm guessing 200 usec.
+		// 25 cycles @ (16MHz / 128) ~= 200 microseconds.
+		// Reference: ATmega2560 data sheet, 2549N-AVR-05/11, pp. 278-279
+		delay(milliseconds2ticks(500));
+printf(PSTR("starts=%d completions=%d available=%d\n"), com::diag::amigo::a2d_starts, com::diag::amigo::a2d_completions, a2d.available());
+		if (a2d.available() != 4) {
+			FAILED(__LINE__);
+			break;
+		}
+		conversion = a2d.conversion(a2d.IMMEDIATELY);
+		if (!((607 <= conversion) && (conversion <= 742))) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (a2d.available() != 3) {
+			FAILED(__LINE__);
+			break;
+		}
+		conversion = a2d.conversion(a2d.IMMEDIATELY);
+		if (conversion != 0) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (a2d.available() != 2) {
+			FAILED(__LINE__);
+			break;
+		}
+		conversion = a2d.conversion(a2d.IMMEDIATELY);
+		if (!((607 <= conversion) && (conversion <= 742))) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (a2d.available() != 1) {
+			FAILED(__LINE__);
+			break;
+		}
+		conversion = a2d.conversion(a2d.IMMEDIATELY);
+		if (conversion != 0) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (a2d.available() != 0) {
+			FAILED(__LINE__);
+			break;
+		}
+		if ((conversion = a2d.conversion(a2d.IMMEDIATELY)) >= 0) {
 			FAILED(__LINE__);
 			break;
 		}
