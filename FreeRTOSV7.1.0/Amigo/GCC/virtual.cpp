@@ -21,7 +21,6 @@
  * unless something is seriously wrong, in which case wackiness ensues.
  */
 CXXCAPI void __cxa_pure_virtual(void);
-
 CXXCAPI void __cxa_pure_virtual(void) {
 	com::diag::amigo::fatal(PSTR(__FILE__), __LINE__);
 }
@@ -45,7 +44,6 @@ __extension__ typedef int guard_t __attribute__((mode (__DI__)));
  * @return non-zero if the static constructor needs to be called.
  */
 CXXCAPI int __cxa_guard_acquire(guard_t * guard);
-
 CXXCAPI int __cxa_guard_acquire(guard_t * guard) {
 	com::diag::amigo::Uninterruptible ui;
 	return !(*(char *)guard);
@@ -60,7 +58,6 @@ CXXCAPI int __cxa_guard_acquire(guard_t * guard) {
  * @param guard points to a guard object provided by the compiler.
  */
 CXXCAPI void __cxa_guard_release(guard_t * guard);
-
 CXXCAPI void __cxa_guard_release(guard_t * guard) {
 	com::diag::amigo::Uninterruptible ui;
 	*(char *)guard = 1;
@@ -75,6 +72,5 @@ CXXCAPI void __cxa_guard_release(guard_t * guard) {
  * @param guard points to a guard object provided by the compiler.
  */
 CXXCAPI void __cxa_guard_abort(guard_t * guard);
-
 CXXCAPI void __cxa_guard_abort(guard_t * guard) {
 }

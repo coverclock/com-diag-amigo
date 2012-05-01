@@ -328,13 +328,10 @@ void A2D::restart() {
 	begin();
 }
 
-int a2d_starts = 0;
-int a2d_completions = 0;
-
 void A2D::begin() {
 	Uninterruptible uninterruptible;
 	uint8_t request;
-	if ((A2DCSRA & (_BV(ADEN) & _BV(ADIE))) != _BV(ADEN)) {
+	if ((A2DCSRA & (_BV(ADEN) | _BV(ADIE))) != _BV(ADEN)) {
 		// Do nothing: stopped or busy.
 	} else if (!requesting.receive(&request, IMMEDIATELY)) {
 		// Do nothing: stalled.
@@ -344,7 +341,6 @@ void A2D::begin() {
 }
 
 void A2D::adc(uint8_t request) {
-++a2d_starts;
 	uint8_t reference = request >> 4;
 	uint8_t channel = request & 0x0f;
 
@@ -420,7 +416,6 @@ inline void A2D::complete(Converter converter) {
 }
 
 void A2D::complete() {
-++a2d_completions;
 	uint8_t adcl = ADCL; // Must read ADCL, then ADCH.
 	uint8_t adch = ADCH;
 	uint16_t sample = (adch << 8) | adcl;
