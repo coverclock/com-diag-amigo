@@ -220,13 +220,19 @@ A2D::A2D(Converter myconverter, size_t requests, size_t conversions)
 	}
 }
 
-void A2D::start(Trigger trigger, Divisor divisor) {
+A2D::~A2D() {
+}
 
+void A2D::start(Trigger trigger, Divisor divisor) {
 	uint8_t adts;
 	uint8_t adate;
 	switch (trigger) {
 
 	default:
+	case ON_DEMAND:
+		adts = 0;
+		break;
+
 	case FREE_RUNNING:
 		adts = 0;
 		break;
@@ -260,7 +266,7 @@ void A2D::start(Trigger trigger, Divisor divisor) {
 		break;
 
 	}
-	adate = (adts == 0) ? 0 : _BV(ADATE);
+	adate = (trigger == ON_DEMAND) ? 0 : _BV(ADATE);
 
 	uint8_t adps;
 	switch (divisor) {
@@ -373,10 +379,9 @@ void A2D::adc(uint8_t request) {
 
 	}
 
-	ADCSRB = (ADCSRB & ~(1 << MUX5)) | (((channel >> 3) & 0x01) << MUX5);
-	ADMUX = refs | (channel & 0x07);
-	A2DCSRA |= _BV(ADIE);
-	A2DCSRA |= _BV(ADSC);
+	A2DCSRB = (A2DCSRB & ~(1 << MUX5)) | (((channel >> 3) & 0x01) << MUX5);
+	A2DMUX = refs | (channel & 0x07);
+	A2DCSRA |= _BV(ADIE) | _BV(ADSC);
 }
 
 void A2D::stop() {
@@ -390,7 +395,7 @@ void A2D::restart() {
 	begin();
 }
 
-inline int A2D::convert(Pin pin, Reference reference, ticks_t timeout) {
+int A2D::convert(Pin pin, Reference reference, ticks_t timeout) {
 	int result;
 	uint8_t request = (reference << 4) | (pin & 0x0f);
 	if (!requesting.send(&request, timeout)) {
@@ -420,12 +425,12 @@ inline void A2D::complete(Converter converter) {
 }
 
 void A2D::complete() {
-	uint8_t adcl  = ADCL; // Must read ADCL, then ADCH.
+	uint8_t adcl = ADCL; // Must read ADCL, then ADCH.
 	uint8_t adch = ADCH;
-	uint16_t result = (adch << 8) | adcl;
+	uint16_t sample = (adch << 8) | adcl;
 
 	bool woken = false;
-	if (converted.sendFromISR(&result, woken)) {
+	if (converted.sendFromISR(&sample, woken)) {
 		// Do nothing.
 	} else if (errors < ~static_cast<uint8_t>(0)) {
 		++errors;
@@ -434,7 +439,7 @@ void A2D::complete() {
 	}
 
 	uint8_t request;
-	if (requesting.receive(&request, IMMEDIATELY)) {
+	if (requesting.receiveFromISR(&request)) {
 		adc(request);
 	} else {
 		A2DCSRA &= ~_BV(ADIE);

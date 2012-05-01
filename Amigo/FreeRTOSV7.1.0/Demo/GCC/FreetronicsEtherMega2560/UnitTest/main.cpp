@@ -21,6 +21,7 @@
 #include "com/diag/amigo/target/SPI.h"
 #include "com/diag/amigo/target/GPIO.h"
 #include "com/diag/amigo/target/PWM.h"
+#include "com/diag/amigo/target/A2D.h"
 #include "com/diag/amigo/target/Uninterruptible.h"
 #include "com/diag/amigo/target/Console.h"
 #include "com/diag/amigo/Task.h"
@@ -41,12 +42,12 @@
 
 extern "C" void vApplicationStackOverflowHook(xTaskHandle pxTask, signed char * pcTaskName);
 
-static const char VINTAGE[] PROGMEM = "COM_DIAG_AMIGO_VINTAGE=" COM_DIAG_AMIGO_VINTAGE;
-
 // Note that this is global and is initialized in main(). Hence it can be
 // referenced in other translation units for debugging by having them create
 // their own local SerialSink and Print objects.
 com::diag::amigo::Serial * serialp = 0;
+
+static int errors = 0;
 
 /*******************************************************************************
  * UNIT TEST FRAMEWORK (SUCH AS IT IS)
@@ -65,13 +66,72 @@ static const char CUNITTEST_PASSED[] PROGMEM = "PASSED.\r\n";
 #define PASSED() do { printf(UNITTEST_PASSED); serialp->flush(); } while (false)
 #define TRACE(_LINE_) do { printf(UNITTEST_TRACE, _LINE_); serialp->flush(); } while (false)
 
-#define CUNITTEST(_NAME_) com::diag::amigo::Console::instance().start().write_P(PSTR("Unit Test " _NAME_ " ")).flush().stop()
-#define CUNITTESTLN(_NAME_) com::diag::amigo::Console::instance().start().write_P(PSTR("Unit Test " _NAME_ "\r\n")).flush().stop()
-#define CFAILED(_LINE_) do { int line = com::diag::amigo::littleendian() ? (((_LINE_) >> 8) & 0xff) | (((_LINE_) & 0xff) << 8) : (_LINE_); com::diag::amigo::Console::instance().start().write_P(CUNITTEST_FAILED_AT_LINE).dump(&line, sizeof(line)).write_P(CUNITTEST_FAILED_EOL).flush().stop(); } while (0)
-#define CPASSED() com::diag::amigo::Console::instance().start().write_P(CUNITTEST_PASSED).flush().stop()
+/*******************************************************************************
+ * CONSOLE TEST FIXTURE
+ ******************************************************************************/
+
+static const char VINTAGE[] PROGMEM = "VINTAGE=" COM_DIAG_AMIGO_VINTAGE;
+
+																// e.g. (from UnitTest.map):
+extern void * __data_start				__attribute__ ((weak)); // 00800200 D __data_start
+extern void * __data_end				__attribute__ ((weak)); // 00800536 D __data_end
+extern void * __bss_start				__attribute__ ((weak)); // 00800536 B __bss_start
+extern void * __bss_end					__attribute__ ((weak)); // 00801636 B __bss_end
+extern void * __trampolines_start		__attribute__ ((weak)); // 00001060 T __trampolines_start
+extern void * __trampolines_end			__attribute__ ((weak)); // 00001060 T __trampolines_end
+extern void * __ctors_start				__attribute__ ((weak)); // 00001144 T __ctors_start
+extern void * __ctors_end				__attribute__ ((weak)); // 0000114a T __ctors_end
+extern void * __dtors_start				__attribute__ ((weak)); // 0000114a T __dtors_start
+extern void * __dtors_end				__attribute__ ((weak)); // 00001150 T __dtors_end
+extern void * __data_load_start			__attribute__ ((weak)); // 0000cb5a A __data_load_start
+extern void * __data_load_end			__attribute__ ((weak)); // 0000ce90 A __data_load_end
+
+inline void * htonvp(void * vp) {
+	return reinterpret_cast<void*>(com::diag::amigo::htons(reinterpret_cast<uintptr_t>(vp)));
+}
+
+// Deliberately not in PROGMEM in order to test Console::dump().
+// Nonexistent weak external references will print as zero (NULL).
+// Put in network byte order just to make dump more readable.
+static const void * const MAP[] = {
+	htonvp(__data_start),
+	htonvp(__data_end),
+	htonvp(__bss_start),
+	htonvp(__bss_end),
+	htonvp(__trampolines_start),
+	htonvp(__trampolines_end),
+	htonvp(__ctors_start),
+	htonvp(__ctors_end),
+	htonvp(__dtors_start),
+	htonvp(__dtors_end),
+	htonvp(__data_load_start),
+	htonvp(__data_load_end),
+};
+// 4449 0000 0000 FEDF 0000 0000 0000 0000 0000 0000 5050 5959
+
+class Scope {
+public:
+	Scope() {
+		com::diag::amigo::Console::instance()
+			.start()
+			.write_P(PSTR("Unit Test Console\r\n"))
+			.write_P(VINTAGE)
+			.write("\r\n")
+			.dump_P(&VINTAGE[sizeof("VINTAGE=") - 1], sizeof(VINTAGE) - sizeof("VINTAGE="))
+			.write('\r')
+			.write('\n')
+			.dump(&MAP, sizeof(MAP))
+			.write_P(PSTR("\r\nPASSED\r\n"))
+			.flush()
+			.stop();
+	}
+	~Scope() {
+		com::diag::amigo::fatal(PSTR(__FILE__), __LINE__);
+	}
+};
 
 /*******************************************************************************
- * TIMER TEXT FIXTURES
+ * TIMER TEST FIXTURES
  ******************************************************************************/
 
 class OneShotTimer : public com::diag::amigo::OneShotTimer {
@@ -157,7 +217,7 @@ void TakerTask::task() {
 }
 
 /*******************************************************************************
- * SOURCE TO SINK COPY
+ * SOURCE TO SINK COPY (FOR TESTING SOURCE AND SINK)
  ******************************************************************************/
 
 static bool source2sink(com::diag::amigo::Source & source, com::diag::amigo::Sink & sink) {
@@ -198,7 +258,7 @@ static bool source2sink(com::diag::amigo::Source & source, com::diag::amigo::Sin
 }
 
 /*******************************************************************************
- * BRIGHTNESS CONTROL
+ * BRIGHTNESS CONTROL (FOR TESTING PWM)
  ******************************************************************************/
 
 static bool brightnesscontrol(com::diag::amigo::PWM::Pin pin, com::diag::amigo::ticks_t ticks) {
@@ -232,9 +292,8 @@ static bool brightnesscontrol(com::diag::amigo::PWM::Pin pin, com::diag::amigo::
 
 class UnitTestTask : public com::diag::amigo::Task {
 public:
-	explicit UnitTestTask(const char * name) : com::diag::amigo::Task(name), errors(0) {}
+	explicit UnitTestTask(const char * name) : com::diag::amigo::Task(name) {}
 	virtual void task();
-	int errors;
 } static unittesttask("UnitTest");
 
 void UnitTestTask::task() {
@@ -243,8 +302,48 @@ void UnitTestTask::task() {
 	com::diag::amigo::Print printf(serialsink, true);
 
 #if 1
+	UNITTEST("Serial (sanity)");
+	do {
+		if (!(*serialp)) {
+			FAILED(__LINE__);
+			break;
+		}
+		{
+			com::diag::amigo::Serial bogus(static_cast<com::diag::amigo::Serial::Port>(~0));
+			if (bogus) {
+				FAILED(__LINE__);
+				break;
+			}
+		}
+		PASSED();
+	} while (false);
+#endif
+
+#if 0
+	UNITTEST("fatal");
+	com::diag::amigo::fatal(PSTR(__FILE__), __LINE__);
+	FAILED(__LINE__);
+#endif
+
+#if 0
+	UNITTESTLN("Overflow");
+	{
+		vApplicationStackOverflowHook(0, (signed char *)"OVERFLOW");
+		PASSED();
+	}
+#endif
+
+#if 1
+	UNITTEST("Morse");
+	do {
+		com::diag::amigo::Morse telegraph;
+		telegraph.morse(" .. .- -. -- ");
+		PASSED();
+	} while (false);
+#endif
+
+#if 1
 	UNITTESTLN("Sink");
-	// We do this first because printf() depends upon it.
 	do {
 		size_t written;
 		written = serialsink.write("Now is the time ");
@@ -329,6 +428,8 @@ void UnitTestTask::task() {
 		SIZEOF(double);
 		// Note how small many of these are. For some, it's just the two-byte
 		// virtual pointer overhead for the virtual destructor.
+		SIZEOF(com::diag::amigo::A2D);
+		SIZEOF(com::diag::amigo::A2D::Pin);
 		SIZEOF(com::diag::amigo::BinarySemaphore);
 		SIZEOF(com::diag::amigo::Console);
 		SIZEOF(com::diag::amigo::CountingSemaphore);
@@ -355,6 +456,7 @@ void UnitTestTask::task() {
 		SIZEOF(com::diag::amigo::Task::priority_t);
 		SIZEOF(com::diag::amigo::ticks_t);
 		SIZEOF(com::diag::amigo::Timer);
+		SIZEOF(com::diag::amigo::TypedQueue<uint16_t>);
 		SIZEOF(com::diag::amigo::TypedQueue<uint8_t>);
 		SIZEOF(com::diag::amigo::Uninterruptible);
 		SIZEOF(com::diag::amigo::W5100::W5100);
@@ -364,7 +466,7 @@ void UnitTestTask::task() {
 #endif
 
 #if 1
-	UNITTEST("stack");
+	UNITTEST("Task");
 	do {
 		Task proxyidletask(idle());
 		if (!proxyidletask) {
@@ -553,7 +655,7 @@ void UnitTestTask::task() {
 #endif
 
 #if 1
-	UNITTEST("High Precision busywait");
+	UNITTEST("High Precision busy wait");
 	// There is no way to test the high precision busywait in a software-only
 	// manner. If we leave interrupts enabled, tick processing by FreeRTOS adds
 	// enormously to our delay (nearly doubles it), since for a 10ms delay we
@@ -586,7 +688,7 @@ void UnitTestTask::task() {
 	UNITTEST("FOREVER");
 	// This delays about two minutes and eleven seconds so I don't normally
 	// run it. But it does verify that the FreeRTOS scheduler doesn't do
-	// something unexpected with the maximum possible ticks value.
+	// something unexpected with the maximum possible tick value.
 	delay(FOREVER);
 	PASSED();
 #endif
@@ -1296,11 +1398,8 @@ void UnitTestTask::task() {
 			}
 			PASSED();
 		} while (false);
-		static const char LOW[] PROGMEM = "L ";
-		static const char MEDIUM[] PROGMEM = "M ";
-		static const char HIGH[] PROGMEM = "H ";
 		do {
-			UNITTEST("Analog Output (uses pin 9 on EtherMega)");
+			UNITTEST("Analog Output Pin 9 (requires text fixture on EtherMega)");
 			// Zero-volts for a few seconds, half-voltage for a few seconds,
 			// full-voltage for a few seconds, back to half-voltage for a few
 			// seconds, then back to zero-volts. For most Arduinos, like the
@@ -1349,26 +1448,27 @@ void UnitTestTask::task() {
 				break;
 			}
 			static const com::diag::amigo::ticks_t DELAY = milliseconds2ticks(5000);
-			printf(LOW);
+			(*serialp).write('L');
 			pwm.start(PWM::LOW);
 			delay(DELAY);
-			printf(MEDIUM);
+			(*serialp).write('M');
 			pwm.start(PWM::HIGH / 2);
 			delay(DELAY);
-			printf(HIGH);
+			(*serialp).write('H');
 			pwm.start(PWM::HIGH);
 			delay(DELAY);
-			printf(MEDIUM);
+			(*serialp).write('M');
 			pwm.start(PWM::HIGH / 2);
 			delay(DELAY);
-			printf(LOW);
+			(*serialp).write('L');
 			pwm.start(PWM::LOW);
 			delay(DELAY);
+			(*serialp).write(' ');
 			pwm.stop();
 			PASSED();
 		} while (false);
 		do {
-			UNITTEST("Analog Output (uses pin 8 on EtherMega)");
+			UNITTEST("Analog Output Pin 8 (requires text fixture on EtherMega)");
 			// Zero-volts for a few seconds, half-voltage for a few seconds,
 			// full-voltage for a few seconds, back to half-voltage for a few
 			// seconds, then back to zero-volts. For most Arduinos, like the
@@ -1417,21 +1517,22 @@ void UnitTestTask::task() {
 				break;
 			}
 			static const com::diag::amigo::ticks_t DELAY = milliseconds2ticks(5000);
-			printf(LOW);
+			(*serialp).write('L');
 			pwm.start(PWM::LOW);
 			delay(DELAY);
-			printf(MEDIUM);
+			(*serialp).write('M');
 			pwm.start(PWM::HIGH / 2);
 			delay(DELAY);
-			printf(HIGH);
+			(*serialp).write('H');
 			pwm.start(PWM::HIGH);
 			delay(DELAY);
-			printf(MEDIUM);
+			(*serialp).write('M');
 			pwm.start(PWM::HIGH / 2);
 			delay(DELAY);
-			printf(LOW);
+			(*serialp).write('L');
 			pwm.start(PWM::LOW);
 			delay(DELAY);
+			(*serialp).write(' ');
 			pwm.stop(true);
 			PASSED();
 		} while (false);
@@ -1439,21 +1540,145 @@ void UnitTestTask::task() {
 #endif
 
 #if 1
+	UNITTEST("A2D (specific to Arduino Uno, Mega etc.)");
+	do {
+#if defined(__AVR_ATmega2560__)
+		if (com::diag::amigo::A2D::a2d2gpio(com::diag::amigo::A2D::PIN_0) != com::diag::amigo::GPIO::PIN_F0) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::A2D::a2d2gpio(com::diag::amigo::A2D::PIN_7) != com::diag::amigo::GPIO::PIN_F7) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::A2D::a2d2gpio(com::diag::amigo::A2D::PIN_8) != com::diag::amigo::GPIO::PIN_K0) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::A2D::a2d2gpio(com::diag::amigo::A2D::PIN_15) != com::diag::amigo::GPIO::PIN_K7) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::A2D::arduino2a2d(54) != com::diag::amigo::A2D::PIN_0) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::A2D::arduino2a2d(69) != com::diag::amigo::A2D::PIN_15) {
+			FAILED(__LINE__);
+			break;
+		}
+#elif defined(__AVR_ATmega328P__)
+		if (com::diag::amigo::A2D::a2d2gpio(com::diag::amigo::A2D::PIN_0) != com::diag::amigo::GPIO::PIN_C0) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::A2D::a2d2gpio(com::diag::amigo::A2D::PIN_5) != com::diag::amigo::GPIO::PIN_C5) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::A2D::arduino2a2d(14) != com::diag::amigo::A2D::PIN_0) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::A2D::arduino2a2d(19) != com::diag::amigo::A2D::PIN_5) {
+			FAILED(__LINE__);
+			break;
+		}
+#else
+#	main must be modified for this microcontroller!
+#endif
+		if (com::diag::amigo::A2D::a2d2gpio(com::diag::amigo::A2D::INVALID) != com::diag::amigo::GPIO::INVALID) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::A2D::arduino2a2d(~0) != com::diag::amigo::A2D::INVALID) {
+			FAILED(__LINE__);
+			break;
+		}
+		PASSED();
+	} while (false);
+#endif
+
+#if 1
+	UNITTEST("Analog Input (requires test fixture on EtherMega)");
+	// This is a separate test because it requires a simple text fixture to be
+	// wired up on the board. It is specific to the EtherMega 2560 board.
+	// PF7 (Arduino Mega digital pin 61 or analog pin A7) wired to 3.3V.
+	// PK7 (Arduino Mega digital pin 69 or analog pin A15) wired to ground.
+	// A better test would be to combine PWM and A2D but I didn't want the
+	// basic tests to depend upon one another.
+	do {
+		typedef com::diag::amigo::A2D A2D;
+		typedef com::diag::amigo::GPIO GPIO;
+		A2D::Pin a0 = A2D::arduino2a2d(54);
+		if (a0 != A2D::PIN_0) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (A2D::a2d2gpio(a0) != GPIO::PIN_F0) {
+			FAILED(__LINE__);
+			break;
+		}
+		A2D::Pin a15 = A2D::arduino2a2d(69);
+		if (a15 != A2D::PIN_15) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (A2D::a2d2gpio(a15) != GPIO::PIN_K7) {
+			FAILED(__LINE__);
+			break;
+		}
+		A2D a2d;
+		if (!a2d) {
+			FAILED(__LINE__);
+			break;
+		}
+		a2d.start();
+		int conversion = a2d.convert(a0);
+		if (conversion < 0) {
+			FAILED(__LINE__);
+			break;
+		}
+		uint16_t sample0 = conversion;
+		// Nominally: (3.3V * 1023) / 5.0V = 675 +/- 10% = 607 .. 742.
+		if (!((607 <= sample0) && (sample0 <= 742))) {
+			FAILED(__LINE__);
+			break;
+		}
+		conversion = a2d.convert(a15);
+		if (conversion < 0) {
+			FAILED(__LINE__);
+			break;
+		}
+		uint16_t sample15 = conversion;
+		// Nominally: (0V * 1023) / 5.0V = 0.
+		if (sample15 != 0) {
+			FAILED(__LINE__);
+			break;
+		}
+		a2d.stop();
+		PASSED();
+		printf(PSTR("A0=%u=%u.%uV\n"), sample0, (5 * sample0) / 1023, ((5 * sample0 * 10) / 1023) % 10);
+		printf(PSTR("A15=%u=%u.%uV\n"), sample15, (5 * sample15) / 1023, ((5 * sample15 * 10) / 1023) % 10);
+	} while (false);
+#endif
+
+#if 1
 	UNITTEST("SPI (sanity)");
 	do {
 		com::diag::amigo::SPI spi;
 		if (!spi) {
-			CFAILED(__LINE__);
+			FAILED(__LINE__);
 			break;
 		}
 		{
 			com::diag::amigo::SPI bogus(static_cast<com::diag::amigo::SPI::Controller>(~0));
 			if (bogus) {
-				CFAILED(__LINE__);
+				FAILED(__LINE__);
 				break;
 			}
 		}
-		CPASSED();
+		PASSED();
 	} while (false);
 #endif
 
@@ -1650,7 +1875,6 @@ void UnitTestTask::task() {
 	printf(PSTR("Unit Test errors=%d\n"), errors);
 
 	// Just to make sure the regular data memory Print works.
-
 	com::diag::amigo::Print testf(serialsink);
 	testf("Type <control a><control \\>y to exit Mac screen utility.\n");
 
@@ -1660,12 +1884,6 @@ void UnitTestTask::task() {
 /*******************************************************************************
  * MAIN PROGRAM
  ******************************************************************************/
-
-class Scope {
-public:
-	Scope() { com::diag::amigo::Console::instance().start().write_P(PSTR("\r\n")).write_P(VINTAGE).write_P(PSTR("\r\n")).flush().stop(); }
-	~Scope() { com::diag::amigo::fatal(PSTR(__FILE__), __LINE__); }
-};
 
 int main() __attribute__((OS_main));
 int main() {
@@ -1682,70 +1900,19 @@ int main() {
 	// those bytes may be unprintable.
 	Scope scope;
 
-	// We test the busy waiting stuff in main before we create our tasks and
-	// start the scheduler.
-
-#if 0
-	CUNITTEST("fatal");
-	com::diag::amigo::Console::instance().start().write_P(PSTR("Fatal Unit Test\r\n")).flush().stop();
-	com::diag::amigo::fatal(PSTR(__FILE__), __LINE__);
-	CFAILED(__LINE__);
-#endif
-
-#if 1
-	CUNITTESTLN("Console");
-	static const char STARTING[] PROGMEM = "STARTING";
-	static const char EQUALS[] PROGMEM = "=0x";
-	com::diag::amigo::Console::instance().start().write_P(STARTING, strlen_P(STARTING)).write_P(EQUALS).dump_P(&STARTING, sizeof(STARTING)).write('\r').write('\n').flush().stop();
-	static const char TASK[] = "unittesttask";
-	com::diag::amigo::Console::instance().start().write(TASK, strlen(TASK)).write("=0x").dump(&unittesttask, sizeof(unittesttask)).write('\r').write('\n').flush().stop();
-	CPASSED();
-#endif
-
-#if 0
-	CUNITTESTLN("Overflow");
-	{
-		vApplicationStackOverflowHook(0, (signed char *)"OVERFLOW");
-		CPASSED();
-	}
-#endif
-
-#if 1
-	CUNITTEST("Morse");
-	do {
-		com::diag::amigo::Morse telegraph;
-		telegraph.morse(" .. .- -. -- ");
-		CPASSED();
-	} while (false);
-#endif
-
 	// The fact that main() never exits means local variables allocated on
 	// its stack in its outermost braces never go out of scope. We can take
 	// advantage of main to allocate objects on its stack that persist until
 	// the system is rebooted and pass pointers to them to tasks. That's useful
 	// to know, especially in light of the fact that the memory allocated
 	// for main's stack is never otherwise recovered or used.
-
 	com::diag::amigo::Serial serial;
+	com::diag::amigo::Task::enable();
+	serial.start();
 	serialp = &serial;
 
-#if 1
-	CUNITTEST("Serial (sanity)");
-	do {
-		if (!serial) {
-			CFAILED(__LINE__);
-			break;
-		}
-		{
-			com::diag::amigo::Serial bogus(static_cast<com::diag::amigo::Serial::Port>(~0));
-			if (bogus) {
-				CFAILED(__LINE__);
-				break;
-			}
-		}
-		CPASSED();
-	} while (false);
-#endif
+	com::diag::amigo::SerialSink serialsink(serial);
+	com::diag::amigo::Print printf(serialsink, true);
 
 	com::diag::amigo::BinarySemaphore binarysemaphore;
 	binarysemaphorep = &binarysemaphore;
@@ -1753,24 +1920,20 @@ int main() {
 	com::diag::amigo::MutexSemaphore mutexsemaphore;
 	mutexsemaphorep = &mutexsemaphore;
 
-	CUNITTEST("Task");
 	do {
 		takertask.start();
 		unittesttask.start();
 		if (takertask != true) {
-			CFAILED(__LINE__);
 			break;
 		}
 		if (unittesttask != true) {
-			CFAILED(__LINE__);
 			break;
 		}
-		CPASSED();
-		com::diag::amigo::Task::enable();
-		serial.start();
 		com::diag::amigo::Task::begin();
+		// Should never get here unless the Task::start() or Task::begin()
+		// methods fail, or the Task::begin() methods returns. All are
+		// fatal errors.
 	} while (false);
 
-	// Should never get here. scope going out of lexical scope will fatal() in
-	// its destructor.
+	// scope going out of lexical scope will FATAL in its destructor.
 }

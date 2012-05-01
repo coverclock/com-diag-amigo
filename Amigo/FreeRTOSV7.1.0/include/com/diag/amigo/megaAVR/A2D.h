@@ -41,35 +41,35 @@ public:
 	 * consider fixing that header file instead of changing this code.
 	 */
 	enum Pin {
-#if defined(ADC3D) && defined(DIDR0)
+#if defined(ADC3D)
 		PIN_0 = 0,
 		PIN_1 = 1,
 		PIN_2 = 2,
 		PIN_3 = 3,
 #endif
-#if defined(ADC5D) && defined(DIDR0)
+#if defined(ADC5D)
 		PIN_4 = 4,
 		PIN_5 = 5,
 #endif
-#if defined(ADC6D) && defined(DIDR0)
+#if defined(ADC6D)
 		PIN_6 = 6,
 #endif
-#if defined(ADC7D) && defined(DIDR0)
+#if defined(ADC7D)
 		PIN_7 = 7,
 #endif
-#if defined(ADC10D) && defined(DIDR2)
+#if defined(ADC10D)
 		PIN_8 = 8,
 		PIN_9 = 9,
 		PIN_10 = 10,
 #endif
-#if defined(ADC11D) && defined(DIDR2)
+#if defined(ADC11D)
 		PIN_11 = 11,
 #endif
-#if defined(ADC13D) && defined(DIDR2)
+#if defined(ADC13D)
 		PIN_12 = 12,
 		PIN_13 = 13,
 #endif
-#if defined(ADC15D) && defined(DIDR2)
+#if defined(ADC15D)
 		PIN_14 = 14,
 		PIN_15 = 15,
 #endif
@@ -108,6 +108,7 @@ public:
 	 * the timer/counters or the analog comparator.
 	 */
 	enum Trigger {
+		ON_DEMAND,
 		FREE_RUNNING,
 		ANALOG_COMPARATOR,
 		EXTINT0,
@@ -217,7 +218,7 @@ public:
 	/**
 	 * Initialize the ADC and start interrupt driven I/O operations on it.
 	 */
-	void start(Trigger trigger = FREE_RUNNING, Divisor divisor = D128);
+	void start(Trigger trigger = ON_DEMAND, Divisor divisor = D128);
 
 	/**
 	 * The ADC is disabled and all further interrupt driven I/O operations
@@ -243,7 +244,8 @@ public:
 	int available() const;
 
 	/**
-	 * Append a pin number to the end of the request ring buffer.
+	 * Append a request composed of a pin number and a reference to the end of
+	 * the request ring buffer.
 	 * @param request is the pin number to append.
 	 * @param timeout is the number of ticks to wait when the buffer is full.
 	 * @return one if the function was successful, zero otherwise.
