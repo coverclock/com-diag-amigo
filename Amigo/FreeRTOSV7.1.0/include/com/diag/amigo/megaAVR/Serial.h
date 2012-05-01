@@ -62,15 +62,8 @@ public:
 		USART2 		= 2,
 #if defined(UCSR3A)
 		USART3		= 3,
-		MAXUSART	= 3
-#else
-		MAXUSART	= 2
 #endif
-#else
-		MAXUSART	= 1
 #endif
-#else
-		MAXUSART	= 0
 #endif
 	};
 

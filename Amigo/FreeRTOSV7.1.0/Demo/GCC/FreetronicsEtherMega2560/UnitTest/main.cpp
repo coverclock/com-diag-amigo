@@ -107,7 +107,6 @@ static const void * const MAP[] = {
 	htonvp(__data_load_start),
 	htonvp(__data_load_end),
 };
-// 4449 0000 0000 FEDF 0000 0000 0000 0000 0000 0000 5050 5959
 
 class Scope {
 public:
@@ -290,11 +289,6 @@ static bool brightnesscontrol(com::diag::amigo::PWM::Pin pin, com::diag::amigo::
  * UNIT TEST TASK
  ******************************************************************************/
 
-namespace com { namespace diag { namespace amigo {
-extern int a2d_starts;
-extern int a2d_completions;
-}}}
-
 class UnitTestTask : public com::diag::amigo::Task {
 public:
 	explicit UnitTestTask(const char * name) : com::diag::amigo::Task(name) {}
@@ -315,7 +309,7 @@ void UnitTestTask::task() {
 		}
 		{
 			com::diag::amigo::Serial bogus(static_cast<com::diag::amigo::Serial::Port>(~0));
-			if (static_cast<bool>(bogus)) {
+			if (bogus) {
 				FAILED(__LINE__);
 				break;
 			}
@@ -1547,6 +1541,18 @@ void UnitTestTask::task() {
 #if 1
 	UNITTEST("A2D (specific to Arduino Uno, Mega etc.)");
 	do {
+		com::diag::amigo::A2D a2d;
+		if (!a2d) {
+			FAILED(__LINE__);
+			break;
+		}
+		{
+			com::diag::amigo::A2D bogus(static_cast<com::diag::amigo::A2D::Converter>(~0));
+			if (bogus) {
+				FAILED(__LINE__);
+				break;
+			}
+		}
 #if defined(__AVR_ATmega2560__)
 		if (com::diag::amigo::A2D::a2d2gpio(com::diag::amigo::A2D::PIN_0) != com::diag::amigo::GPIO::PIN_F0) {
 			FAILED(__LINE__);
@@ -1604,7 +1610,7 @@ void UnitTestTask::task() {
 	} while (false);
 #endif
 
-#if 0
+#if 1
 	UNITTEST("Analog Input (requires test fixture on EtherMega)");
 	// This is a separate test because it requires a simple text fixture to be
 	// wired up on the board. It is specific to the EtherMega 2560 board.
@@ -1681,13 +1687,12 @@ void UnitTestTask::task() {
 			FAILED(__LINE__);
 			break;
 		}
-		// Worst case for an ADC appears to be about half a millisecond.
-		// 25 cycles @ 50KHz ~= 500 microseconds.
-		// On the 16MHz ATmega2560 with a divisor of 128 I'm guessing 200 usec.
-		// 25 cycles @ (16MHz / 128) ~= 200 microseconds.
+		// Worst case for an ADC appears to be about half a millisecond:
+		// 25 cycles @ 50KHz ~ 500 microseconds.
+		// On the 16MHz ATmega2560 with a divisor of 128:
+		// 25 cycles @ (16MHz / 128) ~ 200 microseconds.
 		// Reference: ATmega2560 data sheet, 2549N-AVR-05/11, pp. 278-279
 		delay(milliseconds2ticks(500));
-printf(PSTR("starts=%d completions=%d available=%d\n"), com::diag::amigo::a2d_starts, com::diag::amigo::a2d_completions, a2d.available());
 		if (a2d.available() != 4) {
 			FAILED(__LINE__);
 			break;

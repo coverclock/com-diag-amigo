@@ -80,7 +80,7 @@ public:
 	 * There is only one analog to digital converter, and this identifies it.
 	 */
 	enum Converter {
-		CONVERTER0
+		CONVERTER0 = 0
 	};
 
 	/**

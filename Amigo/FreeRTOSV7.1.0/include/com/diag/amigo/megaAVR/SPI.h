@@ -52,8 +52,7 @@ public:
 	 * default.
 	 */
 	enum Controller {
-		SPI0	= 0,
-		MAXSPI	= 0
+		SPI0	= 0
 	};
 
 	enum Order {
