@@ -179,9 +179,7 @@ void Serial::start(uint32_t rate, Data data, Parity parity, Stop stop) {
 
 	UCSRB = _BV(RXCIE0) | _BV(RXEN0) | _BV(TXEN0);
 
-	if (transmitting.available() > 0) {
-		UCSRB |= _BV(UDRIE0);
-	}
+	begin();
 }
 
 void Serial::stop() {
@@ -189,15 +187,19 @@ void Serial::stop() {
 	UCSRB = 0;
 }
 
-void Serial::begin() {
-	Uninterruptible uninterruptible;
-	UCSRB |= _BV(UDRIE0);
-}
-
 void Serial::restart() {
 	Uninterruptible uninterruptible;
 	UCSRB = _BV(RXCIE0) | _BV(RXEN0) | _BV(TXEN0);
-	if (transmitting.available() > 0) {
+	begin();
+}
+
+void Serial::begin() {
+	Uninterruptible uninterruptible;
+	if ((UCSRB & (_BV(RXCIE0) | _BV(UDRIE0) | _BV(RXEN0) | _BV(TXEN0))) != (_BV(RXCIE0) | _BV(RXEN0) | _BV(TXEN0))) {
+		// Do nothing: stopped or busy.
+	} else if (transmitting.available() <= 0) {
+		// Do nothing: stalled.
+	} else {
 		UCSRB |= _BV(UDRIE0);
 	}
 }

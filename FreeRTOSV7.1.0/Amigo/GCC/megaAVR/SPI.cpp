@@ -226,14 +226,6 @@ void SPI::start(Divisor divisor, Role role, Order order, Polarity polarity, Phas
 	begin();
 }
 
-void SPI::begin() {
-	uint8_t ch;
-	if (transmitting.receive(&ch, IMMEDIATELY)) {
-		SPICR |= _BV(SPIE);
-		SPIDR = ch;
-	}
-}
-
 void SPI::stop() {
 	Uninterruptible uninterruptible;
 	SPICR &= ~(_BV(SPIE) | _BV(SPE));
@@ -245,37 +237,17 @@ void SPI::restart() {
 	begin();
 }
 
-int SPI::master(uint8_t ch, ticks_t timeout) {
-	if (!transmitting.send(&ch, timeout)) {
-		return -1;
-	} else {
-		// Weird, huh? Why do we put something on the transmit queue then
-		// try to immediately take it off? Because the SPI may be stopped. If
-		// it is, the caller will block on the receive waiting for the SPI,
-		// and when the SPI is restarted (presumably by another task), the
-		// begin() will be done to stimulate everything to spin back up
-		// If the SPI is started and is in the middle of a transaction,
-		// then there is also no reason to do the begin() because the ISR
-		// will take care of starting this transaction automatically.
-		{
-			Uninterruptible uninterruptible;
-			if ((SPICR & (_BV(SPIE) | _BV(SPE))) == _BV(SPE)) {
-				begin();
-			}
-		}
-		if (!received.receive(&ch, timeout)) {
-			return -2;
-		} else {
-			return ch;
-		}
-	}
-}
-
-SPI & SPI::operator=(uint8_t value) {
-	// It is fun to think about why this has to be uninterruptible.
+void SPI::begin() {
 	Uninterruptible uninterruptible;
-	errors = value;
-	return *this;
+	uint8_t ch;
+	if ((SPICR & (_BV(SPIE) | _BV(SPE))) != _BV(SPE)) {
+		// Do nothing: stopped or busy.
+	} else if (!transmitting.receive(&ch, IMMEDIATELY)) {
+		// Do nothing: stalled.
+	} else {
+		SPICR |= _BV(SPIE);
+		SPIDR = ch;
+	}
 }
 
 inline void SPI::complete(Controller controller) {
@@ -322,6 +294,13 @@ void SPI::complete() {
 		// It still seems like a violation against the laws of Man and God.
 		Task::yield();
 	}
+}
+
+SPI & SPI::operator=(uint8_t value) {
+	// It is fun to think about why this has to be uninterruptible.
+	Uninterruptible uninterruptible;
+	errors = value;
+	return *this;
 }
 
 }
