@@ -432,6 +432,8 @@ void A2D::complete() {
 	uint8_t request;
 	if (requesting.receiveFromISR(&request)) {
 		adc(request);
+	} else if (((A2DCSRA & _BV(ADATE)) == _BV(ADATE)) && ((A2DCSRB & (_BV(ADTS2) | _BV(ADTS1) | _BV(ADTS0))) == 0)) {
+		// Do nothing: free running.
 	} else {
 		A2DCSRA &= ~_BV(ADIE);
 	}

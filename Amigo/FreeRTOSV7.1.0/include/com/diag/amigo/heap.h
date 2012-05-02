@@ -27,7 +27,7 @@ void * operator new(size_t size);
  * Initialize a block of memory that has already been allocated. This is in
  * support of the C++ placement new operator.
  * @param size is the desired amount of memory in bytes.
- * @paran ptr points to the already allocated block of memory.
+ * @param ptr points to the already allocated block of memory.
  * @return a pointer to the newly allocated memory block or 0 if fail.
  */
 void * operator new(size_t size, void * ptr);

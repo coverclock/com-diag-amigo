@@ -1,11 +1,126 @@
-COM_DIAG_AMIGO_VINTAGE=2.1.0
 Unit Test Console
-STARTING=0x5354415254494E4700
-unittesttask=0x70040000130200000000
-PASSED.
+VINTAGE=3.0.0
+332E302E30
+__heap_end=0x0000
+__data_start=0x0200
+__data_end=0x0536
+__bss_start=0x0536
+__bss_end=0x164B
+__trampolines_start=0x111A
+__trampolines_end=0x111A
+__ctors_start=0x1206
+__ctors_end=0x120C
+__dtors_start=0x120C
+__dtors_end=0x1212
+__data_load_start=0xD246
+__data_load_end=0xD57C
+PASSED
+Unit Test Serial PASSED.
 Unit Test Morse PASSED.
+Unit Test Sink
+Now is the time for all good men to come to the aid of their country.
+PASSED.
+Unit Test sizeof
+sizeof(char)=1
+sizeof(signed char)=1
+sizeof(unsigned char)=1
+sizeof(short)=2
+sizeof(signed short)=2
+sizeof(unsigned short)=2
+sizeof(int)=2
+sizeof(signed int)=2
+sizeof(unsigned int)=2
+sizeof(long)=4
+sizeof(signed long)=4
+sizeof(unsigned long)=4
+sizeof(long long)=8
+sizeof(signed long long)=8
+sizeof(unsigned long long)=8
+sizeof(bool)=1
+sizeof(int8_t)=1
+sizeof(uint8_t)=1
+sizeof(int16_t)=2
+sizeof(uint16_t)=2
+sizeof(int32_t)=4
+sizeof(uint32_t)=4
+sizeof(int64_t)=8
+sizeof(uint64_t)=8
+sizeof(ssize_t)=2
+sizeof(size_t)=2
+sizeof(float)=4
+sizeof(double)=4
+sizeof(com::diag::amigo::A2D)=14
+sizeof(com::diag::amigo::A2D::Pin)=1
+sizeof(com::diag::amigo::BinarySemaphore)=4
+sizeof(com::diag::amigo::Console)=7
+sizeof(com::diag::amigo::CountingSemaphore)=4
+sizeof(com::diag::amigo::CriticalSection)=2
+sizeof(com::diag::amigo::Dump)=3
+sizeof(com::diag::amigo::GPIO)=2
+sizeof(com::diag::amigo::GPIO::Pin)=1
+sizeof(com::diag::amigo::Morse)=3
+sizeof(com::diag::amigo::MutexSemaphore)=4
+sizeof(com::diag::amigo::PeriodicTimer)=6
+sizeof(com::diag::amigo::OneShotTimer)=6
+sizeof(com::diag::amigo::Print)=3
+sizeof(com::diag::amigo::PWM)=11
+sizeof(com::diag::amigo::PWM::Pin)=1
+sizeof(com::diag::amigo::Queue)=4
+sizeof(com::diag::amigo::Serial)=19
+sizeof(com::diag::amigo::SerialSink)=4
+sizeof(com::diag::amigo::SerialSource)=4
+sizeof(com::diag::amigo::Sink)=2
+sizeof(com::diag::amigo::Socket)=2
+sizeof(com::diag::amigo::Source)=2
+sizeof(com::diag::amigo::SPI)=20
+sizeof(com::diag::amigo::Task)=8
+sizeof(com::diag::amigo::Task::priority_t)=1
+sizeof(com::diag::amigo::ticks_t)=2
+sizeof(com::diag::amigo::Timer)=6
+sizeof(com::diag::amigo::TypedQueue<uint16_t>)=4
+sizeof(com::diag::amigo::TypedQueue<uint8_t>)=4
+sizeof(com::diag::amigo::Uninterruptible)=1
+sizeof(com::diag::amigo::W5100::W5100)=25
+sizeof(com::diag::amigo::W5100::Socket)=5
+PASSED.
 Unit Test Task PASSED.
-Unit Test SinkNow is the time for all good men to come to the aid of their country.
-PASSED.Unit Test sizeofsizeof(char)=1sizeof(signed char)=1sizeof(unsigned char)=1sizeof(short)=2sizeof(signed short)=2sizeof(unsigned short)=2sizeof(int)=2sizeof(signed int)=2sizeof(unsigned int)=2sizeof(long)=4sizeof(signed long)=4sizeof(unsigned long)=4sizeof(long long)=8sizeof(signed long long)=8sizeof(unsigned long long)=8sizeof(bool)=1sizeof(int8_t)=1sizeof(uint8_t)=1sizeof(int16_t)=2sizeof(uint16_t)=2sizeof(int32_t)=4sizeof(uint32_t)=4sizeof(int64_t)=8sizeof(uint64_t)=8sizeof(ssize_t)=2sizeof(size_t)=2sizeof(float)=4sizeof(double)=4sizeof(com::diag::amigo::BinarySemaphore)=4sizeof(com::diag::amigo::Console)=7sizeof(com::diag::amigo::CountingSemaphore)=4sizeof(com::diag::amigo::CriticalSection)=2sizeof(com::diag::amigo::Dump)=3sizeof(com::diag::amigo::GPIO)=2sizeof(com::diag::amigo::GPIO::Pin)=1sizeof(com::diag::amigo::Morse)=3sizeof(com::diag::amigo::MutexSemaphore)=4sizeof(com::diag::amigo::PeriodicTimer)=6sizeof(com::diag::amigo::OneShotTimer)=6sizeof(com::diag::amigo::Print)=3sizeof(com::diag::amigo::PWM)=11sizeof(com::diag::amigo::PWM::Pin)=1sizeof(com::diag::amigo::Queue)=4sizeof(com::diag::amigo::Serial)=19sizeof(com::diag::amigo::SerialSink)=4sizeof(com::diag::amigo::SerialSource)=4sizeof(com::diag::amigo::Sink)=2sizeof(com::diag::amigo::Socket)=2sizeof(com::diag::amigo::Source)=2sizeof(com::diag::amigo::SPI)=20sizeof(com::diag::amigo::Task)=8sizeof(com::diag::amigo::Task::priority_t)=1sizeof(com::diag::amigo::ticks_t)=2sizeof(com::diag::amigo::Timer)=6sizeof(com::diag::amigo::TypedQueue<uint8_t>)=4sizeof(com::diag::amigo::Uninterruptible)=1sizeof(com::diag::amigo::W5100::W5100)=25sizeof(com::diag::amigo::W5100::Socket)=5PASSED.Unit Test stack PASSED.idlestack=67timerstack=448takerstack=446unitteststack=110Unit Test heap PASSED.freeheap=1776Unit Test littleendian and byteorder PASSED.Unit Test Low Precision delay PASSED.Unit Test High Precision busywait PASSED.Unit Test Dump0xDEADBEEF0xCAFEBABEPASSED.Unit Test Uninterruptible PASSED.Unit Test BinarySemaphore PASSED.Unit Test CountingSemaphore PASSED.Unit Test MutexSemaphore PASSED.Unit Test CriticalSection PASSED.Unit Test PeriodicTimer PASSED.Unit Test OneShotTimer PASSED.Unit Test GPIO PASSED.Unit Test Digital I/O (requires text fixture on EtherMega) PASSED.Unit Test PWM PASSED.Unit Test Analog Output (uses red LED on EtherMega) PASSED.Unit Test Analog Output (uses pin 9 on EtherMega) L M H M L PASSED.Unit Test Analog Output (uses pin 8 on EtherMega) L M H M L PASSED.Unit Test SPI (requires WIZnet W5100) PASSED.Unit Test W5100 (requires WIZnet W5100) PASSED.Unit Test Socket (requires internet connectivity) PASSED.Unit Test errors=0 (so far)Unit Test Source (type control-D to exit)England expects each man to do his duty.
-PASSED.Unit Test errors=0Type "<control-a><control-\>y" to exit Mac screen utility.
-
+idlestack=72
+timerstack=448
+takerstack=450
+unitteststack=47
+Unit Test heap PASSED.
+freeheap=1776
+Unit Test littleendian and byteorder PASSED.
+Unit Test Low Precision delay PASSED.
+Unit Test High Precision busy wait PASSED.
+Unit Test Dump
+0xDEADBEEF
+0xCAFEBABE
+PASSED.
+Unit Test Uninterruptible PASSED.
+Unit Test BinarySemaphore PASSED.
+Unit Test CountingSemaphore PASSED.
+Unit Test MutexSemaphore PASSED.
+Unit Test CriticalSection PASSED.
+Unit Test PeriodicTimer PASSED.
+Unit Test OneShotTimer PASSED.
+Unit Test GPIO PASSED.
+Unit Test Digital I/O (requires text fixture on EtherMega) PASSED.
+Unit Test PWM PASSED.
+Unit Test Analog Output (uses red LED on EtherMega) PASSED.
+Unit Test Analog Output Pin 9 (requires text fixture on EtherMega) LMHML PASSED.
+Unit Test Analog Output Pin 8 (requires text fixture on EtherMega) LMHML PASSED.
+Unit Test A2D (specific to Arduino Uno, Mega etc.) PASSED.
+Unit Test Analog Input (requires test fixture on EtherMega) PASSED.
+A0=730=3.5V
+A15=0=0.0V
+Unit Test SPI (sanity) PASSED.
+Unit Test SPI (requires WIZnet W5100) PASSED.
+Unit Test W5100 (requires WIZnet W5100) PASSED.
+Unit Test Socket (requires internet connectivity) PASSED.
+Unit Test errors=0 (so far)
+Unit Test Source (type <control d> to exit)
+England expects each man to do his duty.
+PASSED.
+Unit Test errors=0
+Type <control a><control \>y to exit Mac screen utility.

@@ -22,9 +22,14 @@ namespace amigo {
 
 /**
  * A2D is an interrupt-driven device driver with an asynchronous producer
- * and consumer API for an Analog to Digital Converter (ADC). (I would have
- * called it ADC but that's already a preprocessor symbol in one of the AVR
- * libc header files.)
+ * and consumer API for the Analog to Digital Converter (ADC). The ADC converts
+ * a input voltage level on one of several input pins into a ten-bit (0 to
+ * 1023) binary number. The input voltage is measured relative to a reference
+ * voltage. The reference voltage can be an external analog reference voltage
+ * (AREF) or any one of several internal voltage sources, including Vcc. (Note
+ * that some Arduino boards have 5v Vcc and others 3.3v Vcc. The Freetronics
+ * EtherMega is of the former.) This version does not currently support
+ * differential readings between two ADC pins.
  */
 class A2D
 {
@@ -86,8 +91,8 @@ public:
 
 	/**
 	 * These are the possible reference voltages against which the ADC measures
-	 * the pin. The internal Vcc is the most typical, followed by a voltage
-	 * applied to the external AREF analog reference pin. Some megaAVR models
+	 * the pin. The internal Vcc (AVCC) is the most typical, followed by a
+	 * voltage applied to the external AREF analog reference pin. Some megaAVRs
 	 * offer other internal voltage choices.
 	 */
 	enum Reference {
@@ -102,10 +107,11 @@ public:
 
 	/**
 	 * These are the events that can trigger the start of an ADC conversion
-	 * once it has been enabled. Most typically it is free running, occurring a
-	 * soon as the ADC is enabled. But I can easily see applications for
-	 * triggering it on an pulse on the external interrupt 0 (INT0) pin. For
-	 * any of the other choices, the application has to do its own setup on
+	 * once it has been enabled. Most typically it is on demand, occurring a
+	 * soon as the ADC is enabled, and this is the only one currently tested
+	 * in the Unit Test. But I can easily see applications for triggering it
+	 * on an pulse on the external interrupt 0 (INT0) pin, or for free running.
+	 * For any of the other choices, the application has to do its own setup on
 	 * the timer/counters or the analog comparator.
 	 */
 	enum Trigger {
@@ -120,6 +126,15 @@ public:
 		CAPTURE1
 	};
 
+	/**
+	 * The ADC requires a clock that is between 50KHz and 200KHz. This divisor
+	 * divides the CPU clock to get an appropriate ADC clock. For a 16MHz
+	 * ATmega328p or ATmega2560p, a divisor of 128 yields an ADC clock of
+	 * 125KHz. If you want to write portable code that runs for several clock
+	 * rates, you can base the value you choose on the F_CPU symbol which by
+	 * convention is set at compile time to be the CPU clock frequency (for
+	 * example, F_CPU=16000000L).
+	 */
 	enum Divisor {
 		D2,
 		D4,
@@ -247,7 +262,8 @@ public:
 	/**
 	 * Append a request composed of a pin number and a reference to the end of
 	 * the request ring buffer.
-	 * @param request is the pin number to append.
+	 * @param pin is the pin number.
+	 * @param reference is the reference against which the pin is measured.
 	 * @param timeout is the number of ticks to wait when the buffer is full.
 	 * @return one if the function was successful, zero otherwise.
 	 */
@@ -269,7 +285,8 @@ public:
 	 * they are using the same A2D pin or different pins), use of this method
 	 * should be serialized with a MutexSemaphore semaphore; this is the
 	 * responsibility of the application.
-	 * @param request is the pin to sample and convert.
+	 * @param pin is the pin number.
+	 * @param reference is the reference against which the pin is measured.
 	 * @param timeout is the number of ticks to wait when the buffer is empty.
 	 * @return the first sample or <0 if fail.
 	 */
