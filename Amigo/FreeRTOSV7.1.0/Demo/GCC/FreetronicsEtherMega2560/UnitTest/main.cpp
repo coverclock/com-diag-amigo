@@ -73,6 +73,7 @@ static const char CUNITTEST_PASSED[] PROGMEM = "PASSED.\r\n";
 static const char VINTAGE[] PROGMEM = "VINTAGE=" COM_DIAG_AMIGO_VINTAGE;
 
 																// e.g. (from UnitTest.map):
+extern void * __heap_end				__attribute__ ((weak)); // 00000000 W __heap_end
 extern void * __data_start				__attribute__ ((weak)); // 00800200 D __data_start
 extern void * __data_end				__attribute__ ((weak)); // 00800536 D __data_end
 extern void * __bss_start				__attribute__ ((weak)); // 00800536 B __bss_start
@@ -94,18 +95,19 @@ inline void * htonvp(void * vp) {
 // Nonexistent weak external references will print as zero (NULL).
 // Put in network byte order just to make dump more readable.
 static const void * const MAP[] = {
-	htonvp(__data_start),
-	htonvp(__data_end),
-	htonvp(__bss_start),
-	htonvp(__bss_end),
-	htonvp(__trampolines_start),
-	htonvp(__trampolines_end),
-	htonvp(__ctors_start),
-	htonvp(__ctors_end),
-	htonvp(__dtors_start),
-	htonvp(__dtors_end),
-	htonvp(__data_load_start),
-	htonvp(__data_load_end),
+	htonvp(&__heap_end),
+	htonvp(&__data_start),
+	htonvp(&__data_end),
+	htonvp(&__bss_start),
+	htonvp(&__bss_end),
+	htonvp(&__trampolines_start),
+	htonvp(&__trampolines_end),
+	htonvp(&__ctors_start),
+	htonvp(&__ctors_end),
+	htonvp(&__dtors_start),
+	htonvp(&__dtors_end),
+	htonvp(&__data_load_start),
+	htonvp(&__data_load_end),
 };
 
 class Scope {
@@ -114,13 +116,22 @@ public:
 		com::diag::amigo::Console::instance()
 			.start()
 			.write_P(PSTR("Unit Test Console\r\n"))
-			.write_P(VINTAGE)
-			.write("\r\n")
-			.dump_P(&VINTAGE[sizeof("VINTAGE=") - 1], sizeof(VINTAGE) - sizeof("VINTAGE="))
-			.write('\r')
-			.write('\n')
-			.dump(&MAP, sizeof(MAP))
-			.write_P(PSTR("\r\nPASSED\r\n"))
+			.write_P(VINTAGE).write("\r\n")
+			.dump_P(&VINTAGE[sizeof("VINTAGE=") - 1], sizeof(VINTAGE) - sizeof("VINTAGE=")).write('\r').write('\n')
+			.write_P(PSTR("__heap_end=0x")).dump(&MAP[0], sizeof(MAP[0])).write('\r').write('\n')
+			.write_P(PSTR("__data_start=0x")).dump(&MAP[1], sizeof(MAP[1])).write('\r').write('\n')
+			.write_P(PSTR("__data_end=0x")).dump(&MAP[2], sizeof(MAP[2])).write('\r').write('\n')
+			.write_P(PSTR("__bss_start=0x")).dump(&MAP[3], sizeof(MAP[3])).write('\r').write('\n')
+			.write_P(PSTR("__bss_end=0x")).dump(&MAP[4], sizeof(MAP[4])).write('\r').write('\n')
+			.write_P(PSTR("__trampolines_start=0x")).dump(&MAP[5], sizeof(MAP[5])).write('\r').write('\n')
+			.write_P(PSTR("__trampolines_end=0x")).dump(&MAP[6], sizeof(MAP[6])).write('\r').write('\n')
+			.write_P(PSTR("__ctors_start=0x")).dump(&MAP[7], sizeof(MAP[7])).write('\r').write('\n')
+			.write_P(PSTR("__ctors_end=0x")).dump(&MAP[8], sizeof(MAP[8])).write('\r').write('\n')
+			.write_P(PSTR("__dtors_start=0x")).dump(&MAP[9], sizeof(MAP[9])).write('\r').write('\n')
+			.write_P(PSTR("__dtors_end=0x")).dump(&MAP[10], sizeof(MAP[10])).write('\r').write('\n')
+			.write_P(PSTR("__data_load_start=0x")).dump(&MAP[11], sizeof(MAP[11])).write('\r').write('\n')
+			.write_P(PSTR("__data_load_end=0x")).dump(&MAP[12], sizeof(MAP[12])).write('\r').write('\n')
+			.write_P(PSTR("PASSED\r\n"))
 			.flush()
 			.stop();
 	}
@@ -289,17 +300,6 @@ static bool brightnesscontrol(com::diag::amigo::PWM::Pin pin, com::diag::amigo::
  * UNIT TEST TASK
  ******************************************************************************/
 
-namespace com { namespace diag { namespace amigo {
-extern int Serial_port;
-extern int Serial_countof;
-extern volatile void * Serial_base;
-extern int Serial_line;
-extern bool Serial_ge;
-extern bool Serial_lt;
-extern bool Serial_not;
-extern int Serial_port2;
-} } }
-
 class UnitTestTask : public com::diag::amigo::Task {
 public:
 	explicit UnitTestTask(const char * name) : com::diag::amigo::Task(name) {}
@@ -322,9 +322,7 @@ void UnitTestTask::task() {
 		}
 		{
 			com::diag::amigo::Serial bogus(com::diag::amigo::Serial::FAIL);
-printf(PSTR("P=0x%x C=0x%x B=0x%x L=%d F=%d\n"), com::diag::amigo::Serial_port, com::diag::amigo::Serial_countof, com::diag::amigo::Serial_base, com::diag::amigo::Serial_line, static_cast<bool>(bogus));
-printf(PSTR("G=%d L=%d N=%d P=%d\n"), com::diag::amigo::Serial_ge, com::diag::amigo::Serial_lt, com::diag::amigo::Serial_not, com::diag::amigo::Serial_port2);
-		if (bogus) {
+			if (bogus) {
 				FAILED(__LINE__);
 				break;
 			}
