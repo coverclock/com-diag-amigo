@@ -15,11 +15,20 @@
 #include "com/diag/amigo/cxxcapi.h"
 
 /**
+ * Enable interrupts system-wide. This is typically called once in main()
+ * when interrupt-driven I/O is desired. The prior state of the system
+ * status register (SREG) is _not_ saved.
+ */
+CXXCINLINE void amigo_interrupts_enable(void) {
+	sei();
+}
+
+/**
  * Disable interrupts and returns the value of SREG before it did so. This
  * function can be called from either C or C++ translation units.
  * @return the prior SREG value before interrupts were disabled.
  */
-CXXCINLINE uint8_t amigo_uninterruptible_begin() {
+CXXCINLINE uint8_t amigo_interrupts_disable(void) {
 	uint8_t sreg = SREG;
 	cli();
 	return sreg;
@@ -31,11 +40,49 @@ CXXCINLINE uint8_t amigo_uninterruptible_begin() {
  * called from either C or C++ translation units.
  * @param sreg is the new SREG value.
  */
-CXXCINLINE void amigo_uninterruptible_end(uint8_t sreg) {
+CXXCINLINE void amigo_interrupts_restore(uint8_t sreg) {
 	SREG = sreg;
 }
 
 #if defined(__cplusplus)
+
+namespace com {
+namespace diag {
+namespace amigo {
+namespace interrupts {
+
+/**
+ * Enable interrupts system-wide. This is typically called once in main()
+ * when interrupt-driven I/O is desired. The prior state of the system
+ * status register (SREG) is _not_ saved.
+ */
+inline void enable() {
+	amigo_interrupts_enable();
+}
+
+/**
+ * Disable interrupts and returns the value of SREG before it did so. This
+ * function can be called from either C or C++ translation units.
+ * @return the prior SREG value before interrupts were disabled.
+ */
+inline uint8_t disable() {
+	return amigo_interrupts_disable();
+}
+
+/**
+ * Set the SREG to the specified value. This can be used to restore the prior
+ * value of the SREG before interrupts were disabled. This function can be
+ * called from either C or C++ translation units.
+ * @param sreg is the new SREG value.
+ */
+inline void restore(uint8_t sreg) {
+	amigo_interrupts_restore(sreg);
+}
+
+}
+}
+}
+}
 
 namespace com {
 namespace diag {
@@ -58,7 +105,7 @@ public:
 	 */
 	Uninterruptible()
 	{
-		sreg = amigo_uninterruptible_begin();
+		sreg = interrupts::disable();
 	}
 
 	/**
@@ -68,7 +115,7 @@ public:
 	 * disabled) is restored.
 	 */
 	~Uninterruptible() {
-		amigo_uninterruptible_end(sreg);
+		interrupts::restore(sreg);
 	}
 
 	/**

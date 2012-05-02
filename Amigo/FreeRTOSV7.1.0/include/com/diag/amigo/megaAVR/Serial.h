@@ -50,21 +50,21 @@ public:
 	/**
 	 * Identifies the specific USART serial port to be associated with a
 	 * particular Serial object. Some megaAVR devices only have one USART,
-	 * some have several. The default console is assumed to be USART0, which
+	 * some have several. The default port is assumed to be USART0, which
 	 * is the USART used by the typical boot loader.
 	 */
 	enum Port {
-		CONSOLE		= 0,
-		USART0		= 0,
+		USART0 = 0,
 #if defined(UCSR1A)
-		USART1		= 1,
+		USART1 = 1,
 #if defined(UCSR2A)
-		USART2 		= 2,
+		USART2 = 2,
 #if defined(UCSR3A)
-		USART3		= 3,
+		USART3 = 3,
 #endif
 #endif
 #endif
+		FAIL = 255
 	};
 
 	/**
@@ -196,7 +196,7 @@ public:
 	 * @param receives specifies the size of the receive ring buffer in bytes.
 	 * @param mybad specifies the character to be used for a receive error.
 	 */
-	explicit Serial(Port myport = CONSOLE, size_t transmits = TRANSMITS, size_t receives = RECEIVES, uint8_t mybad = BAD);
+	explicit Serial(Port myport = USART0, size_t transmits = TRANSMITS, size_t receives = RECEIVES, uint8_t mybad = BAD);
 
 	/**
 	 * Destructor. The stop() instance method is automatically called, and the

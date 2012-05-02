@@ -289,6 +289,17 @@ static bool brightnesscontrol(com::diag::amigo::PWM::Pin pin, com::diag::amigo::
  * UNIT TEST TASK
  ******************************************************************************/
 
+namespace com { namespace diag { namespace amigo {
+extern int Serial_port;
+extern int Serial_countof;
+extern volatile void * Serial_base;
+extern int Serial_line;
+extern bool Serial_ge;
+extern bool Serial_lt;
+extern bool Serial_not;
+extern int Serial_port2;
+} } }
+
 class UnitTestTask : public com::diag::amigo::Task {
 public:
 	explicit UnitTestTask(const char * name) : com::diag::amigo::Task(name) {}
@@ -300,6 +311,8 @@ void UnitTestTask::task() {
 	com::diag::amigo::SerialSource serialsource(*serialp);
 	com::diag::amigo::Print printf(serialsink, true);
 
+	serialp->start();
+
 #if 1
 	UNITTEST("Serial");
 	do {
@@ -308,8 +321,10 @@ void UnitTestTask::task() {
 			break;
 		}
 		{
-			com::diag::amigo::Serial bogus(static_cast<com::diag::amigo::Serial::Port>(~0));
-			if (bogus) {
+			com::diag::amigo::Serial bogus(com::diag::amigo::Serial::FAIL);
+printf(PSTR("P=0x%x C=0x%x B=0x%x L=%d F=%d\n"), com::diag::amigo::Serial_port, com::diag::amigo::Serial_countof, com::diag::amigo::Serial_base, com::diag::amigo::Serial_line, static_cast<bool>(bogus));
+printf(PSTR("G=%d L=%d N=%d P=%d\n"), com::diag::amigo::Serial_ge, com::diag::amigo::Serial_lt, com::diag::amigo::Serial_not, com::diag::amigo::Serial_port2);
+		if (bogus) {
 				FAILED(__LINE__);
 				break;
 			}
@@ -715,12 +730,12 @@ void UnitTestTask::task() {
 				FAILED(__LINE__);
 				break;
 			}
-			uint8_t sreg = amigo_uninterruptible_begin();
+			uint8_t sreg = com::diag::amigo::interrupts::disable();
 			if ((SREG & _BV(SREG_I)) != 0) {
 				FAILED(__LINE__);
 				break;
 			}
-			amigo_uninterruptible_end(sreg);
+			com::diag::amigo::interrupts::restore(sreg);
 			if ((SREG & _BV(SREG_I)) == 0) {
 				FAILED(__LINE__);
 				break;
@@ -1547,7 +1562,7 @@ void UnitTestTask::task() {
 			break;
 		}
 		{
-			com::diag::amigo::A2D bogus(static_cast<com::diag::amigo::A2D::Converter>(~0));
+			com::diag::amigo::A2D bogus(com::diag::amigo::A2D::FAIL);
 			if (bogus) {
 				FAILED(__LINE__);
 				break;
@@ -1671,6 +1686,12 @@ void UnitTestTask::task() {
 			FAILED(__LINE__);
 			break;
 		}
+		// Why would you use this asynchronous interface instead of the
+		// synchronous A2D::convert() method? Because if you only have one
+		// ADC pin that you're using, you can have a timer periodically
+		// request an ADC conversion on your schedule (instead of continuously
+		// via ADC::FREE_RUNNING) and then just have your application pick the
+		// next converted value off the queue.
 		if (a2d.request(a0) != 1) {
 			FAILED(__LINE__);
 			break;
@@ -1753,7 +1774,7 @@ void UnitTestTask::task() {
 			break;
 		}
 		{
-			com::diag::amigo::SPI bogus(static_cast<com::diag::amigo::SPI::Controller>(~0));
+			com::diag::amigo::SPI bogus(com::diag::amigo::SPI::FAIL);
 			if (bogus) {
 				FAILED(__LINE__);
 				break;
@@ -1981,6 +2002,9 @@ int main() {
 	// those bytes may be unprintable.
 	Scope scope;
 
+	// Enable interrupts system-wide.
+	com::diag::amigo::interrupts::enable();
+
 	// The fact that main() never exits means local variables allocated on
 	// its stack in its outermost braces never go out of scope. We can take
 	// advantage of main to allocate objects on its stack that persist until
@@ -1988,12 +2012,7 @@ int main() {
 	// to know, especially in light of the fact that the memory allocated
 	// for main's stack is never otherwise recovered or used.
 	com::diag::amigo::Serial serial;
-	com::diag::amigo::Task::enable();
-	serial.start();
 	serialp = &serial;
-
-	com::diag::amigo::SerialSink serialsink(serial);
-	com::diag::amigo::Print printf(serialsink, true);
 
 	com::diag::amigo::BinarySemaphore binarysemaphore;
 	binarysemaphorep = &binarysemaphore;

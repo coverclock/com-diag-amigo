@@ -54,6 +54,15 @@ static Serial * serial[] = {
 #endif
 };
 
+int Serial_port = -1;
+int Serial_countof = -1;
+volatile void * Serial_base = 0;
+int Serial_line = -1;
+bool Serial_ge = false;
+bool Serial_lt = false;
+bool Serial_not = false;
+int Serial_port2 = -1;
+
 Serial::Serial(Port myport, size_t transmits, size_t receives, uint8_t mybad)
 : usartbase(0)
 , received(receives)
@@ -63,10 +72,19 @@ Serial::Serial(Port myport, size_t transmits, size_t receives, uint8_t mybad)
 , bad(mybad)
 , errors(0)
 {
-	if (port >= countof(serial)) {
+Serial_port = port;
+Serial_countof = countof(serial);
+Serial_line = __LINE__;
+Serial_ge = (0 <= port);
+Serial_lt = (port < countof(serial));
+Serial_not = (!((0 <= port) && (port < countof(serial))));
+	if (!((0 <= port) && (port < countof(serial)))) {
 		// FAIL!
+Serial_line = __LINE__;
 		return;
 	}
+Serial_line = __LINE__;
+Serial_port2 = port;
 
 	serial[port] = this;
 
@@ -91,12 +109,12 @@ Serial::Serial(Port myport, size_t transmits, size_t receives, uint8_t mybad)
 #endif
 #endif
 #endif
-
 	}
+Serial_base = usartbase;
 }
 
 Serial::~Serial() {
-	if (port < countof(serial)) {
+	if ((0 <= port) && (port < countof(serial))) {
 		Uninterruptible uninterruptible;
 		UCSRB = 0;
 		serial[port] = 0;
@@ -229,7 +247,7 @@ void Serial::flush() {
 	if (microseconds < (Task::ticks2milliseconds(1) * 1000)) {
 		// Busy wait for the requested number of microseconds which is less than
 		// a system tick.
-		Task::delay(microseconds);
+		Task::busywait(microseconds);
 	} else {
 		// Task wait by ceiling the microseconds to milliseconds, then ceiling
 		// up to the nearest system tick.
