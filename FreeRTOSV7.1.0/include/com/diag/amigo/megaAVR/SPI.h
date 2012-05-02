@@ -52,7 +52,8 @@ public:
 	 * default.
 	 */
 	enum Controller {
-		SPI0	= 0
+		SPI0 = 0,
+		FAIL = 255
 	};
 
 	enum Order {

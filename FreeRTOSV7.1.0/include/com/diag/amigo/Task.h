@@ -148,13 +148,6 @@ protected:
 public:
 
 	/**
-	 * Enable interrupts system-wide. This is typically called once in main()
-	 * when interrupt-driven I/O is desired. The prior state of the system
-	 * status register (SREG) is _not_ saved.
-	 */
-	static void enable();
-
-	/**
 	 * Start the FreeRTOS scheduler. All FreeRTOS tasks that have been started
 	 * and are not suspended will begin to run. There is always at least one
 	 * FreeRTOS task, the idle task. You must call this once and only once from

@@ -6,7 +6,6 @@
  * http://www.diag.com/navigation/downloads/Amigo.html\n
  */
 
-#include <avr/interrupt.h>
 #include "com/diag/amigo/Task.h"
 #include "com/diag/amigo/fatal.h"
 
@@ -43,10 +42,6 @@ extern "C" void amigo_task_trampoline(Task * that);
 
 extern "C" void amigo_task_trampoline(Task * that) {
 	Task::task(that);
-}
-
-void Task::enable() {
-	sei();
 }
 
 Task::Task(const char * myname)

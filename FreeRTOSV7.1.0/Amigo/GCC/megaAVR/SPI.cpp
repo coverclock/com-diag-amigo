@@ -57,7 +57,7 @@ SPI::SPI(Controller mycontroller, size_t transmits, size_t receives)
 , miso(0)
 , errors(0)
 {
-	if (controller >= countof(spi)) {
+	if (!((0 <= controller) && (controller < countof(spi)))) {
 		// FAIL!
 		return;
 	}
@@ -90,7 +90,7 @@ SPI::SPI(Controller mycontroller, size_t transmits, size_t receives)
 }
 
 SPI::~SPI() {
-	if (controller < countof(spi)) {
+	if ((0 <= controller) && (controller < countof(spi))) {
 		Uninterruptible uninterruptible;
 		SPICR &= ~(_BV(SPIE) | _BV(SPE));
 		spi[controller] = 0;
