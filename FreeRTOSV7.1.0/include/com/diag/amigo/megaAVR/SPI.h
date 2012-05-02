@@ -48,34 +48,61 @@ public:
 
 	/**
 	 * Identifies the specific SPI controller to be associated with a particular
-	 * SPI object. Generally there is only one SPI controller, and it is the
-	 * default.
+	 * SPI object. Generally there is only one SPI controller.
 	 */
 	enum Controller {
 		SPI0 = 0,
 		FAIL = 255
 	};
 
+	/**
+	 * Identifies the bit order for transmission onto the SPI bus: Most
+	 * Significant Bit first, or Least Significant Bit first.
+	 */
 	enum Order {
 		MSB,
 		LSB
 	};
 
+	/**
+	 * Specifies the role of this SPI bus, Master or Slave. My long experience
+	 * with another common embedded bus standard, I2C (a.k.a. TWI) suggests
+	 * that it is a mistake to architect a system that switches back and forth
+	 * between roles; the inability to reliably synchronize who is playing what
+	 * role on the bus leads to wackiness ensuing. (I have no way currently to
+	 * test the slave role.)
+	 */
 	enum Role {
 		SLAVE,
 		MASTER
 	};
 
+	/**
+	 * Specifies signal polarity, normal or inverted.
+	 */
 	enum Polarity {
 		NORMAL,
 		INVERTED
 	};
 
+	/**
+	 * Specifies the signal phase used to detect bits on the SPI bus, leading or
+	 * trailing.
+	 */
 	enum Phase {
 		LEADING,
 		TRAILING
 	};
 
+	/**
+	 * SPI devices require a SPI clock (pin SCK)  to drive the shift registers
+	 * that clock bits onto and off of the SPI bus (pins MISO for Master In
+	 * Slave Out and MOSI for Master Out Slave In). The SPI clock frequency
+	 * depends on the abilities of both the master and slave device. For
+	 * example, a divisor of D4 on a 16MHz ATmega328p or ATmega2560 requires
+	 * that the master and slave devices be able to keep up with a 4MHz clock
+	 * rate. Your mileage may vary.
+	 */
 	enum Divisor {
 		D2,
 		D4,
@@ -199,16 +226,26 @@ public:
 	int master(uint8_t ch = 0, ticks_t timeout = NEVER);
 
 	/**
-	 * UNTESTED!
-	 * Return the first character in the receive ring buffer and remove it from
-	 * the buffer. This is only meaningful (I think) when acting as a slave.
-	 * Transmits and receives are still coupled, but the slave SPI just
-	 * transmits whatever is in the SPDR at the time a byte is received, and
-	 * the master just ignores it.
-	 * @param timeout is the number of ticks to wait when the buffer is empty.
+	 * Append a byte to the end of the transmit ring buffer and remove the byte
+	 * at the beginning of the receive ring buffer and return it. This is only
+	 * meaningful (I think) when acting as a master. All SPI I/O operations
+	 * performed by a master are always a transmit of a byte coupled with a
+	 * receive of a byte, although the received byte may be ignored. If there
+	 * are multiple tasks using the SPI bus (whether they are using the same
+	 * SPI slave device or different devices), use of this method should be
+	 * serialized with a MutexSemaphore semaphore; this is the responsibility
+	 * of the application. (This method is currently identical to master()
+	 * and I have no way to test this driver in the slave role. However, I
+	 * suspect that the primary difference between master and slave is that the
+	 * master drives SCK and the slave passively listens to SCK. And obviously
+	 * the master reads MISO and writes MOSI and the slave vice versa. Otherwise
+	 * the software interface is the same. I wanted to have different API
+	 * methods to leave open the possibility that I am full of crap.)
+	 * @param ch is the byte to append.
+	 * @param timeout is the number of ticks to wait when the buffer is full.
 	 * @return the first character or <0 if fail.
 	 */
-	int slave(ticks_t timeout = NEVER);
+	int slave(uint8_t ch = 0, ticks_t timeout = NEVER);
 
 	/***************************************************************************
 	 * CHECKING
@@ -284,9 +321,17 @@ inline int SPI::master(uint8_t ch, ticks_t timeout) {
 	}
 }
 
-inline int SPI::slave(ticks_t timeout) {
-	uint8_t ch;
-	return (received.receive(&ch, timeout) ? ch : -1);
+inline int SPI::slave(uint8_t ch, ticks_t timeout) {
+	if (!transmitting.send(&ch, timeout)) {
+		return -1;
+	} else {
+		begin();
+		if (!received.receive(&ch, timeout)) {
+			return -2;
+		} else {
+			return ch;
+		}
+	}
 }
 
 }
