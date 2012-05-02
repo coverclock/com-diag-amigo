@@ -7,6 +7,7 @@
  */
 
 #include <avr/interrupt.h>
+#include "com/diag/amigo/cxxcapi.h"
 #include "com/diag/amigo/fatal.h"
 
 // Placing this in the low text section seems to be occasionally necessary.

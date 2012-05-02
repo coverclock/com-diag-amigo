@@ -70,14 +70,6 @@ Serial::Serial(Port myport, size_t transmits, size_t receives, uint8_t mybad)
 
 	serial[port] = this;
 
-	// Important safety tip: placing the code below in a static function
-	// that returned a volatile pointer returned NULL instead. Putting some
-	// debugging code in that function to display the pointer caused the
-	// function to return the correct value. Not good. Seems like yet another
-	// compiler bug in dealing with volatiles. This occurred when building on
-	// my Mac using GCC 4.5.1 and AVR libc 1.8.0. It did NOT occur when building
-	// on Windows using AVR Studio 5.1 with GCC 4.5.1 and AVR libc 1.7.1.
-
 	switch (port) {
 
 	default:
