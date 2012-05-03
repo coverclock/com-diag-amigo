@@ -36,7 +36,7 @@
 #include "com/diag/amigo/CriticalSection.h"
 #include "com/diag/amigo/MutexSemaphore.h"
 #include "com/diag/amigo/Timer.h"
-#include "com/diag/amigo/SPISlaveSelect.h"
+#include "com/diag/amigo/Toggle.h"
 #include "com/diag/amigo/W5100/W5100.h"
 #include "com/diag/amigo/W5100/Socket.h"
 
@@ -167,7 +167,7 @@ void PeriodicTimer::timer() {
 }
 
 /*******************************************************************************
- * WIZNET W5100 TEST FIXTURE (FOR TESTING SPI AND ALSO GPIO)
+ * WIZNET W5100 TEST FIXTURE (FOR TESTING SPI, Toggle, and GPIO.
  ******************************************************************************/
 
 static com::diag::amigo::MutexSemaphore * mutexsemaphorep = 0;
@@ -184,7 +184,7 @@ public:
 	}
 	int read(uint16_t address) {
 		com::diag::amigo::CriticalSection cs(*mutex);
-		com::diag::amigo::SPISlaveSelect ss(gpio, mask);
+		com::diag::amigo::ToggleOff ss(gpio, mask);
 		spi->master(0x0f);
 		spi->master(address >> 8);
 		spi->master(address & 0xff);
@@ -332,7 +332,7 @@ void UnitTestTask::task() {
 #endif
 
 #if 1
-	UNITTESTLN("event");
+	UNITTEST("event");
 	com::diag::amigo::event(PSTR(__FILE__), __LINE__);
 	PASSED();
 #endif
@@ -474,6 +474,8 @@ void UnitTestTask::task() {
 		SIZEOF(com::diag::amigo::Task::priority_t);
 		SIZEOF(com::diag::amigo::ticks_t);
 		SIZEOF(com::diag::amigo::Timer);
+		SIZEOF(com::diag::amigo::ToggleOff);
+		SIZEOF(com::diag::amigo::ToggleOn);
 		SIZEOF(com::diag::amigo::TypedQueue<uint16_t>);
 		SIZEOF(com::diag::amigo::TypedQueue<uint8_t>);
 		SIZEOF(com::diag::amigo::Uninterruptible);
@@ -1232,6 +1234,50 @@ void UnitTestTask::task() {
 #endif
 
 #if 1
+	UNITTEST("Toggle (requires text fixture on EtherMega)");
+	// This is a separate test because it requires the same fixture as the
+	// Digital I/O test above.
+	// PE3 (Arduino Mega pin 5) connected to PH3 (Arduino Mega pin 6).
+	do {
+		com::diag::amigo::GPIO::Pin outputpin = com::diag::amigo::GPIO::arduino2gpio(5);
+		com::diag::amigo::GPIO outputgpio(outputpin);
+		uint8_t outputmask = com::diag::amigo::GPIO::gpio2mask(outputpin);
+		outputgpio.output(outputmask);
+		com::diag::amigo::GPIO::Pin inputpin = com::diag::amigo::GPIO::arduino2gpio(6);
+		com::diag::amigo::GPIO inputgpio(inputpin);
+		uint8_t inputmask = com::diag::amigo::GPIO::gpio2mask(inputpin);
+		inputgpio.input(inputmask);
+		if (inputgpio.get(inputmask) != 0) {
+			FAILED(__LINE__);
+			break;
+		}
+		{
+			com::diag::amigo::ToggleOn on(outputgpio, outputmask);
+			if (inputgpio.get(inputmask) != inputmask) {
+				FAILED(__LINE__);
+				break;
+			}
+			{
+				com::diag::amigo::ToggleOff off(outputgpio, outputmask);
+				if (inputgpio.get(inputmask) != 0) {
+					FAILED(__LINE__);
+					break;
+				}
+			}
+			if (inputgpio.get(inputmask) != inputmask) {
+				FAILED(__LINE__);
+				break;
+			}
+		}
+		if (inputgpio.get(inputmask) != 0) {
+			FAILED(__LINE__);
+			break;
+		}
+		PASSED();
+	} while (false);
+#endif
+
+#if 1
 	UNITTEST("PWM");
 	// This should work on either the 2560 (Arduino Mega and compatibles) or
 	// the 328p (Arduino Uno and compatibles) since both implement PWM on
@@ -1417,7 +1463,7 @@ void UnitTestTask::task() {
 			PASSED();
 		} while (false);
 		do {
-			UNITTEST("Analog Output Pin 9 (requires text fixture on EtherMega)");
+			UNITTEST("Analog Output Pin 9 (requires operator monitoring)");
 			// Zero-volts for a few seconds, half-voltage for a few seconds,
 			// full-voltage for a few seconds, back to half-voltage for a few
 			// seconds, then back to zero-volts. For most Arduinos, like the
@@ -1486,7 +1532,7 @@ void UnitTestTask::task() {
 			PASSED();
 		} while (false);
 		do {
-			UNITTEST("Analog Output Pin 8 (requires text fixture on EtherMega)");
+			UNITTEST("Analog Output Pin 8 (requires operator monitoring)");
 			// Zero-volts for a few seconds, half-voltage for a few seconds,
 			// full-voltage for a few seconds, back to half-voltage for a few
 			// seconds, then back to zero-volts. For most Arduinos, like the
