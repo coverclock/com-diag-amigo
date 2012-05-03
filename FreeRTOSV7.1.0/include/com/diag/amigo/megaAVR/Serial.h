@@ -45,6 +45,10 @@ namespace amigo {
 class Serial
 {
 
+	/***************************************************************************
+	 * TYPES AND CONSTANTS
+	 **************************************************************************/
+
 public:
 
 	/**
@@ -164,26 +168,8 @@ public:
 	 */
 	static const uint8_t BAD = '?';
 
-	/**
-	 * This class method is called by the receive interrupt vector function.
-	 * It in turn calls the instance method specific in the Serial object for
-	 * the specified port. This method has to be public to be called from the
-	 * interrupt vector function, which has C linkage; you should never call it.
-	 * @param port identifies the USART port from which the interrupt occurred.
-	 */
-	static void receive(Port port);
-
-	/**
-	 * This class method is called by the transmit interrupt vector function.
-	 * It in turn calls the instance method specific in the Serial object for
-	 * the specified port. This method has to be public to be called from the
-	 * interrupt vector function, which has C linkage; you should never call it.
-	 * @param port identifies the USART port from which the interrupt occurred.
-	 */
-	static void transmit(Port port);
-
 	/***************************************************************************
-	 * CREATING AND DESTROYING
+	 * CONSTRUCTING AND DESTRUCTING
 	 **************************************************************************/
 
 public:
@@ -213,6 +199,8 @@ public:
 	/***************************************************************************
 	 * STARTING AND STOPPING
 	 **************************************************************************/
+
+public:
 
 	/**
 	 * Initialize the USART and start interrupt driven I/O operations on it.
@@ -253,6 +241,8 @@ public:
 	/***************************************************************************
 	 * READING AND WRITING
 	 **************************************************************************/
+
+public:
 
 	/**
 	 * Return the number of characters in the receive ring buffer available to
@@ -317,6 +307,8 @@ public:
 	 * CHECKING
 	 **************************************************************************/
 
+public:
+
 	/**
 	 * Cast this object to an integer by returning the error counter. The error
 	 * counter is cumulative. The application is responsible for interrogating
@@ -332,6 +324,30 @@ public:
 	 * @return a reference to this object.
 	 */
 	Serial & operator=(uint8_t value);
+
+	/***************************************************************************
+	 * INTERRUPTING
+	 **************************************************************************/
+
+public:
+
+	/**
+	 * This class method is called by the receive interrupt vector function.
+	 * It in turn calls the instance method specific in the Serial object for
+	 * the specified port. This method has to be public to be called from the
+	 * interrupt vector function, which has C linkage; you should never call it.
+	 * @param port identifies the USART port from which the interrupt occurred.
+	 */
+	static void receive(Port port);
+
+	/**
+	 * This class method is called by the transmit interrupt vector function.
+	 * It in turn calls the instance method specific in the Serial object for
+	 * the specified port. This method has to be public to be called from the
+	 * interrupt vector function, which has C linkage; you should never call it.
+	 * @param port identifies the USART port from which the interrupt occurred.
+	 */
+	static void transmit(Port port);
 
 protected:
 

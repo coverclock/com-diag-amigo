@@ -33,6 +33,9 @@ namespace amigo {
  */
 class A2D
 {
+	/***************************************************************************
+	 * TYPES AND CONSTANTS
+	 **************************************************************************/
 
 public:
 
@@ -168,19 +171,11 @@ public:
 	 */
 	static const size_t CONVERSIONS = 8;
 
-	/**
-	 * This class method is called by the conversion complete interrupt vector
-	 * function. It in turn calls the instance method specific in the A2D object
-	 * for the specified converter. This method has to be public to be called
-	 * from the interrupt vector function, which has C linkage; you should never
-	 * call it.
-	 * @param converter identifies the ADC from which the interrupt occurred.
-	 */
-	static void complete(Converter converter);
-
 	/***************************************************************************
-	 * MAPPING CLASS METHODS
+	 * MAPPING
 	 **************************************************************************/
+
+public:
 
 	/**
 	 * Map a pin to its equivalent GPIO pin.
@@ -201,7 +196,7 @@ public:
 	static Pin arduino2a2d(uint8_t number);
 
 	/***************************************************************************
-	 * CREATION AND DESTRUCTION
+	 * CONSTRUCTING AND DESTRUCTING
 	 **************************************************************************/
 
 public:
@@ -231,6 +226,8 @@ public:
 	 * STARTING AND STOPPING
 	 **************************************************************************/
 
+public:
+
 	/**
 	 * Initialize the ADC and start interrupt driven I/O operations on it.
 	 */
@@ -251,6 +248,8 @@ public:
 	/***************************************************************************
 	 * READING AND WRITING
 	 **************************************************************************/
+
+public:
 
 	/**
 	 * Return the number of samples in the conversion ring buffer available to
@@ -296,6 +295,8 @@ public:
 	 * CHECKING
 	 **************************************************************************/
 
+public:
+
 	/**
 	 * Cast this object to an integer by returning the error counter. The error
 	 * counter is cumulative. The application is responsible for interrogating
@@ -311,6 +312,22 @@ public:
 	 * @return a reference to this object.
 	 */
 	A2D & operator=(uint8_t value);
+
+	/***************************************************************************
+	 * INTERRUPTING
+	 **************************************************************************/
+
+public:
+
+	/**
+	 * This class method is called by the conversion complete interrupt vector
+	 * function. It in turn calls the instance method specific in the A2D object
+	 * for the specified converter. This method has to be public to be called
+	 * from the interrupt vector function, which has C linkage; you should never
+	 * call it.
+	 * @param converter identifies the ADC from which the interrupt occurred.
+	 */
+	static void complete(Converter converter);
 
 protected:
 

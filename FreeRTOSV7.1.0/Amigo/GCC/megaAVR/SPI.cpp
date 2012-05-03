@@ -57,16 +57,8 @@ SPI::SPI(Controller mycontroller, size_t transmits, size_t receives)
 , miso(0)
 , errors(0)
 {
-	if (!((0 <= controller) && (controller < countof(spi)))) {
-		// FAIL!
-		return;
-	}
-
-	spi[controller] = this;
-
 	switch (controller) {
 
-	default:
 	case SPI0:
 		spibase = &SPCR;
 #if defined(__AVR_ATmega2560__)
@@ -84,13 +76,17 @@ SPI::SPI(Controller mycontroller, size_t transmits, size_t receives)
 #else
 #	error SPI must be modified for this microcontroller!
 #endif
+		spi[SPI0] = this;
+		break;
+
+	default:
 		break;
 
 	}
 }
 
 SPI::~SPI() {
-	if ((0 <= controller) && (controller < countof(spi))) {
+	if ((spibase != 0) && (gpiobase != 0)) {
 		Uninterruptible uninterruptible;
 		SPICR &= ~(_BV(SPIE) | _BV(SPE));
 		spi[controller] = 0;

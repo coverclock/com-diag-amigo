@@ -23,6 +23,15 @@ Socket::~Socket() {
 	close();
 }
 
+Socket::operator bool() const {
+	return (sock < W5100::SOCKETS);
+}
+
+Socket & Socket::operator=(socket_t mysocket) {
+	sock = mysocket;
+	return *this;
+}
+
 Socket::State Socket::state() {
 	if (sock >= W5100::SOCKETS) {
 		return STATE_OTHER;
@@ -100,7 +109,7 @@ bool Socket::listen() {
 	return true;
 }
 
-bool Socket::connect(const uint8_t * address, port_t port) {
+bool Socket::connect(const ipv4address_t * address, port_t port) {
 	if (sock >= W5100::SOCKETS) {
 		return false;
 	}
@@ -221,7 +230,7 @@ ssize_t Socket::peek(void * buffer) {
 	return 1;
 }
 
-ssize_t Socket::sendto(const void * data, size_t length, const uint8_t * address , port_t port) {
+ssize_t Socket::sendto(const void * data, size_t length, const ipv4address_t * address , port_t port) {
 	if (sock >= W5100::SOCKETS) {
 		return -2;
 	}
@@ -261,7 +270,7 @@ ssize_t Socket::sendto(const void * data, size_t length, const uint8_t * address
 }
 
 
-ssize_t Socket::recvfrom(void * buffer, size_t length, uint8_t * address, port_t * port) {
+ssize_t Socket::recvfrom(void * buffer, size_t length, ipv4address_t * address, port_t * port) {
 	if (sock >= W5100::SOCKETS) {
 		return -2;
 	}
@@ -381,7 +390,7 @@ ssize_t Socket::bufferData(size_t offset, const void * data, size_t length) {
 	return result;
 }
 
-bool Socket::startUDP(const uint8_t * address, port_t port) {
+bool Socket::startUDP(const ipv4address_t * address, port_t port) {
 	if (sock >= W5100::SOCKETS) {
 		return false;
 	}

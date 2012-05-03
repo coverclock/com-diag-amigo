@@ -233,7 +233,7 @@ void TakerTask::task() {
 static bool source2sink(com::diag::amigo::Source & source, com::diag::amigo::Sink & sink) {
 	static const int CONTROL_D = 0x04;
 	char buffer[20];
-	unsigned int have;
+	size_t have;
 	size_t in;
 	size_t out;
 	char * controld;
@@ -331,6 +331,12 @@ void UnitTestTask::task() {
 	} while (false);
 #endif
 
+#if 1
+	UNITTESTLN("event");
+	com::diag::amigo::event(PSTR(__FILE__), __LINE__);
+	PASSED();
+#endif
+
 #if 0
 	UNITTEST("fatal");
 	com::diag::amigo::fatal(PSTR(__FILE__), __LINE__);
@@ -338,7 +344,7 @@ void UnitTestTask::task() {
 #endif
 
 #if 0
-	UNITTESTLN("Overflow");
+	UNITTESTLN("vApplicationStackOverflowHook");
 	{
 		vApplicationStackOverflowHook(0, (signed char *)"OVERFLOW");
 		PASSED();
@@ -1711,7 +1717,9 @@ void UnitTestTask::task() {
 		// On the 16MHz ATmega2560 with a divisor of 128:
 		// 25 cycles @ (16MHz / 128) ~ 200 microseconds.
 		// Reference: ATmega2560 data sheet, 2549N-AVR-05/11, pp. 278-279
-		delay(milliseconds2ticks(500));
+		for (uint8_t ii = 0; (ii < 100) && (a2d.available() < 4); ++ii) {
+			delay(milliseconds2ticks(10));
+		}
 		if (a2d.available() != 4) {
 			FAILED(__LINE__);
 			break;
@@ -1841,7 +1849,7 @@ void UnitTestTask::task() {
 #endif
 
 #if 1
-	UNITTEST("Socket (requires internet connectivity)");
+	UNITTEST("Socket Client (requires internet connectivity)");
 	// On typical larger system I would test this against 127.0.0.1 to
 	// make sure I can talk to myself. But that implies a bunch more
 	// infrastructure than we have on this tiny system at this point.
@@ -1874,18 +1882,21 @@ void UnitTestTask::task() {
 			w5100.setSubnetMask(SUBNET);
 			w5100.setMACAddress(MACADDRESS);
 			w5100.setIPAddress(IPADDRESS);
-			if (w5100socket) {
+			if (socket) {
 				FAILED(__LINE__);
 				break;
 			}
 			for (com::diag::amigo::W5100::Socket::socket_t sock = 0; sock <= w5100.SOCKETS; ++sock) {
-				w5100socket = sock;
+				socket = sock;
+				if (!socket) {
+					break;
+				}
 				state = socket.state();
 				if ((state == socket.STATE_CLOSED) || (state == socket.STATE_FIN_WAIT)) {
 					break;
 				}
 			}
-			if (!w5100socket) {
+			if (!socket) {
 				FAILED(__LINE__);
 				break;
 			}
@@ -1947,7 +1958,148 @@ void UnitTestTask::task() {
 			PASSED();
 		} while (false);
 		socket.disconnect();
-		if (!w5100socket) {
+		if (!socket) {
+			FAILED(__LINE__);
+			break;
+		}
+		socket.close();
+		if (socket) {
+			FAILED(__LINE__);
+			break;
+		}
+		w5100.stop();
+		spi.stop();
+	} while (false);
+#endif
+
+#if 0
+	UNITTEST("Socket Server (requires internet connectivity)");
+	do {
+		com::diag::amigo::SPI spi;
+		com::diag::amigo::W5100::W5100 w5100(*mutexsemaphorep, com::diag::amigo::GPIO::PIN_B4, spi);
+		com::diag::amigo::W5100::Socket w5100socket(w5100);
+		com::diag::amigo::Socket & socket = w5100socket;
+		spi.start();
+		w5100.start();
+		static const uint8_t GATEWAY[] = { 192, 168, 1, 1 };
+		static const uint8_t SUBNET[] = { 255, 255, 255, 0 };
+		static const uint8_t MACADDRESS[] = { 0x90, 0xa2, 0xda, 0x0d, 0x03, 0x4c };
+		static const uint8_t IPADDRESS[] = { 192, 168, 1, 253 };
+		static const com::diag::amigo::Socket::port_t TELNET = 23;
+		com::diag::amigo::Socket::State state;
+		do {
+			w5100.setGatewayIp(GATEWAY);
+			w5100.setSubnetMask(SUBNET);
+			w5100.setMACAddress(MACADDRESS);
+			w5100.setIPAddress(IPADDRESS);
+			if (socket) {
+				FAILED(__LINE__);
+				break;
+			}
+			for (com::diag::amigo::W5100::Socket::socket_t sock = 0; sock <= w5100.SOCKETS; ++sock) {
+				socket = sock;
+				if (!socket) {
+					break;
+				}
+				state = socket.state();
+				if (state == socket.STATE_CLOSED) {
+					break;
+				}
+			}
+			if (!socket) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (!socket.socket(socket.PROTOCOL_TCP, TELNET)) {
+				FAILED(__LINE__);
+				break;
+			}
+		    if (!socket.listen()) {
+		    	FAILED(__LINE__);
+		    	break;
+		    }
+
+
+		    {
+		      int listening = 0;
+
+		      for (int sock = 0; sock < MAX_SOCK_NUM; sock++) {
+		        EthernetClient client(sock);
+
+		        if (EthernetClass::_server_port[sock] == _port) {
+		          if (client.status() == SnSR::LISTEN) {
+		            listening = 1;
+		          }
+		          else if (client.status() == SnSR::CLOSE_WAIT && !client.available()) {
+		            client.stop();
+		          }
+		        }
+		      }
+
+		      if (!listening) {
+		        begin();
+		      }
+
+
+			com::diag::amigo::Socket::port_t port = socket.allocate();
+			if (port == 0) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (!socket.socket(socket.PROTOCOL_TCP, port)) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (!socket.connect(WEBSERVER, HTTP)) {
+				FAILED(__LINE__);
+				break;
+			}
+			while (socket.state() != socket.STATE_ESTABLISHED) {
+				delay(milliseconds2ticks(10));
+				if (socket.state() == socket.STATE_CLOSED) {
+					FAILED(__LINE__);
+					break;
+				}
+			}
+			state = socket.state();
+			if ((state == socket.STATE_LISTEN) || (state == socket.STATE_CLOSED) || (state == socket.STATE_FIN_WAIT)) {
+				FAILED(__LINE__);
+				break;
+			}
+			// Reference: T. Berners-Lee et al., "Hypertext Transfer Protocol -- HTTP/1.0", RFC1945, May 1996
+			static const char GET[] = "GET /expect404.html HTTP/1.0\r\nFrom: coverclock@diag.com\r\nUser-Agent: Amigo/1.0\r\n\r\n";
+			ssize_t sent = socket.send(GET, sizeof(GET) - 1 /* Not including terminating NUL. */);
+			if (sent != (sizeof(GET) - 1)) {
+				FAILED(__LINE__);
+				break;
+			}
+			for (uint8_t ii = 0; (ii < 100) && (socket.available() == 0); ++ii) {
+				delay(milliseconds2ticks(100));
+			}
+			if (socket.available() == 0) {
+				FAILED(__LINE__);
+				break;
+			}
+			// If WEBSERVER ever updates their HTTP version to something other
+			// than 1.1 this will have to change.
+			static const char EXPECTED[] = "HTTP/1.1 404 Not Found";
+			char buffer[sizeof(EXPECTED)];
+			ssize_t received = socket.recv(buffer, sizeof(buffer) - 1 /* Not including terminating NUL. */);
+			if (!((0 < received) && (received < sizeof(buffer)))) {
+				FAILED(__LINE__);
+				break;
+			}
+			buffer[received] = '\0';
+			if (strcmp(buffer, EXPECTED) != 0) {
+				FAILED(__LINE__);
+				serialsink.write(buffer);
+				serialsink.write("\r\n");
+				break;
+			}
+			PASSED();
+		} while (false);
+		socket.disconnect();
+		if (!socket) {
 			FAILED(__LINE__);
 			break;
 		}

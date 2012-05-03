@@ -8,12 +8,11 @@
 
 #include "com/diag/amigo/Timer.h"
 #include "com/diag/amigo/fatal.h"
+#include "com/diag/amigo/target/Uninterruptible.h"
 
 namespace com {
 namespace diag {
 namespace amigo {
-
-int Timer::errors = 0;
 
 // We declare this to be inline. I haven't checked, but in similar code in
 // Task.cpp the compiler actually outlined it.
@@ -39,11 +38,13 @@ Timer::Timer(ticks_t duration, bool periodic, const char * myname)
 }
 
 Timer::~Timer() {
-	// If this fails, it's not fatal, but it may be a resource leak depending on
-	// the reason for the failure.
+	// Deleting an active timer automatically cancels the timer. It is not an
+	// error to do so. If this fails, it's not fatal, but it may be a resource
+	// leak depending on the reason for the failure.
 	if (xTimerDelete(handle, DESTRUCTION) != pdPASS) {
-		++errors;
+		com::diag::amigo::event(PSTR(__FILE__), __LINE__);
 	}
+
 	// It is a fatal error to delete a Timer object associated with an active
 	// timer. This implies that the timer delete above failed. It is possible
 	// for the delete to fail but the timer not be active, which is a non-fatal

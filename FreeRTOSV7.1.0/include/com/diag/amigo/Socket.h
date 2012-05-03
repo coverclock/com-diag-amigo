@@ -17,14 +17,26 @@ namespace diag {
 namespace amigo {
 
 /**
- * Socket is an abstract class that defines an interface to Berkeley socket-like
- * facilities for both server-side and client-side communication end points
- * using Internet Protocol version 4 (IPV4).
+ * Socket is a partly abstract class that defines an interface to Berkeley
+ * socket-like facilities for both server-side and client-side communication
+ * with end points using Internet Protocol Version 4 (IPV4).
  */
 class Socket
 {
+	/***************************************************************************
+	 * TYPES AND CONSTANTS
+	 **************************************************************************/
 
 public:
+
+	/**
+	 * Individual socket connections are identified using a handle of this
+	 * type. It would be wrong to assume that the full dynamic range of this
+	 * type can be used to identify a unique socket. Typically the underlying
+	 * implementation will use a (very) restricted subset of all possible
+	 * socket handles.
+	 */
+	typedef uint8_t socket_t;
 
 	/**
 	 * Internet Protocol has a sixteen bit port type. A pair of port numbers
@@ -37,17 +49,35 @@ public:
 	typedef uint16_t port_t;
 
 	/**
-	 * A four octet Internet Protocol address is used to identify a layer-3
-	 * entity. Conventionally such addresses are denoted using decimal numbers
-	 * for each octet in network byte order in a syntax like "192.168.1.220".
+	 * A four octet Internet Protocol Version 4 address is used to identify a
+	 * layer-3 entity. Conventionally such addresses are denoted using decimal
+	 * numbers for each octet in network byte order in a syntax like
+	 * "192.168.1.220". This is the length of an IPV4 address. Each octet is
+	 * encoded as this type.
+	 */
+	typedef uint8_t ipv4address_t;
+
+	/**
+	 * A six octet IEEE 802.3 Media Access Control (MAC) address is used to
+	 * identify a layer-2 entity. Conventionally such addresses are denoted
+	 * using hexadecimal numbers for each octet in network byte order in a
+	 * syntax like "90:a2:da:0x0d:03:4c". Each octet is encoded as this type.
+	 */
+	typedef uint8_t macaddress_t;
+
+	/**
+	 * A four octet Internet Protocol Version 4 address is used to identify a
+	 * layer-3 entity. Conventionally such addresses are denoted using decimal
+	 * numbers for each octet in network byte order in a syntax like
+	 * "192.168.1.220". This is the length of an IPV4 address.
 	 */
 	static const size_t IPV4ADDRESS = 4;
 
 	/**
-	 * A six octet Media Access Control (MAC) address is used to identify a
-	 * layer-2 entity. Conventionally such addresses are denoted using
-	 * hexadecimal numbers for each octet in network byte order in a syntax
-	 * like "90:a2:da:0x0d:03:4c".
+	 * A six octet IEEE 802.3 Media Access Control (MAC) address is used to
+	 * identify a layer-2 entity. Conventionally such addresses are denoted
+	 * using hexadecimal numbers for each octet in network byte order in a
+	 * syntax like "90:a2:da:0x0d:03:4c". This is the length of a MAC address.
 	 */
 	static const size_t MACADDRESS = 6;
 
@@ -100,6 +130,44 @@ public:
 		STATE_OTHER
 	};
 
+	/***************************************************************************
+	 * CREATION AND DESTRUCTION
+	 **************************************************************************/
+
+public:
+
+	/**
+	 * Constructor.
+	 * @param mysocket identifies a specific socket or possibly no socket.
+	 */
+	explicit Socket(socket_t mysocket = ~0)
+	: sock(mysocket)
+	{};
+
+	/**
+	 * Destructor.
+	 */
+	virtual ~Socket();
+
+	/**
+	 * Associate this object with the specified underlying socket, or
+	 * disassociate it from any underlying socket.
+	 * @param mysocket identifies a specific socket or possibly no socket.
+	 */
+	virtual Socket & operator=(socket_t mysocket) { sock = mysocket; return *this; }
+
+	/**
+	 * Return true if this object represents an underlying socket.
+	 * @return true if this object represents an underlying socket.
+	 */
+	virtual operator bool() const = 0;
+
+	/***************************************************************************
+	 * CONNECTION MANAGEMENT
+	 **************************************************************************/
+
+public:
+
 	/**
 	 * Allocate a new local port number that is unlikely to have been used
 	 * for a while. The underlying code does not actually keep track of whether
@@ -108,16 +176,6 @@ public:
 	 * @return a new local port number.
 	 */
 	static port_t allocate();
-
-	/**
-	 * Constructor.
-	 */
-	explicit Socket() {};
-
-	/**
-	 * Destructor.
-	 */
-	virtual ~Socket();
 
 	/**
 	 * Return the state of this socket.
@@ -148,7 +206,7 @@ public:
 	 * @param port is a port number.
 	 * @return true if successful, false otherwise.
 	 */
-	virtual bool connect(const uint8_t * address /* [IPV4ADDRESS] */, uint16_t port) = 0;
+	virtual bool connect(const ipv4address_t * address /* [IPV4ADDRESS] */, uint16_t port) = 0;
 
 	/**
 	 * Disconnect this near end socket from a connected far end service. The
@@ -164,6 +222,12 @@ public:
 	 */
 	virtual bool listen() = 0;
 
+	/***************************************************************************
+	 * MEMORY MANAGEMENT
+	 **************************************************************************/
+
+public:
+
 	/**
 	 * Return the number of buffer bytes free for outgoing packets to be
 	 * transmitted in the underlying implementation.
@@ -177,6 +241,12 @@ public:
 	 * @return the number of data bytes available.
 	 */
 	virtual size_t available() = 0;
+
+	/***************************************************************************
+	 * READING AND WRITING
+	 **************************************************************************/
+
+public:
 
 	/**
 	 * Send data using the reliable, connection-oriented Transmission Control
@@ -218,7 +288,7 @@ public:
 	 * @param port is a port number.
 	 * @return the number of bytes sent, 0 for closed connection, <0 for error.
 	 */
-	virtual ssize_t sendto(const void * data, size_t length, const uint8_t * address /* [IPV4ADDRESS] */, port_t port) = 0;
+	virtual ssize_t sendto(const void * data, size_t length, const ipv4address_t * address /* [IPV4ADDRESS] */, port_t port) = 0;
 
 	/**
 	 * Receive data using the unreliable, connectionless User Datagram Protocol
@@ -229,7 +299,7 @@ public:
 	 * @param port points to where the port number of the sender will be stored.
 	 * @return the number of bytes received, 0 for closed connection, <0 for error.
 	 */
-	virtual ssize_t recvfrom(void * buffer, size_t length, uint8_t * address /* [IPV4ADDRESS] */, port_t * port) = 0;
+	virtual ssize_t recvfrom(void * buffer, size_t length, ipv4address_t * address /* [IPV4ADDRESS] */, port_t * port) = 0;
 
 	/**
 	 * Send data using the Internet Group Management Protocol (IGMP) multi-cast
@@ -244,9 +314,9 @@ public:
 protected:
 
 	static MutexSemaphore mutex;
-
 	static port_t localport;
 
+	socket_t sock;
 };
 
 }

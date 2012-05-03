@@ -205,25 +205,21 @@ A2D::A2D(Converter myconverter, size_t requests, size_t conversions)
 , converter(myconverter)
 , errors(0)
 {
-	if (!((0 <= converter) && (converter < countof(a2d)))) {
-		// FAIL!
-		return;
-	}
-
-	a2d[converter] = this;
-
 	switch (converter) {
 
-	default:
 	case CONVERTER0:
 		adcbase = &ADCL;
+		a2d[CONVERTER0] = this;
+		break;
+
+	default:
 		break;
 
 	}
 }
 
 A2D::~A2D() {
-	if ((0 <= converter) && (converter < countof(a2d))) {
+	if (adcbase != 0) {
 		Uninterruptible uninterruptible;
 		A2DCSRA = 0;
 		a2d[converter] = 0;

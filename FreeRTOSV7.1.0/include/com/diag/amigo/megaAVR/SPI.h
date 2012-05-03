@@ -44,6 +44,10 @@ namespace amigo {
 class SPI
 {
 
+	/***************************************************************************
+	 * TYPES AND CONSTANTS
+	 **************************************************************************/
+
 public:
 
 	/**
@@ -142,18 +146,8 @@ public:
 	 */
 	static const size_t TRANSMITS = 1;
 
-	/**
-	 * This class method is called by the transfer complete interrupt vector
-	 * function. It in turn calls the instance method specific in the SPI object
-	 * for the specified controller. This method has to be public to be called
-	 * from the interrupt vector function, which has C linkage; you should never
-	 * call it.
-	 * @param controller identifies the SPI from which the interrupt occurred.
-	 */
-	static void complete(Controller controller);
-
 	/***************************************************************************
-	 * CREATING AND DESTROYING
+	 * CONSTRUCTING AND DESTRUCTING
 	 **************************************************************************/
 
 public:
@@ -183,6 +177,8 @@ public:
 	 * STARTING AND STOPPING
 	 **************************************************************************/
 
+public:
+
 	/**
 	 * Initialize the SPI and start interrupt driven I/O operations on it.
 	 * @param divisor specifies the oscillator frequency divisor.
@@ -208,6 +204,8 @@ public:
 	/***************************************************************************
 	 * READING AND WRITING
 	 **************************************************************************/
+
+public:
 
 	/**
 	 * Append a byte to the end of the transmit ring buffer and remove the byte
@@ -251,6 +249,8 @@ public:
 	 * CHECKING
 	 **************************************************************************/
 
+public:
+
 	/**
 	 * Cast this object to an integer by returning the error counter. The error
 	 * counter is cumulative. The application is responsible for interrogating
@@ -267,6 +267,22 @@ public:
 	 */
 	SPI & operator=(uint8_t value);
 
+	/***************************************************************************
+	 * INTERRUPTING
+	 **************************************************************************/
+
+public:
+
+	/**
+	 * This class method is called by the transfer complete interrupt vector
+	 * function. It in turn calls the instance method specific in the SPI object
+	 * for the specified controller. This method has to be public to be called
+	 * from the interrupt vector function, which has C linkage; you should never
+	 * call it.
+	 * @param controller identifies the SPI from which the interrupt occurred.
+	 */
+	static void complete(Controller controller);
+
 protected:
 
 	volatile void * spibase;
@@ -274,10 +290,15 @@ protected:
 	TypedQueue<uint8_t> received;
 	TypedQueue<uint8_t> transmitting;
 	Controller controller;
-	uint8_t ss;
-	uint8_t sck;
-	uint8_t mosi;
-	uint8_t miso;
+	// Below is _our_ Slave Select (SS) when we are operating in slave mode.
+	// When we are operating in master mode, each individual slave device on
+	// the SPI bus will have its own SS pin which will be typically connected
+	// to one of our GPIO pins and which we will have to toggle to enable the
+	// device when we want to talk to it.
+	uint8_t ss;		// Slave Select
+	uint8_t sck;	// SPI Clock
+	uint8_t mosi;	// Master Out Slave In
+	uint8_t miso;	// Master In Slave Out
 	uint8_t errors;
 
 	/**
