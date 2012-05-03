@@ -65,8 +65,9 @@ public:
 	/**
 	 * Legitimate values for variables of type socket_t in this implementation
 	 * range from zero to (SOCKETS - 1). A value outside of this range (like,
-	 * SOCKETS, to pick an example completely at random) means this object is
-	 * not connected to an active socket.
+	 * SOCKETS to pick an example completely at random, or NOSOCKET defined
+	 * in the Socket base class) means this object is not connected to an
+	 * active socket.
 	 */
 	static const size_t SOCKETS = 4;
 
@@ -83,7 +84,7 @@ public:
 	static const size_t RSIZE = 2048;
 
 	/***************************************************************************
-	 * CREATION AND DESTRUCTION
+	 * CONSTRUCTING AND DESTRUCTING
 	 **************************************************************************/
 
 public:
@@ -127,7 +128,7 @@ public:
 	void stop();
 
 	/***************************************************************************
-	 * DEFINITIONS
+	 * INITIALIZING
 	 **************************************************************************/
 
 protected:
@@ -222,7 +223,7 @@ private:
 	void initialize();
 
 	/***************************************************************************
-	 * GENERAL PURPOSE REGISTER ACTIONS
+	 * GENERAL PURPOSE REGISTER OPERATING
 	 **************************************************************************/
 
 private:
@@ -356,7 +357,7 @@ public:
 	void setRetransmissionCount(uint8_t retry) { writeRCR(retry); }
 
 	/***************************************************************************
-	 * SOCKET REGISTER ACTIONS
+	 * SOCKET REGISTER OPERATING
 	 **************************************************************************/
 
 private:
