@@ -49,6 +49,9 @@ namespace amigo {
  */
 class Console
 {
+	/***************************************************************************
+	 * TYPES AND CONSTANTS
+	 **************************************************************************/
 
 public:
 
@@ -58,8 +61,10 @@ public:
 	static const uint32_t RATE = 115200UL;
 
 	/***************************************************************************
-	 * CREATING AND DESTROYING
+	 * CONSTRUCTING AND DESTRUCTING
 	 **************************************************************************/
+
+public:
 
 	/**
 	 * This returns a reference to a pre-built Console object.
@@ -80,6 +85,8 @@ public:
 	/***************************************************************************
 	 * STARTING AND STOPPING
 	 **************************************************************************/
+
+public:
 
 	/**
 	 * Initialize USART0 to the specified baud rate, one start bit, eight data
@@ -102,6 +109,8 @@ public:
 	/***************************************************************************
 	 * READING AND WRITING
 	 **************************************************************************/
+
+public:
 
 	/**
 	 * Display a character on USART0.
@@ -167,7 +176,7 @@ public:
 	 */
 	Console & flush();
 
-private:
+protected:
 
 	uint8_t ubrrl;
 	uint8_t ubrrh;

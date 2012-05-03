@@ -24,13 +24,41 @@ namespace amigo {
  * not by the FreeRTOS kernel itself. So using a Timer is the same as two
  * tasks using a Queue for intertask communication, with all of the same issues
  * of timeouts and failures. This also means that there is scheduling latency
- * involved in managing timers.
+ * involved in managing timers. Note that this refers to a FreeRTOS timer
+ * implemented in software, not any hardware timer provided by the underlying
+ * target; however, the former may be implemented using the latter.
  */
 class Timer
 {
+	/***************************************************************************
+	 * TYPES AND CONSTANTS
+	 **************************************************************************/
+
+public:
+
+	/**
+	 * Defines the timeout value in ticks that causes the application to never
+	 * block waiting for the Timer task to become available, but instead be
+	 * returned an error.
+	 */
+	static const ticks_t IMMEDIATELY = Queue::IMMEDIATELY;
+
+	/**
+	 * Defines the timeout value in ticks that causes the application to block
+	 * indefinitely waiting for the Timer task to become available.
+	 */
+	static const ticks_t NEVER = Queue::NEVER;
+
+protected:
+
+	/**
+	 * This is how long this objects' destructor will wait to communicate with
+	 * the FreeRTOS timer task to delete a FreeRTOS timer.
+	 */
+	static const ticks_t DESTRUCTION = portMAX_DELAY;
 
 	/***************************************************************************
-	 * TIMER CREATING AND DELETING
+	 * CONSTRUCTING AND DESTRUCTING
 	 **************************************************************************/
 
 public:
@@ -57,23 +85,10 @@ public:
 	operator bool() const { return (handle != 0); }
 
 	/***************************************************************************
-	 * TIMER STARTING AND STOPPING
+	 * STARTING AND STOPPING
 	 **************************************************************************/
 
 public:
-
-	/**
-	 * Defines the timeout value in ticks that causes the application to never
-	 * block waiting for the Timer task to become available, but instead be
-	 * returned an error.
-	 */
-	static const ticks_t IMMEDIATELY = Queue::IMMEDIATELY;
-
-	/**
-	 * Defines the timeout value in ticks that causes the application to block
-	 * indefinitely waiting for the Timer task to become available.
-	 */
-	static const ticks_t NEVER = Queue::NEVER;
 
 	/**
 	 * Start the timer.
@@ -106,7 +121,7 @@ public:
 	bool stopFromISR(bool & woken = unused.b);
 
 	/***************************************************************************
-	 * TIMER IMPLEMENTATION
+	 * IMPLEMENTING
 	 **************************************************************************/
 
 protected:
@@ -118,7 +133,7 @@ protected:
 	virtual void timer();
 
 	/***************************************************************************
-	 * TIMER MANAGEMENT
+	 * MANAGING
 	 **************************************************************************/
 
 public:
@@ -164,33 +179,10 @@ public:
 	bool rescheduleFromISR(ticks_t duration, bool & woken = unused.b);
 
 	/***************************************************************************
-	 * ANCILLARY STUFF
+	 * IDENTIFYING
 	 **************************************************************************/
 
 public:
-
-	/**
-	 * This counter is incremented when a non-fatal but perhaps serious error
-	 * has occurred in a place where it cannot be communicated to the
-	 * application. Typically this means a resource leak may have occurred
-	 * inside the destructor due to a failure reported by FreeRTOS.
-	 */
-	static int errors;
-
-	/**
-	 * This is how long this objects' destructor will wait to communicate with
-	 * the FreeRTOS timer task to delete a FreeRTOS timer.
-	 */
-	static const ticks_t DESTRUCTION = portMAX_DELAY;
-
-	/**
-	 * Call the instance task method when invoked by the Amigo trampoline
-	 * function. It must be public so that it can be called by the trampoline
-	 * function which has C-linkage. It is not part of the public API and you
-	 * should never call it.
-	 * @param that points to the Timer object for the expiring timer.
-	 */
-	static void timer(Timer * that);
 
 	/**
 	 * Return the task handle for the FreeRTOS timer task.
@@ -215,6 +207,22 @@ public:
 	 * @return the FreeRTOS handle for this timer.
 	 */
 	xTimerHandle getHandle() const { return handle; }
+
+	/***************************************************************************
+	 * INTERRUPTING
+	 **************************************************************************/
+
+public:
+
+	/**
+	 * Call back the instance timer method when invoked by the Amigo trampoline
+	 * function. It is in spirit if not in fact an interrupt service routine.
+	 * It must be public so that it can be called by the trampoline function
+	 * which has C-linkage. It is not part of the public API and you should
+	 * never call it.
+	 * @param that points to the Timer object for the expiring timer.
+	 */
+	static void timer(Timer * that);
 
 protected:
 

@@ -26,9 +26,50 @@ namespace amigo {
  */
 class Task
 {
+	/***************************************************************************
+	 * TYPES AND CONSTANTS
+	 **************************************************************************/
+
+public:
+
+	/**
+	 * This defines the data type which can hold a task priority. Tasks can have
+	 * priorities from 0 (lowest) to (configMAX_PRIORITIES - 1) (highest).
+	 */
+	typedef uint8_t priority_t;
+
+	/**
+	 * This is the default stack depth for a Task. As stated in the FreeRTOS
+	 * documentation, this is in units of the fundamental stack cell type,
+	 * which can differ from architecture to architecture. On the megaAVR a
+	 * stack cell is one byte.
+	 */
+	static const size_t DEPTH = 512;
+
+	/**
+	 * This is the default priority for a Task. Tasks can have priorities from
+	 * 0 (lowest) to (configMAX_PRIORITIES - 1) (highest).
+	 */
+	static const priority_t PRIORITY = 0;
+
+	/**
+	 * This is the number of milliseconds per system tick. A system tick is
+	 * the basic timing and scheduling interval in FreeRTOS.
+	 */
+	static const ticks_t PERIOD = portTICK_RATE_MS;
+
+	/**
+	 * Defines the maximum delay value in ticks. The actual delay depends on
+	 * the duration of a system tick, the width of the ticks data type, and
+	 * any underlying scheduling latency. Forever may be as short as about 131
+	 * seconds given a two millisecond tick duration and a sixteen-bit ticks
+	 * data type. If you really want to delay forever, you must put your
+	 * delay() in a loop.
+	 */
+	static const ticks_t FOREVER = portMAX_DELAY; // Nominally (ticks_t)~0.
 
 	/***************************************************************************
-	 * CREATION AND DESTRUCTION
+	 * CONSTRUCTING AND DESTRUCTING
 	 **************************************************************************/
 
 public:
@@ -74,26 +115,6 @@ public:
 public:
 
 	/**
-	 * This defines the data type which can hold a task priority. Tasks can have
-	 * priorities from 0 (lowest) to (configMAX_PRIORITIES - 1) (highest).
-	 */
-	typedef uint8_t priority_t;
-
-	/**
-	 * This is the default stack depth for a Task. As stated in the FreeRTOS
-	 * documentation, this is in units of the fundamental stack cell type,
-	 * which can differ from architecture to architecture. On the megaAVR a
-	 * stack cell is one byte.
-	 */
-	static const size_t DEPTH = 512;
-
-	/**
-	 * This is the default priority for a Task. Tasks can have priorities from
-	 * 0 (lowest) to (configMAX_PRIORITIES - 1) (highest).
-	 */
-	static const priority_t PRIORITY = 0;
-
-	/**
 	 * Return true if the task is running, false otherwise. When the task
 	 * instance method returns, the FreeRTOS task automatically deleted and
 	 * its task handle in this object is zeroed out.
@@ -123,7 +144,7 @@ public:
 	bool stopped() const { return stopping; }
 
 	/***************************************************************************
-	 * BODY IMPLEMENTATION
+	 * IMPLEMENTING
 	 **************************************************************************/
 
 protected:
@@ -142,41 +163,10 @@ protected:
 	virtual void task();
 
 	/***************************************************************************
-	 * SYSTEM INITIALIZATION
-	 **************************************************************************/
-
-public:
-
-	/**
-	 * Start the FreeRTOS scheduler. All FreeRTOS tasks that have been started
-	 * and are not suspended will begin to run. There is always at least one
-	 * FreeRTOS task, the idle task. You must call this once and only once from
-	 * main(). Unless the FreeRTOS scheduler fails to start, this class method
-	 * never returns.
-	 */
-	static void begin();
-
-	/***************************************************************************
 	 * TIMING
 	 **************************************************************************/
 
 public:
-
-	/**
-	 * This is the number of milliseconds per system tick. A system tick is
-	 * the basic timing and scheduling interval in FreeRTOS.
-	 */
-	static const ticks_t PERIOD = portTICK_RATE_MS;
-
-	/**
-	 * Defines the maximum delay value in ticks. The actual delay depends on
-	 * the duration of a system tick, the width of the ticks data type, and
-	 * any underlying scheduling latency. Forever may be as short as about 131
-	 * seconds given a two millisecond tick duration and a sixteen-bit ticks
-	 * data type. If you really want to delay forever, you must put your
-	 * delay() in a loop.
-	 */
-	static const ticks_t FOREVER = portMAX_DELAY; // Nominally (ticks_t)~0.
 
 	/**
 	 * Convert milliseconds to ticks. Fractional results are truncated. The
@@ -250,6 +240,15 @@ public:
 public:
 
 	/**
+	 * Start the FreeRTOS scheduler. All FreeRTOS tasks that have been started
+	 * and are not suspended will begin to run. There is always at least one
+	 * FreeRTOS task, the idle task. You must call this once and only once from
+	 * main(). Unless the FreeRTOS scheduler fails to start, this class method
+	 * never returns.
+	 */
+	static void begin();
+
+	/**
 	 * Yield the processor, placing the calling FreeRTOS task at the end of
 	 * the list of ready tasks and resuming the highest priority ready task.
 	 * This class method will return to the caller when that task once again
@@ -308,8 +307,10 @@ public:
 	bool resumeFromISR();
 
 	/***************************************************************************
-	 * MEMORY MANAGEMENT
+	 * MONITORING
 	 **************************************************************************/
+
+public:
 
 	/**
 	 * Return the number of bytes left in the heap.
@@ -333,10 +334,8 @@ public:
 	 */
 	size_t stack();
 
-public:
-
 	/***************************************************************************
-	 * ANCILLARY STUFF
+	 * IDENTIFYING
 	 **************************************************************************/
 
 public:

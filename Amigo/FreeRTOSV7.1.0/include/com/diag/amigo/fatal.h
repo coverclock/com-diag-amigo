@@ -22,6 +22,16 @@
  */
 CXXCAPI void amigo_fatal(PGM_P file, int line);
 
+/**
+ * This function prints a warning to the console serial port using busy waiting.
+ * While the event it reports is not fatal, it is pretty serious, for example a
+ * resource leak or failure in the underlying implementation. This version can
+ * be called from either C or C++ translation units.
+ * @param file points to a file name in program space, typically PSTR(__FILE__).
+ * @param line is a line number, typically __LINE__.
+ */
+CXXCAPI void amigo_event(PGM_P file, int line);
+
 #if defined(__cplusplus)
 
 namespace com {
@@ -37,6 +47,18 @@ namespace amigo {
  */
 inline void fatal(PGM_P file, int line) {
 	amigo_fatal(file, line);
+}
+
+/**
+ * This function prints a warning to the console serial port using busy waiting.
+ * While the event it reports is not fatal, it is pretty serious, for example a
+ * resource leak or failure in the underlying implementation. This version can
+ * be called from either C or C++ translation units.
+ * @param file points to a file name in program space, typically PSTR(__FILE__).
+ * @param line is a line number, typically __LINE__.
+ */
+inline void event(PGM_P file, int line) {
+	amigo_event(file, line);
 }
 
 }

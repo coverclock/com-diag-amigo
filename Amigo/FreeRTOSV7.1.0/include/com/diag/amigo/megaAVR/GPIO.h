@@ -39,6 +39,10 @@ namespace amigo {
  */
 class GPIO {
 
+	/***************************************************************************
+	 * TYPES AND CONSTANTS
+	 **************************************************************************/
+
 public:
 
 	/**
@@ -166,6 +170,8 @@ public:
 	 * MAPPING
 	 **************************************************************************/
 
+public:
+
 	/**
 	 * Map a pin into a base address.
 	 * @param pin is a Pin enumerated value.
@@ -199,8 +205,10 @@ public:
 	static Pin arduino2gpio(uint8_t number);
 
 	/***************************************************************************
-	 * CREATING AND DESTROYING
+	 * CONSTRUCTING AND DESTRUCTING
 	 **************************************************************************/
+
+public:
 
 	/**
 	 * Constructor.
@@ -228,6 +236,8 @@ public:
 	/***************************************************************************
 	 * CONFIGURING
 	 **************************************************************************/
+
+public:
 
 	/**
 	 * Disables pull-ups on all pins. Pull-ups can be reenabled by configuring
@@ -295,6 +305,8 @@ public:
 	 * READING AND WRITING
 	 **************************************************************************/
 
+public:
+
 	/**
 	 * Set a GPIO pin to one (high).
 	 * @param pin is a Pin enumerated value.
@@ -359,6 +371,8 @@ public:
 	/***************************************************************************
 	 * DELAYING
 	 **************************************************************************/
+
+public:
 
 	/**
 	 * Delay the calling task for the specified number of ticks by yielding the

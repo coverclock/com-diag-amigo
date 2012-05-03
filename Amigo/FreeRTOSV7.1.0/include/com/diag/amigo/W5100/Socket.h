@@ -39,41 +39,19 @@ class Socket
 public:
 
 	/**
-	 * This implementation identifies individual socket connections using
-	 * a handle of this type. Legitimate values for variables of this type
-	 * range from zero to (W5100::SOCKETS - 1). A value outside of this
-	 * range (like, W5100::SOCKETS) means this object is not connected to
-	 * an active socket.
-	 */
-	typedef W5100::socket_t socket_t;
-
-	/**
 	 * Constructor.
 	 * @param myw5100 refers to the object controlling the W5100 chip.
 	 * @param mysocket identifies a specific socket, or W5100::SOCKETS for none.
 	 */
 	explicit Socket(W5100 & myw5100, socket_t mysocket = W5100::SOCKETS)
-	: w5100(&myw5100)
-	, sock(mysocket)
+	: com::diag::amigo::Socket(mysocket)
+	, w5100(&myw5100)
 	{}
 
 	/**
 	 * Destructor. If the socket is connected, it is disconnected and closed.
 	 */
 	~Socket();
-
-	/**
-	 * Return true if this object represents an underlying socket.
-	 * @return true if this object represents an underlying socket.
-	 */
-	operator bool() const { return (sock < W5100::SOCKETS); }
-
-	/**
-	 * Associate this object with the specified underlying socket, or
-	 * disassociate it from any underlying socket.
-	 * @param mysocket identifies a specific socket, or W5100::SOCKETS for none.
-	 */
-	Socket & operator=(socket_t mysocket) { sock = mysocket; return *this; }
 
 	/**
 	 * Start a packet to be sent via connectionless User Datagram Protocol to
@@ -83,7 +61,7 @@ public:
 	 * @param port is a port number.
 	 * @return true if successful, false otherwise.
 	 */
-	bool startUDP(const uint8_t * address /* [IPV4ADDRESS] */, port_t port);
+	bool startUDP(const ipv4address_t * address /* [IPV4ADDRESS] */, port_t port);
 
 	/**
 	 * Add data to a UDP packet being built incrementally.
@@ -105,13 +83,17 @@ public:
 	 * (Doxygen automatically imports the comments from the base class.)
 	 */
 
+	virtual operator bool() const;
+
+	virtual Socket & operator=(socket_t mysocket);
+
 	virtual State state();
 
 	virtual bool socket(Protocol protocol, port_t port, uint8_t flag = 0x00);
 
 	virtual void close();
 
-	virtual bool connect(const uint8_t * address /* [IPV4ADDRESS] */, uint16_t port);
+	virtual bool connect(const ipv4address_t * address /* [IPV4ADDRESS] */, uint16_t port);
 
 	virtual void disconnect();
 
@@ -127,16 +109,15 @@ public:
 
 	virtual ssize_t peek(void * buffer);
 
-	virtual ssize_t sendto(const void * data, size_t length, const uint8_t * address /* [IPV4ADDRESS] */, port_t port);
+	virtual ssize_t sendto(const void * data, size_t length, const ipv4address_t * address /* [IPV4ADDRESS] */, port_t port);
 
-	virtual ssize_t recvfrom(void * buffer, size_t length, uint8_t * address /* [IPV4ADDRESS] */, port_t * port);
+	virtual ssize_t recvfrom(void * buffer, size_t length, ipv4address_t * address /* [IPV4ADDRESS] */, port_t * port);
 
 	virtual ssize_t igmpsend(const void * data, size_t length);
 
 protected:
 
 	W5100 * w5100;
-	socket_t sock;
 
 };
 

@@ -32,7 +32,11 @@ namespace amigo {
  * enumerated values are not defined. (Meaning: if you try to use pins that
  * can't be used on your FreeRTOS configuration, your code won't compile).
  */
-class PWM {
+class PWM
+{
+	/***************************************************************************
+	 * TYPES AND CONSTANTS
+	 **************************************************************************/
 
 public:
 
@@ -154,6 +158,8 @@ public:
 	 * MAPPING
 	 **************************************************************************/
 
+public:
+
 	/**
 	 * Map a pin to a control register address.
 	 * @param pin is a Pin enumerated value.
@@ -214,8 +220,10 @@ public:
 	static Timer pwm2timer(Pin pin);
 
 	/***************************************************************************
-	 * CREATING AND DESTROYING
+	 * CONSTRUCTING AND DESTRUCTING
 	 **************************************************************************/
+
+public:
 
 	/**
 	 * Constructor.
@@ -245,6 +253,8 @@ public:
 	/***************************************************************************
 	 * STARTING AND STOPPING
 	 **************************************************************************/
+
+public:
 
 	/**
 	 * Configure the specified hardware timer for PWM operation.

@@ -63,31 +63,43 @@ Serial::Serial(Port myport, size_t transmits, size_t receives, uint8_t mybad)
 , bad(mybad)
 , errors(0)
 {
-	if (!((0 <= port) && (port < countof(serial)))) {
-		// FAIL!
-		return;
-	}
-
-	serial[port] = this;
-
 	switch (port) {
 
-	default:
-	case USART0:	usartbase = &UCSR0A;	break;
+	case USART0:
+		usartbase = &UCSR0A;
+		serial[USART0] = this;
+		break;
+
 #if defined(UCSR1A)
-	case USART1:	usartbase = &UCSR1A;	break;
+	case USART1:
+		usartbase = &UCSR1A;
+		serial[USART1] = this;
+		break;
+
 #if defined(UCSR2A)
-	case USART2:	usartbase = &UCSR2A;	break;
+	case USART2:
+		usartbase = &UCSR2A;
+		serial[USART2] = this;
+		break;
+
 #if defined(UCSR3A)
-	case USART3:	usartbase = &UCSR3A;	break;
+	case USART3:
+		usartbase = &UCSR3A;
+		serial[USART3] = this;
+		break;
+
 #endif
 #endif
 #endif
+
+	default:
+		break;
+
 	}
 }
 
 Serial::~Serial() {
-	if ((0 <= port) && (port < countof(serial))) {
+	if (usartbase != 0) {
 		Uninterruptible uninterruptible;
 		UCSRB = 0;
 		serial[port] = 0;

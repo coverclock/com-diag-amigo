@@ -43,6 +43,46 @@ class W5100
 	friend class com::diag::amigo::W5100::Socket;
 
 	/***************************************************************************
+	 * TYPES AND CONSTANTS
+	 **************************************************************************/
+
+public:
+
+	/**
+	 * This is the integral type used as a memory address when reading and
+	 * writing memory in the W5100 via SPI.
+	 */
+	typedef uint16_t address_t;
+
+	typedef com::diag::amigo::Socket::socket_t socket_t;
+
+	typedef com::diag::amigo::Socket::port_t port_t;
+
+	typedef com::diag::amigo::Socket::ipv4address_t ipv4address_t;
+
+	typedef com::diag::amigo::Socket::macaddress_t macaddress_t;
+
+	/**
+	 * Legitimate values for variables of type socket_t in this implementation
+	 * range from zero to (SOCKETS - 1). A value outside of this range (like,
+	 * SOCKETS, to pick an example completely at random) means this object is
+	 * not connected to an active socket.
+	 */
+	static const size_t SOCKETS = 4;
+
+	/**
+	 * This is the size of an individual transmit buffer for a socket. Packets
+	 * larger than this cannot be sent.
+	 */
+	static const size_t SSIZE = 2048;
+
+	/**
+	 * This is the size of an individual receive buffer for a socket. Packets
+	 * larger than this cannot be received.
+	 */
+	static const size_t RSIZE = 2048;
+
+	/***************************************************************************
 	 * CREATION AND DESTRUCTION
 	 **************************************************************************/
 
@@ -69,52 +109,6 @@ public:
 	 * Destructor.
 	 */
 	virtual ~W5100();
-
-	/***************************************************************************
-	 * TYPES AND SIZES
-	 **************************************************************************/
-
-public:
-
-	/**
-	 * This is the integral type used as a memory address when reading and
-	 * writing memory in the W5100 via SPI.
-	 */
-	typedef uint16_t address_t;
-
-	/**
-	 * The W5100 identifies individual sockets using a handle of this type.
-	 * Legitimate values for variables of this type range from zero to
-	 * (SOCKETS - 1).
-	 */
-	typedef uint8_t socket_t;
-
-	/**
-	 * Internet Protocol has a sixteen bit port type. A pair of port numbers
-	 * identify a specific service provider on the far end and a specific
-	 * service requester on the near end. 0 is not a valid port number.
-	 * Nominally port numbers 1024 and lower, or conventionally 4096 and
-	 * lower, are reserved for well known services. For example, web service
-	 * via the Hypertext Transfer Protocol (HTTP) is available on port 80.
-	 */
-	typedef com::diag::amigo::Socket::port_t port_t;
-
-	/**
-	 * The W5100 support four concurrent active sockets.
-	 */
-	static const size_t SOCKETS = 4;
-
-	/**
-	 * This is the size of an individual transmit buffer for a socket. Packets
-	 * larger than this cannot be sent.
-	 */
-	static const size_t SSIZE = 2048;
-
-	/**
-	 * This is the size of an individual receive buffer for a socket. Packets
-	 * larger than this cannot be received.
-	 */
-	static const size_t RSIZE = 2048;
 
 	/***************************************************************************
 	 * STARTING AND STOPPING
@@ -293,49 +287,49 @@ public:
 	 * Get the gateway (router) IP address from the W5100.
 	 * @param buffer points to a buffer into which the IP address is stored.
 	 */
-	void getGatewayIp(uint8_t * buffer /* [IPV4ADDRESS] */) { readGAR(buffer); }
+	void getGatewayIp(ipv4address_t * buffer /* [IPV4ADDRESS] */) { readGAR(buffer); }
 
 	/**
 	 * Set the gateway (router) IP address in the W5100.
 	 * @param data points to the array from which the IP address is loaded.
 	 */
-	void setGatewayIp(const uint8_t * data /* [IPV4ADDRESS] */) { writeGAR(data); }
+	void setGatewayIp(const ipv4address_t * data /* [IPV4ADDRESS] */) { writeGAR(data); }
 
 	/**
 	 * Get the IP subnet mask from the W5100.
 	 * @param buffer points to a buffer into which the IP subnet mask is stored.
 	 */
-	void getSubnetMask(uint8_t * buffer /* [IPV4ADDRESS] */) { readSUBR(buffer); }
+	void getSubnetMask(ipv4address_t * buffer /* [IPV4ADDRESS] */) { readSUBR(buffer); }
 
 	/**
 	 * Set the IP subnet mask in the W5100.
 	 * @param data points to the array from which the IP subnet mask is loaded.
 	 */
-	void setSubnetMask(const uint8_t * data /* [IPV4ADDRESS] */) { writeSUBR(data); }
+	void setSubnetMask(const ipv4address_t * data /* [IPV4ADDRESS] */) { writeSUBR(data); }
 
 	/**
 	 * Get the MAC address for this end point from the W5100.
 	 * @param buffer points to a buffer into which the MAC address is stored.
 	 */
-	void getMACAddress(uint8_t * buffer /* [MACADDRESS] */) { readSHAR(buffer); }
+	void getMACAddress(macaddress_t * buffer /* [MACADDRESS] */) { readSHAR(buffer); }
 
 	/**
 	 * Set the MAC address for this end point in the W5100.
 	 * @param data points to the array from which the MAC address is loaded.
 	 */
-	void setMACAddress(const uint8_t * data /* [MACADDRESS] */) { writeSHAR(data); }
+	void setMACAddress(const macaddress_t * data /* [MACADDRESS] */) { writeSHAR(data); }
 
 	/**
 	 * Get the IP address for this end point from the W5100.
 	 * @param buffer points to a buffer into which the IP address is stored.
 	 */
-	void getIPAddress(uint8_t * buffer /* [IPV4ADDRESS] */) { readSIPR(buffer); }
+	void getIPAddress(ipv4address_t * buffer /* [IPV4ADDRESS] */) { readSIPR(buffer); }
 
 	/**
 	 * Set the IP address for this end point to the W5100.
 	 * @param data points to the array from which the IP address is loaded.
 	 */
-	void setIPAddress(const uint8_t * data /* [IPV4ADDRESS] */) { writeSIPR(data); }
+	void setIPAddress(const ipv4address_t * data /* [IPV4ADDRESS] */) { writeSIPR(data); }
 
 	/**
 	 * Get the retransmission time parameter from the W5100.
