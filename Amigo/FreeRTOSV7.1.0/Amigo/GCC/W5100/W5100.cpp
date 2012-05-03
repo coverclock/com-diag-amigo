@@ -13,7 +13,7 @@
 
 #include "com/diag/amigo/W5100/W5100.h"
 #include "com/diag/amigo/CriticalSection.h"
-#include "com/diag/amigo/SPISlaveSelect.h"
+#include "com/diag/amigo/Toggle.h"
 #include "com/diag/amigo/target/Console.h"
 #include "com/diag/amigo/countof.h"
 
@@ -56,7 +56,7 @@ void W5100::stop() {
 
 void W5100::write(address_t address, uint8_t datum) {
 	CriticalSection cs(mutex);
-	SPISlaveSelect ss(gpio, mask);
+	ToggleOff ss(gpio, mask);
 	spi->master(0xf0);
 	spi->master(address >> 8);
 	spi->master(address & 0xff);
@@ -67,7 +67,7 @@ void W5100::write(address_t address, const void * data, size_t length) {
 	CriticalSection cs(mutex);
 	const uint8_t * here = static_cast<const uint8_t *>(data);
 	for (; length > 0; --length) {
-		SPISlaveSelect ss(gpio, mask);
+		ToggleOff ss(gpio, mask);
 		spi->master(0xf0);
 		spi->master(address >> 8);
 		spi->master((address++) & 0xff);
@@ -77,7 +77,7 @@ void W5100::write(address_t address, const void * data, size_t length) {
 
 uint8_t W5100::read(address_t address) {
 	CriticalSection cs(mutex);
-	SPISlaveSelect ss(gpio, mask);
+	ToggleOff ss(gpio, mask);
 	spi->master(0x0f);
 	spi->master(address >> 8);
 	spi->master(address & 0xff);
@@ -89,7 +89,7 @@ void W5100::read(address_t address, void * buffer, size_t length) {
 	CriticalSection cs(mutex);
 	uint8_t * here = static_cast<uint8_t *>(buffer);
 	for (; length > 0; --length) {
-		SPISlaveSelect ss(gpio, mask);
+		ToggleOff ss(gpio, mask);
 		spi->master(0x0f);
 		spi->master(address >> 8);
 		spi->master((address++) & 0xff);
