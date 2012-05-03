@@ -15,13 +15,13 @@ namespace amigo {
 
 MutexSemaphore Socket::mutex;
 
-Socket::port_t Socket::localport = LOCAL;
+Socket::port_t Socket::localport = LOCALPORT;
 
 Socket::port_t Socket::allocate() {
 	CriticalSection cs(mutex);
 	port_t port = localport++;
-	if (localport == 0) {
-		localport = LOCAL;
+	if (localport == NOPORT) {
+		localport = LOCALPORT;
 	}
 	return port;
 }

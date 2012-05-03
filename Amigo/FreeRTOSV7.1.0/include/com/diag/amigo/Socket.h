@@ -90,7 +90,22 @@ public:
 	 * of the connection; reusing the same port number too quickly may look to
 	 * the far end like we're part of the prior connection.
 	 */
-	static const port_t LOCAL = 4097;
+	static const port_t LOCALPORT = 4097;
+
+	/**
+	 * Zero is not a valid port number and can be used to indicate no port.
+	 * (This value must be zero for the local port allocation to work
+	 * correctly.)
+	 */
+	static const port_t NOPORT = 0;
+
+	/**
+	 * This is not a valid socket number and can be used to indicate no socket.
+	 * Note that zero is a valid socket number. The underlying implementation
+	 * may consider other socket values to also be invalid. But it must consider
+	 * this value to be invalid.
+	 */
+	static const socket_t NOSOCKET = ~0;
 
 	/**
 	 * These are the layer-3 protocols we know about. The underlying hardware
@@ -131,7 +146,7 @@ public:
 	};
 
 	/***************************************************************************
-	 * CREATION AND DESTRUCTION
+	 * CONSTRUCTING AND DESTRUCTING
 	 **************************************************************************/
 
 public:
@@ -140,7 +155,7 @@ public:
 	 * Constructor.
 	 * @param mysocket identifies a specific socket or possibly no socket.
 	 */
-	explicit Socket(socket_t mysocket = ~0)
+	explicit Socket(socket_t mysocket = NOSOCKET)
 	: sock(mysocket)
 	{};
 
@@ -163,7 +178,7 @@ public:
 	virtual operator bool() const = 0;
 
 	/***************************************************************************
-	 * CONNECTION MANAGEMENT
+	 * MANAGING
 	 **************************************************************************/
 
 public:
@@ -191,7 +206,7 @@ public:
 	 * @param flag is an implementation-dependent flag.
 	 * @return true if successful, false otherwise.
 	 */
-	virtual bool socket(Protocol protocol, port_t port, uint8_t flag = 0x00) = 0;
+	virtual bool socket(Protocol protocol, port_t port = NOPORT, uint8_t flag = 0x00) = 0;
 
 	/**
 	 * Close this socket. Any underlying connection is broken.
@@ -223,7 +238,7 @@ public:
 	virtual bool listen() = 0;
 
 	/***************************************************************************
-	 * MEMORY MANAGEMENT
+	 * MONITORING
 	 **************************************************************************/
 
 public:
@@ -243,7 +258,7 @@ public:
 	virtual size_t available() = 0;
 
 	/***************************************************************************
-	 * READING AND WRITING
+	 * SENDING AND RECEIVING
 	 **************************************************************************/
 
 public:

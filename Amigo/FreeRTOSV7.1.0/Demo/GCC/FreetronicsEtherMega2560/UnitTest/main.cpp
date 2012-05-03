@@ -53,18 +53,17 @@ static int errors = 0;
  * UNIT TEST FRAMEWORK (SUCH AS IT IS)
  ******************************************************************************/
 
-static const char UNITTEST_FAILED_AT_LINE[] PROGMEM = "FAILED at line %d!\n";
+static const char UNITTEST_FAILED[] PROGMEM = "FAILED at line %d!\n";
 static const char UNITTEST_PASSED[] PROGMEM = "PASSED.\n";
+static const char UNITTEST_SKIPPED[] PROGMEM = "SKIPPED.\n";
 static const char UNITTEST_TRACE[] PROGMEM = "TRACE at line %d; ";
-static const char CUNITTEST_FAILED_AT_LINE[] PROGMEM = "FAILED at line 0x";
-static const char CUNITTEST_FAILED_EOL[] PROGMEM = "!\r\n";
-static const char CUNITTEST_PASSED[] PROGMEM = "PASSED.\r\n";
 
 #define UNITTEST(_NAME_) do { printf(PSTR("Unit Test " _NAME_ " ")); serialp->flush(); } while (false)
 #define UNITTESTLN(_NAME_) do { printf(PSTR("Unit Test " _NAME_ "\n")); serialp->flush(); } while (false)
-#define FAILED(_LINE_) do { printf(UNITTEST_FAILED_AT_LINE, _LINE_); serialp->flush(); ++errors; } while (false)
+#define FAILED(_LINE_) do { printf(UNITTEST_FAILED, _LINE_); serialp->flush(); ++errors; } while (false)
 #define PASSED() do { printf(UNITTEST_PASSED); serialp->flush(); } while (false)
 #define TRACE(_LINE_) do { printf(UNITTEST_TRACE, _LINE_); serialp->flush(); } while (false)
+#define SKIPPED() do { printf(UNITTEST_SKIPPED); serialp->flush(); } while (false)
 
 /*******************************************************************************
  * CONSOLE TEST FIXTURE
@@ -638,7 +637,7 @@ void UnitTestTask::task() {
 #endif
 
 #if 1
-	UNITTEST("Low Precision delay");
+	UNITTEST("delay (low precision)");
 	do {
 		static const com::diag::amigo::ticks_t W1 = 200;
 		static const com::diag::amigo::ticks_t W2 = 500;
@@ -675,7 +674,7 @@ void UnitTestTask::task() {
 #endif
 
 #if 1
-	UNITTEST("High Precision busy wait");
+	UNITTEST("busywait (high precision)");
 	// There is no way to test the high precision busywait in a software-only
 	// manner. If we leave interrupts enabled, tick processing by FreeRTOS adds
 	// enormously to our delay (nearly doubles it), since for a 10ms delay we
@@ -1895,7 +1894,7 @@ void UnitTestTask::task() {
 #endif
 
 #if 1
-	UNITTEST("Socket Client (requires internet connectivity)");
+	UNITTEST("Socket client (requires internet connectivity)");
 	// On typical larger system I would test this against 127.0.0.1 to
 	// make sure I can talk to myself. But that implies a bunch more
 	// infrastructure than we have on this tiny system at this point.
@@ -2018,9 +2017,9 @@ void UnitTestTask::task() {
 	} while (false);
 #endif
 
-#if 0
-	UNITTEST("Socket Server (requires internet connectivity)");
-	do {
+#if 1
+	UNITTESTLN("Socket server (requires remote 'netcat 192.168.1.253 23')");
+	{
 		com::diag::amigo::SPI spi;
 		com::diag::amigo::W5100::W5100 w5100(*mutexsemaphorep, com::diag::amigo::GPIO::PIN_B4, spi);
 		com::diag::amigo::W5100::Socket w5100socket(w5100);
@@ -2032,7 +2031,8 @@ void UnitTestTask::task() {
 		static const uint8_t MACADDRESS[] = { 0x90, 0xa2, 0xda, 0x0d, 0x03, 0x4c };
 		static const uint8_t IPADDRESS[] = { 192, 168, 1, 253 };
 		static const com::diag::amigo::Socket::port_t TELNET = 23;
-		com::diag::amigo::Socket::State state;
+		bool notpassed = false;
+		com::diag::amigo::Socket::State state = socket.STATE_OTHER;
 		do {
 			w5100.setGatewayIp(GATEWAY);
 			w5100.setSubnetMask(SUBNET);
@@ -2042,7 +2042,7 @@ void UnitTestTask::task() {
 				FAILED(__LINE__);
 				break;
 			}
-			for (com::diag::amigo::W5100::Socket::socket_t sock = 0; sock <= w5100.SOCKETS; ++sock) {
+			for (com::diag::amigo::Socket::socket_t sock = 0; sock < w5100.SOCKETS; ++sock) {
 				socket = sock;
 				if (!socket) {
 					break;
@@ -2056,6 +2056,10 @@ void UnitTestTask::task() {
 				FAILED(__LINE__);
 				break;
 			}
+			if (state != socket.STATE_CLOSED) {
+				FAILED(__LINE__);
+				break;
+			}
 			if (!socket.socket(socket.PROTOCOL_TCP, TELNET)) {
 				FAILED(__LINE__);
 				break;
@@ -2064,99 +2068,94 @@ void UnitTestTask::task() {
 		    	FAILED(__LINE__);
 		    	break;
 		    }
-
-
-		    {
-		      int listening = 0;
-
-		      for (int sock = 0; sock < MAX_SOCK_NUM; sock++) {
-		        EthernetClient client(sock);
-
-		        if (EthernetClass::_server_port[sock] == _port) {
-		          if (client.status() == SnSR::LISTEN) {
-		            listening = 1;
-		          }
-		          else if (client.status() == SnSR::CLOSE_WAIT && !client.available()) {
-		            client.stop();
-		          }
-		        }
-		      }
-
-		      if (!listening) {
-		        begin();
-		      }
-
-
-			com::diag::amigo::Socket::port_t port = socket.allocate();
-			if (port == 0) {
-				FAILED(__LINE__);
-				break;
-			}
-			if (!socket.socket(socket.PROTOCOL_TCP, port)) {
-				FAILED(__LINE__);
-				break;
-			}
-			if (!socket.connect(WEBSERVER, HTTP)) {
-				FAILED(__LINE__);
-				break;
-			}
-			while (socket.state() != socket.STATE_ESTABLISHED) {
-				delay(milliseconds2ticks(10));
-				if (socket.state() == socket.STATE_CLOSED) {
-					FAILED(__LINE__);
+		    if (socket.state() != socket.STATE_LISTEN) {
+		    	FAILED(__LINE__);
+		    	break;
+		    }
+		    // Note that sockets here using the W5100 aren't like Berkely
+		    // Sockets on platforms like Berkely UNIX, Solaris, or Linux: when
+		    // we listen, the incoming connection ends up on the same socket.
+		    // If we want to support more than one concurrent incoming
+		    // connection, we have to create a second socket and place it in
+		    // the listen state. This issue here, I think, is that there's a
+		    // time window in which no socket is listening to the port, which
+		    // is not true with the Berkeley sockets.
+			state = socket.state();
+			for (uint8_t ii = 0; (state != socket.STATE_ESTABLISHED) && (state != socket.STATE_CLOSE_WAIT) && (ii < 100); ++ii) {
+				delay(milliseconds2ticks(100));
+				state = socket.state();
+				if ((state == socket.STATE_CLOSED) || (state == socket.STATE_FIN_WAIT)) {
 					break;
 				}
 			}
-			state = socket.state();
-			if ((state == socket.STATE_LISTEN) || (state == socket.STATE_CLOSED) || (state == socket.STATE_FIN_WAIT)) {
-				FAILED(__LINE__);
+			if (state == socket.STATE_LISTEN) {
+				// Not a failure, but operator didn't try to connect.
+				SKIPPED();
+				notpassed = true;
 				break;
 			}
-			// Reference: T. Berners-Lee et al., "Hypertext Transfer Protocol -- HTTP/1.0", RFC1945, May 1996
-			static const char GET[] = "GET /expect404.html HTTP/1.0\r\nFrom: coverclock@diag.com\r\nUser-Agent: Amigo/1.0\r\n\r\n";
-			ssize_t sent = socket.send(GET, sizeof(GET) - 1 /* Not including terminating NUL. */);
-			if (sent != (sizeof(GET) - 1)) {
+			if ((state == socket.STATE_CLOSED) || (state == socket.STATE_FIN_WAIT)) {
 				FAILED(__LINE__);
+				notpassed = true;
 				break;
 			}
-			for (uint8_t ii = 0; (ii < 100) && (socket.available() == 0); ++ii) {
+			char buffer[16];
+			ssize_t received;
+			ssize_t sent;
+			for (state = socket.state(); (state == socket.STATE_ESTABLISHED) || (state == socket.STATE_CLOSE_WAIT); state = socket.state()) {
+				while (socket.available() > 0) {
+					received = socket.recv(buffer, sizeof(buffer));
+					if (!((0 < received) && (received <= sizeof(buffer)))) {
+						FAILED(__LINE__);
+						notpassed = true;
+						break;
+					}
+					// Display locally...
+					sent = serialsink.write(buffer, received);
+					if (sent != received) {
+						FAILED(__LINE__);
+						notpassed = true;
+						break;
+					}
+					// ... and echo remotely.
+					sent = socket.send(buffer, received);
+					if (sent != received) {
+						FAILED(__LINE__);
+						notpassed = true;
+						break;
+					}
+				}
+				if (notpassed) {
+					break;
+				}
+				if (state == socket.STATE_CLOSE_WAIT) {
+					break;
+				}
 				delay(milliseconds2ticks(100));
 			}
-			if (socket.available() == 0) {
-				FAILED(__LINE__);
+			if (notpassed) {
 				break;
 			}
-			// If WEBSERVER ever updates their HTTP version to something other
-			// than 1.1 this will have to change.
-			static const char EXPECTED[] = "HTTP/1.1 404 Not Found";
-			char buffer[sizeof(EXPECTED)];
-			ssize_t received = socket.recv(buffer, sizeof(buffer) - 1 /* Not including terminating NUL. */);
-			if (!((0 < received) && (received < sizeof(buffer)))) {
-				FAILED(__LINE__);
-				break;
-			}
-			buffer[received] = '\0';
-			if (strcmp(buffer, EXPECTED) != 0) {
-				FAILED(__LINE__);
-				serialsink.write(buffer);
-				serialsink.write("\r\n");
-				break;
-			}
-			PASSED();
 		} while (false);
 		socket.disconnect();
 		if (!socket) {
 			FAILED(__LINE__);
-			break;
+			notpassed = true;
+		}
+		for (uint8_t ii = 0; (socket.state() != socket.STATE_CLOSED) && (ii < 100); ++ii) {
+			delay(milliseconds2ticks(100));
 		}
 		socket.close();
-		if (w5100socket) {
+		if (socket) {
 			FAILED(__LINE__);
-			break;
+			notpassed = true;;
 		}
 		w5100.stop();
 		spi.stop();
-	} while (false);
+		if (!notpassed) {
+			PASSED();
+		}
+	}
 #endif
 
 	printf(PSTR("Unit Test errors=%d (so far)\n"), errors);

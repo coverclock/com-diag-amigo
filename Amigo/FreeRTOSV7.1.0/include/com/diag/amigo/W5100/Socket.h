@@ -41,9 +41,9 @@ public:
 	/**
 	 * Constructor.
 	 * @param myw5100 refers to the object controlling the W5100 chip.
-	 * @param mysocket identifies a specific socket, or W5100::SOCKETS for none.
+	 * @param mysocket identifies a specific socket, or NOSOCKET for none.
 	 */
-	explicit Socket(W5100 & myw5100, socket_t mysocket = W5100::SOCKETS)
+	explicit Socket(W5100 & myw5100, socket_t mysocket = NOSOCKET)
 	: com::diag::amigo::Socket(mysocket)
 	, w5100(&myw5100)
 	{}
@@ -89,7 +89,7 @@ public:
 
 	virtual State state();
 
-	virtual bool socket(Protocol protocol, port_t port, uint8_t flag = 0x00);
+	virtual bool socket(Protocol protocol, port_t port = NOPORT, uint8_t flag = 0x00);
 
 	virtual void close();
 
