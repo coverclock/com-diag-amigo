@@ -94,7 +94,7 @@ void Socket::close() {
 	if (sock < W5100::SOCKETS) {
 		w5100->execCmdSn(sock, W5100::Sock_CLOSE);
 		w5100->writeSnIR(sock, 0xFF);
-		sock = W5100::SOCKETS;
+		sock = NOSOCKET;
 	}
 }
 
