@@ -13,7 +13,7 @@
 
 static void log(PGM_P label, PGM_P file, int line) {
 	com::diag::amigo::Uninterruptible uninterruptible;
-	line = com::diag::amigo::htons(line); // This just makes the hexadecimal line number more obvious.
+	line = htons(line); // This just makes the hexadecimal line number more obvious.
 	com::diag::amigo::Console::instance().start().write_P(PSTR("\r\n")).write_P(label).write_P(PSTR(": ")).write_P(file).write_P(PSTR("@0x")).dump(&line, sizeof(line)).write_P(PSTR("!\r\n")).flush().stop();
 }
 
