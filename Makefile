@@ -80,7 +80,7 @@ PROJECT=amigo
 NAME=Amigo
 
 MAJOR=3
-MINOR=2
+MINOR=3
 FIX=0
 
 HTTP_URL=http://www.diag.com/navigation/downloads/$(NAME).html

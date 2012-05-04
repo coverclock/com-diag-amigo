@@ -110,7 +110,7 @@ extern void * __data_load_start			__attribute__ ((weak)); // 0000cb5a A __data_l
 extern void * __data_load_end			__attribute__ ((weak)); // 0000ce90 A __data_load_end
 
 inline void * htonvp(void * vp) {
-	return reinterpret_cast<void*>(htons(reinterpret_cast<uintptr_t>(vp)));
+	return reinterpret_cast<void*>(com::diag::amigo::swapbytesif(reinterpret_cast<uintptr_t>(vp)));
 }
 
 // Deliberately not in PROGMEM in order to test Console::dump().
@@ -271,7 +271,7 @@ void TakerTask::task() {
  * SOURCE TO SINK COPY (FOR TESTING SOURCE AND SINK)
  ******************************************************************************/
 
-static bool source2sink(com::diag::amigo::Source & source, com::diag::amigo::Sink & sink) {
+static int source2sink(com::diag::amigo::Source & source, com::diag::amigo::Sink & sink) {
 	static const int CONTROL_D = 0x04;
 	char buffer[20];
 	size_t have;
@@ -287,7 +287,7 @@ static bool source2sink(com::diag::amigo::Source & source, com::diag::amigo::Sin
 			}
 			in = source.read(buffer, have);
 			if (in != have) {
-				return false;
+				return __LINE__;
 			}
 			buffer[in] = '\0';
 			if ((controld = strchr(buffer, CONTROL_D)) != 0) {
@@ -300,12 +300,12 @@ static bool source2sink(com::diag::amigo::Source & source, com::diag::amigo::Sin
 			}
 			out = sink.write(buffer, in);
 			if (out != in) {
-				return false;
+				return __LINE__;
 			}
 		}
 	}
 	sink.flush();
-	return true;
+	return 0;
 }
 
 /*******************************************************************************
@@ -1808,138 +1808,144 @@ void UnitTestTask::task() {
 	// PK7 (Arduino Mega digital pin 69 or analog pin A15) wired to ground.
 	// A better test would be to combine PWM and A2D but I didn't want the
 	// basic tests to depend upon one another.
-	do {
+	{
 		typedef com::diag::amigo::A2D A2D;
 		typedef com::diag::amigo::GPIO GPIO;
-		A2D::Pin a0 = A2D::arduino2a2d(54);
-		if (a0 != A2D::PIN_0) {
-			FAILED(__LINE__);
-			break;
-		}
-		if (A2D::a2d2gpio(a0) != GPIO::PIN_F0) {
-			FAILED(__LINE__);
-			break;
-		}
-		A2D::Pin a15 = A2D::arduino2a2d(69);
-		if (a15 != A2D::PIN_15) {
-			FAILED(__LINE__);
-			break;
-		}
-		if (A2D::a2d2gpio(a15) != GPIO::PIN_K7) {
-			FAILED(__LINE__);
-			break;
-		}
 		A2D a2d;
-		if (!a2d) {
-			FAILED(__LINE__);
-			break;
-		}
-		a2d.start();
-		int conversion = a2d.convert(a0);
-		if (conversion < 0) {
-			FAILED(__LINE__);
-			break;
-		}
-		uint16_t sample0 = conversion;
-		// Nominally: (3.3V * 1023) / 5.0V = 675 +/- 10% = 607 .. 742.
-		// Note that the data sheet specifies 1024 instead of 1023. I can't
-		// quite reconcile this in my head, unless it's impossible (and maybe
-		// it is) to read 100% of the reference voltage.
-		// Reference: ATmega2560 data sheet, 2549N-AVR-05/11, pp. 288-289
-		if (!((607 <= sample0) && (sample0 <= 742))) {
-			FAILED(__LINE__);
-			break;
-		}
-		conversion = a2d.convert(a15);
-		if (conversion < 0) {
-			FAILED(__LINE__);
-			break;
-		}
-		uint16_t sample15 = conversion;
-		// Nominally: (0V * 1023) / 5.0V = 0.
-		if (sample15 != 0) {
-			FAILED(__LINE__);
-			break;
-		}
-		// Why would you use this asynchronous interface instead of the
-		// synchronous A2D::convert() method? Because if you only have one
-		// ADC pin that you're using, you can have a timer periodically
-		// request an ADC conversion on your schedule (instead of continuously
-		// via ADC::FREE_RUNNING) and then just have your application pick the
-		// next converted value off the queue.
-		if (a2d.request(a0) != 1) {
-			FAILED(__LINE__);
-			break;
-		}
-		if (a2d.request(a15) != 1) {
-			FAILED(__LINE__);
-			break;
-		}
-		if (a2d.request(a0) != 1) {
-			FAILED(__LINE__);
-			break;
-		}
-		if (a2d.request(a15) != 1) {
-			FAILED(__LINE__);
-			break;
-		}
-		// Worst case for an ADC appears to be about half a millisecond:
-		// 25 cycles @ 50KHz ~ 500 microseconds.
-		// On the 16MHz ATmega2560 with a divisor of 128:
-		// 25 cycles @ (16MHz / 128) ~ 200 microseconds.
-		// Reference: ATmega2560 data sheet, 2549N-AVR-05/11, pp. 278-279
-		for (uint8_t ii = 0; (ii < 100) && (a2d.available() < 4); ++ii) {
-			delay(milliseconds2ticks(10));
-		}
-		if (a2d.available() != 4) {
-			FAILED(__LINE__);
-			break;
-		}
-		conversion = a2d.conversion(a2d.IMMEDIATELY);
-		if (!((607 <= conversion) && (conversion <= 742))) {
-			FAILED(__LINE__);
-			break;
-		}
-		if (a2d.available() != 3) {
-			FAILED(__LINE__);
-			break;
-		}
-		conversion = a2d.conversion(a2d.IMMEDIATELY);
-		if (conversion != 0) {
-			FAILED(__LINE__);
-			break;
-		}
-		if (a2d.available() != 2) {
-			FAILED(__LINE__);
-			break;
-		}
-		conversion = a2d.conversion(a2d.IMMEDIATELY);
-		if (!((607 <= conversion) && (conversion <= 742))) {
-			FAILED(__LINE__);
-			break;
-		}
-		if (a2d.available() != 1) {
-			FAILED(__LINE__);
-			break;
-		}
-		conversion = a2d.conversion(a2d.IMMEDIATELY);
-		if (conversion != 0) {
-			FAILED(__LINE__);
-			break;
-		}
-		if (a2d.available() != 0) {
-			FAILED(__LINE__);
-			break;
-		}
-		if ((conversion = a2d.conversion(a2d.IMMEDIATELY)) >= 0) {
-			FAILED(__LINE__);
-			break;
-		}
+		do {
+			A2D::Pin a0 = A2D::arduino2a2d(54);
+			if (a0 != A2D::PIN_0) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (A2D::a2d2gpio(a0) != GPIO::PIN_F0) {
+				FAILED(__LINE__);
+				break;
+			}
+			A2D::Pin a15 = A2D::arduino2a2d(69);
+			if (a15 != A2D::PIN_15) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (A2D::a2d2gpio(a15) != GPIO::PIN_K7) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (!a2d) {
+				FAILED(__LINE__);
+				break;
+			}
+			a2d.start();
+			int conversion = a2d.convert(a0);
+			if (conversion < 0) {
+				FAILED(__LINE__);
+				break;
+			}
+			uint16_t sample0 = conversion;
+			// Nominally: (3.3V * 1023) / 5.0V = 675 +/- 10% = 607 .. 742.
+			// Note that the data sheet specifies 1024 instead of 1023. I can't
+			// quite reconcile this in my head, unless it's impossible (and maybe
+			// it is) to read 100% of the reference voltage.
+			// Reference: ATmega2560 data sheet, 2549N-AVR-05/11, pp. 288-289
+			if (!((607 <= sample0) && (sample0 <= 742))) {
+				FAILED(__LINE__);
+				break;
+			}
+			conversion = a2d.convert(a15);
+			if (conversion < 0) {
+				FAILED(__LINE__);
+				break;
+			}
+			uint16_t sample15 = conversion;
+			// Nominally: (0V * 1023) / 5.0V = 0.
+			if (sample15 != 0) {
+				FAILED(__LINE__);
+				break;
+			}
+			// Why would you use this asynchronous interface instead of the
+			// synchronous A2D::convert() method? Because if you only have one
+			// ADC pin that you're using, you can have a timer periodically
+			// request an ADC conversion on your schedule (instead of continuously
+			// via ADC::FREE_RUNNING) and then just have your application pick the
+			// next converted value off the queue.
+			if (a2d.request(a0) != 1) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (a2d.request(a15) != 1) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (a2d.request(a0) != 1) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (a2d.request(a15) != 1) {
+				FAILED(__LINE__);
+				break;
+			}
+			// Worst case for an ADC appears to be about half a millisecond:
+			// 25 cycles @ 50KHz ~ 500 microseconds.
+			// On the 16MHz ATmega2560 with a divisor of 128:
+			// 25 cycles @ (16MHz / 128) ~ 200 microseconds.
+			// Reference: ATmega2560 data sheet, 2549N-AVR-05/11, pp. 278-279
+			for (uint8_t ii = 0; (ii < 100) && (a2d.available() < 4); ++ii) {
+				delay(milliseconds2ticks(10));
+			}
+			if (a2d.available() != 4) {
+				FAILED(__LINE__);
+				break;
+			}
+			conversion = a2d.conversion(a2d.IMMEDIATELY);
+			if (!((607 <= conversion) && (conversion <= 742))) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (a2d.available() != 3) {
+				FAILED(__LINE__);
+				break;
+			}
+			conversion = a2d.conversion(a2d.IMMEDIATELY);
+			if (conversion != 0) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (a2d.available() != 2) {
+				FAILED(__LINE__);
+				break;
+			}
+			conversion = a2d.conversion(a2d.IMMEDIATELY);
+			if (!((607 <= conversion) && (conversion <= 742))) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (a2d.available() != 1) {
+				FAILED(__LINE__);
+				break;
+			}
+			conversion = a2d.conversion(a2d.IMMEDIATELY);
+			if (conversion != 0) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (a2d.available() != 0) {
+				FAILED(__LINE__);
+				break;
+			}
+			if ((conversion = a2d.conversion(a2d.IMMEDIATELY)) >= 0) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (static_cast<uint8_t>(a2d) > 0) {
+				FAILED(__LINE__);
+				break;
+			}
+			PASSED();
+			printf(PSTR("A0=%u=%u.%uV\n"), sample0, (5 * sample0) / 1023, ((5 * sample0 * 10) / 1023) % 10);
+			printf(PSTR("A15=%u=%u.%uV\n"), sample15, (5 * sample15) / 1023, ((5 * sample15 * 10) / 1023) % 10);
+		} while (false);
 		a2d.stop();
-		PASSED();
-		printf(PSTR("A0=%u=%u.%uV\n"), sample0, (5 * sample0) / 1023, ((5 * sample0 * 10) / 1023) % 10);
-		printf(PSTR("A15=%u=%u.%uV\n"), sample15, (5 * sample15) / 1023, ((5 * sample15 * 10) / 1023) % 10);
-	} while (false);
+	}
 #endif
 
 #if 1
@@ -1996,7 +2002,7 @@ void UnitTestTask::task() {
 				FAILED(__LINE__);
 				break;
 			}
-			if (static_cast<uint8_t>(spi) == 0) {
+			if (static_cast<uint8_t>(spi) > 0) {
 				FAILED(__LINE__);
 				break;
 			}
@@ -2009,12 +2015,12 @@ void UnitTestTask::task() {
 #if 1
 	UNITTEST("W5100 (requires WIZnet W5100)");
 	// Same caveats as above.
-	do {
+	{
 		com::diag::amigo::SPI spi;
 		com::diag::amigo::W5100::W5100 w5100(*mutexsemaphorep, com::diag::amigo::GPIO::arduino2gpio(10), spi);
-		spi.start();
-		w5100.start();
 		do {
+			spi.start();
+			w5100.start();
 			uint16_t rtr = w5100.getRetransmissionTime();
 			if (rtr != 2000) {
 				FAILED(__LINE__);
@@ -2025,11 +2031,15 @@ void UnitTestTask::task() {
 				FAILED(__LINE__);
 				break;
 			}
+			if (static_cast<uint8_t>(spi) > 0) {
+				FAILED(__LINE__);
+				break;
+			}
 			PASSED();
 		} while (false);
 		w5100.stop();
 		spi.stop();
-	} while (false);
+	}
 #endif
 
 #if 1
@@ -2040,109 +2050,121 @@ void UnitTestTask::task() {
 	// So instead I try to talk to q well known web server available
 	// at a single IP address (so it is unlikely to be down or to
 	// change). Your mileage may vary.
-	do {
+	{
 		com::diag::amigo::SPI spi;
 		com::diag::amigo::W5100::W5100 w5100(*mutexsemaphorep, com::diag::amigo::GPIO::PIN_B4, spi);
-		com::diag::amigo::W5100::Socket w5100socket(w5100);
-		w5100socket.provide(*mutexsemaphorep);
-		com::diag::amigo::Socket & socket = w5100socket;
-		spi.start();
-		w5100.start();
-		com::diag::amigo::Socket::State state;
-		do {
-			w5100.setGatewayIp(GATEWAY);
-			w5100.setSubnetMask(SUBNET);
-			w5100.setMACAddress(MACADDRESS);
-			w5100.setIPAddress(IPADDRESS);
-			if (socket) {
-				FAILED(__LINE__);
-				break;
-			}
-			socket = socket.NOSOCKET;
-			if (socket) {
-				FAILED(__LINE__);
-				break;
-			}
-			for (com::diag::amigo::W5100::Socket::socket_t sock = 0; sock < w5100.SOCKETS; ++sock) {
-				socket = sock;
-				if (!socket) {
-					break;
-				}
-				state = socket.state();
-				if ((state == socket.STATE_CLOSED) || (state == socket.STATE_FIN_WAIT)) {
-					break;
-				}
-				socket = socket.NOSOCKET;
-			}
-			if (!socket) {
-				FAILED(__LINE__);
-				break;
-			}
-			if (!socket.socket(socket.PROTOCOL_TCP, socket.NOPORT)) {
-				FAILED(__LINE__);
-				break;
-			}
-			if (!socket.connect(WEBSERVER, HTTP)) {
-				FAILED(__LINE__);
-				break;
-			}
-			while (socket.state() != socket.STATE_ESTABLISHED) {
-				delay(milliseconds2ticks(10));
-				if (socket.state() == socket.STATE_CLOSED) {
+		{
+			com::diag::amigo::W5100::Socket w5100socket(w5100);
+			w5100socket.provide(*mutexsemaphorep);
+			com::diag::amigo::Socket & socket = w5100socket;
+			do {
+				spi.start();
+				w5100.start();
+				w5100.setGatewayIp(GATEWAY);
+				w5100.setSubnetMask(SUBNET);
+				w5100.setMACAddress(MACADDRESS);
+				w5100.setIPAddress(IPADDRESS);
+				if (socket) {
 					FAILED(__LINE__);
 					break;
 				}
-			}
-			state = socket.state();
-			if ((state == socket.STATE_LISTEN) || (state == socket.STATE_CLOSED) || (state == socket.STATE_FIN_WAIT)) {
-				FAILED(__LINE__);
-				break;
-			}
-			// Reference: T. Berners-Lee et al., "Hypertext Transfer Protocol -- HTTP/1.0", RFC1945, May 1996
-			static const char GET[] = "GET /expect404.html HTTP/1.0\r\nFrom: coverclock@diag.com\r\nUser-Agent: Amigo/1.0\r\n\r\n";
-			ssize_t sent = socket.send(GET, sizeof(GET) - 1 /* Not including terminating NUL. */);
-			if (sent != (sizeof(GET) - 1)) {
-				FAILED(__LINE__);
-				break;
-			}
-			for (uint8_t ii = 0; (ii < 100) && (socket.available() == 0); ++ii) {
-				delay(milliseconds2ticks(100));
-			}
-			if (socket.available() == 0) {
-				FAILED(__LINE__);
-				break;
-			}
-			// If WEBSERVER ever updates their HTTP version to something other
-			// than 1.1 this will have to change.
-			static const char EXPECTED[] = "HTTP/1.1 404 Not Found";
-			char buffer[sizeof(EXPECTED)];
-			ssize_t received = socket.recv(buffer, sizeof(buffer) - 1 /* Not including terminating NUL. */);
-			if (!((0 < received) && (received < sizeof(buffer)))) {
-				FAILED(__LINE__);
-				break;
-			}
-			buffer[received] = '\0';
-			if (strcmp(buffer, EXPECTED) != 0) {
-				FAILED(__LINE__);
-				serialsink.write(buffer);
-				serialsink.write("\r\n");
-				break;
-			}
-			PASSED();
-		} while (false);
-		socket.disconnect();
-		if (!socket) {
-			FAILED(__LINE__);
-			break;
-		}
-		socket.close();
-		if (socket) {
-			FAILED(__LINE__);
-			break;
+				socket = socket.NOSOCKET;
+				if (socket) {
+					FAILED(__LINE__);
+					break;
+				}
+				com::diag::amigo::Socket::State state = socket.STATE_OTHER;
+				for (com::diag::amigo::W5100::Socket::socket_t sock = 0; sock < w5100.SOCKETS; ++sock) {
+					socket = sock;
+					if (!socket) {
+						break;
+					}
+					state = socket.state();
+					if ((state == socket.STATE_CLOSED) || (state == socket.STATE_FIN_WAIT)) {
+						break;
+					}
+					socket = socket.NOSOCKET;
+				}
+				if (!socket) {
+					FAILED(__LINE__);
+					break;
+				}
+				if (!((state == socket.STATE_CLOSED) || (state == socket.STATE_FIN_WAIT))) {
+					FAILED(__LINE__);
+					break;
+				}
+				if (!socket.socket(socket.PROTOCOL_TCP, socket.NOPORT)) {
+					FAILED(__LINE__);
+					break;
+				}
+				if (!socket.connect(WEBSERVER, HTTP)) {
+					FAILED(__LINE__);
+					break;
+				}
+				while (socket.state() != socket.STATE_ESTABLISHED) {
+					delay(milliseconds2ticks(10));
+					if (socket.state() == socket.STATE_CLOSED) {
+						FAILED(__LINE__);
+						break;
+					}
+				}
+				state = socket.state();
+				if ((state == socket.STATE_LISTEN) || (state == socket.STATE_CLOSED) || (state == socket.STATE_FIN_WAIT)) {
+					FAILED(__LINE__);
+					break;
+				}
+				// Reference: T. Berners-Lee et al., "Hypertext Transfer Protocol -- HTTP/1.0", RFC1945, May 1996
+				static const char GET[] = "GET /expect404.html HTTP/1.0\r\nFrom: coverclock@diag.com\r\nUser-Agent: Amigo/1.0\r\n\r\n";
+				ssize_t sent = socket.send(GET, sizeof(GET) - 1 /* Not including terminating NUL. */);
+				if (sent != (sizeof(GET) - 1)) {
+					FAILED(__LINE__);
+					break;
+				}
+				for (uint8_t ii = 0; (ii < 100) && (socket.available() == 0); ++ii) {
+					delay(milliseconds2ticks(100));
+				}
+				if (socket.available() == 0) {
+					FAILED(__LINE__);
+					break;
+				}
+				// If WEBSERVER ever updates their HTTP version to something other
+				// than 1.1 this will have to change.
+				static const char EXPECTED[] = "HTTP/1.1 404 Not Found";
+				char buffer[sizeof(EXPECTED)];
+				ssize_t received = socket.recv(buffer, sizeof(buffer) - 1 /* Not including terminating NUL. */);
+				if (!((0 < received) && (received < sizeof(buffer)))) {
+					FAILED(__LINE__);
+					break;
+				}
+				buffer[received] = '\0';
+				if (strcmp(buffer, EXPECTED) != 0) {
+					FAILED(__LINE__);
+					serialsink.write(buffer);
+					serialsink.write("\r\n");
+					break;
+				}
+				socket.disconnect();
+				if (!socket) {
+					FAILED(__LINE__);
+					break;
+				}
+				socket.close();
+				if (socket) {
+					FAILED(__LINE__);
+					break;
+				}
+				if (static_cast<uint8_t>(spi) > 0) {
+					FAILED(__LINE__);
+					break;
+				}
+				PASSED();
+			} while (false);
+			socket.disconnect();
+			socket.close();
 		}
 		w5100.stop();
 		spi.stop();
-	} while (false);
+	}
 #endif
 
 #if 1
@@ -2150,141 +2172,151 @@ void UnitTestTask::task() {
 	{
 		com::diag::amigo::SPI spi;
 		com::diag::amigo::W5100::W5100 w5100(*mutexsemaphorep, com::diag::amigo::GPIO::PIN_B4, spi);
-		com::diag::amigo::W5100::Socket w5100socket(w5100);
-		w5100socket.provide(*mutexsemaphorep);
-		com::diag::amigo::Socket & socket = w5100socket;
-		spi.start();
-		w5100.start();
-		bool notpassed = false;
-		com::diag::amigo::Socket::State state = socket.STATE_OTHER;
-		do {
-			w5100.setGatewayIp(GATEWAY);
-			w5100.setSubnetMask(SUBNET);
-			w5100.setMACAddress(MACADDRESS);
-			w5100.setIPAddress(IPADDRESS);
-			if (socket) {
-				FAILED(__LINE__);
-				break;
-			}
-			socket = socket.NOSOCKET;
-			if (socket) {
-				FAILED(__LINE__);
-				break;
-			}
-			for (com::diag::amigo::Socket::socket_t sock = 0; sock < w5100.SOCKETS; ++sock) {
-				socket = sock;
-				if (!socket) {
-					break;
-				}
-				state = socket.state();
-				if (state == socket.STATE_CLOSED) {
+		{
+			com::diag::amigo::W5100::Socket w5100socket(w5100);
+			w5100socket.provide(*mutexsemaphorep);
+			com::diag::amigo::Socket & socket = w5100socket;
+			do {
+				spi.start();
+				w5100.start();
+				w5100.setGatewayIp(GATEWAY);
+				w5100.setSubnetMask(SUBNET);
+				w5100.setMACAddress(MACADDRESS);
+				w5100.setIPAddress(IPADDRESS);
+				if (socket) {
+					FAILED(__LINE__);
 					break;
 				}
 				socket = socket.NOSOCKET;
-			}
-			if (!socket) {
-				FAILED(__LINE__);
-				break;
-			}
-			if (state != socket.STATE_CLOSED) {
-				FAILED(__LINE__);
-				break;
-			}
-			if (!socket.socket(socket.PROTOCOL_TCP, TELNET)) {
-				FAILED(__LINE__);
-				break;
-			}
-		    if (!socket.listen()) {
-		    	FAILED(__LINE__);
-		    	break;
-		    }
-		    if (socket.state() != socket.STATE_LISTEN) {
-		    	FAILED(__LINE__);
-		    	break;
-		    }
-		    // Note that sockets here using the W5100 aren't like Berkely
-		    // Sockets on platforms like Berkely UNIX, Solaris, or Linux: when
-		    // we listen, the incoming connection ends up on the same socket.
-		    // If we want to support more than one concurrent incoming
-		    // connection, we have to create a second socket and place it in
-		    // the listen state. This issue here, I think, is that there's a
-		    // time window in which no socket is listening to the port, which
-		    // is not true with the Berkeley sockets.
-			state = socket.state();
-			for (uint8_t ii = 0; (state != socket.STATE_ESTABLISHED) && (state != socket.STATE_CLOSE_WAIT) && (ii < 100); ++ii) {
-				delay(milliseconds2ticks(100));
+				if (socket) {
+					FAILED(__LINE__);
+					break;
+				}
+				com::diag::amigo::Socket::State state = socket.STATE_OTHER;
+				for (com::diag::amigo::Socket::socket_t sock = 0; sock < w5100.SOCKETS; ++sock) {
+					socket = sock;
+					if (!socket) {
+						break;
+					}
+					state = socket.state();
+					if (state == socket.STATE_CLOSED) {
+						break;
+					}
+					socket = socket.NOSOCKET;
+				}
+				if (!socket) {
+					FAILED(__LINE__);
+					break;
+				}
+				if (state != socket.STATE_CLOSED) {
+					FAILED(__LINE__);
+					break;
+				}
+				if (!socket.socket(socket.PROTOCOL_TCP, TELNET)) {
+					FAILED(__LINE__);
+					break;
+				}
+				if (!socket.listen()) {
+					FAILED(__LINE__);
+					break;
+				}
+				if (socket.state() != socket.STATE_LISTEN) {
+					FAILED(__LINE__);
+					break;
+				}
+				// Note that sockets here using the W5100 aren't like Berkeley
+				// sockets on platforms like Berkeley UNIX, Solaris, or Linux:
+				// when we listen, the incoming connection ends up on the same
+				// socket, not on a new socket cloned from the listener.
+				// If we want to support more than one concurrent incoming
+				// connection, we have to create a second socket and place it in
+				// the listen state. This issue here, I think, is that there's a
+				// time window in which no socket is listening to the port,
+				// which is not true with the Berkeley sockets. I believe the
+				// Arduino Ethernet library only supports one server connection
+				// at a time, and I suspect that's one of the reasons why.
 				state = socket.state();
+				for (uint8_t ii = 0; (state != socket.STATE_ESTABLISHED) && (state != socket.STATE_CLOSE_WAIT) && (ii < 100); ++ii) {
+					delay(milliseconds2ticks(100));
+					state = socket.state();
+					if ((state == socket.STATE_CLOSED) || (state == socket.STATE_FIN_WAIT)) {
+						break;
+					}
+				}
+				if (state == socket.STATE_LISTEN) {
+					// Not a failure, but operator didn't try to connect.
+					SKIPPED();
+					break;
+				}
 				if ((state == socket.STATE_CLOSED) || (state == socket.STATE_FIN_WAIT)) {
+					FAILED(__LINE__);
 					break;
 				}
-			}
-			if (state == socket.STATE_LISTEN) {
-				// Not a failure, but operator didn't try to connect.
-				SKIPPED();
-				notpassed = true;
-				break;
-			}
-			if ((state == socket.STATE_CLOSED) || (state == socket.STATE_FIN_WAIT)) {
-				FAILED(__LINE__);
-				notpassed = true;
-				break;
-			}
-			char buffer[16];
-			ssize_t received;
-			ssize_t sent;
-			for (state = socket.state(); (state == socket.STATE_ESTABLISHED) || (state == socket.STATE_CLOSE_WAIT); state = socket.state()) {
-				while (socket.available() > 0) {
-					received = socket.recv(buffer, sizeof(buffer));
-					if (!((0 < received) && (received <= sizeof(buffer)))) {
-						FAILED(__LINE__);
-						notpassed = true;
+				char buffer[16];
+				ssize_t received;
+				ssize_t sent;
+				bool failed = false;
+				for (state = socket.state(); (state == socket.STATE_ESTABLISHED) || (state == socket.STATE_CLOSE_WAIT); state = socket.state()) {
+					while (socket.available() > 0) {
+						received = socket.recv(buffer, sizeof(buffer));
+						if (!((0 < received) && (received <= sizeof(buffer)))) {
+							FAILED(__LINE__);
+							failed = true;
+							break;
+						}
+						// Display locally...
+						sent = serialsink.write(buffer, received);
+						if (sent != received) {
+							FAILED(__LINE__);
+							failed = true;
+							break;
+						}
+						// ... and echo remotely.
+						sent = socket.send(buffer, received);
+						if (sent != received) {
+							FAILED(__LINE__);
+							failed = true;
+							break;
+						}
+					}
+					if (failed) {
 						break;
 					}
-					// Display locally...
-					sent = serialsink.write(buffer, received);
-					if (sent != received) {
-						FAILED(__LINE__);
-						notpassed = true;
+					if (state == socket.STATE_CLOSE_WAIT) {
+						// Not an error: the far end disconnected, which is
+						// nominal. But the code above consumes any data that
+						// may have arrived from the far end before it did so.
 						break;
 					}
-					// ... and echo remotely.
-					sent = socket.send(buffer, received);
-					if (sent != received) {
-						FAILED(__LINE__);
-						notpassed = true;
-						break;
-					}
+					delay(milliseconds2ticks(100));
 				}
-				if (notpassed) {
+				if (failed) {
 					break;
 				}
-				if (state == socket.STATE_CLOSE_WAIT) {
+				socket.disconnect();
+				if (!socket) {
+					FAILED(__LINE__);
 					break;
 				}
-				delay(milliseconds2ticks(100));
-			}
-			if (notpassed) {
-				break;
-			}
-		} while (false);
-		socket.disconnect();
-		if (!socket) {
-			FAILED(__LINE__);
-			notpassed = true;
-		}
-		for (uint8_t ii = 0; (socket.state() != socket.STATE_CLOSED) && (ii < 100); ++ii) {
-			delay(milliseconds2ticks(100));
-		}
-		socket.close();
-		if (socket) {
-			FAILED(__LINE__);
-			notpassed = true;;
+				for (uint8_t ii = 0; (socket.state() != socket.STATE_CLOSED) && (ii < 100); ++ii) {
+					delay(milliseconds2ticks(100));
+				}
+				socket.close();
+				if (socket) {
+					FAILED(__LINE__);
+					break;
+				}
+				if (static_cast<uint8_t>(spi) > 0) {
+					FAILED(__LINE__);
+					break;
+				}
+				PASSED();
+			} while (false);
+			socket.disconnect();
+			socket.close();
 		}
 		w5100.stop();
 		spi.stop();
-		if (!notpassed) {
-			PASSED();
-		}
 	}
 #endif
 
@@ -2292,10 +2324,19 @@ void UnitTestTask::task() {
 
 #if 1
 	UNITTESTLN("Source (type <control d> to exit)");
-	if (!source2sink(serialsource, serialsink)) {
-		FAILED(__LINE__);
-	} else {
-		PASSED();
+	{
+		int line;
+		do {
+			if ((line = source2sink(serialsource, serialsink)) != 0) {
+				FAILED(line);
+				break;
+			}
+			if (static_cast<uint8_t>(*serialp) > 0) {
+				FAILED(__LINE__);
+				break;
+			}
+			PASSED();
+		} while (false);
 	}
 #endif
 
