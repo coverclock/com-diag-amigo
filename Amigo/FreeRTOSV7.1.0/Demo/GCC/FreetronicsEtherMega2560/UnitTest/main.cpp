@@ -202,7 +202,26 @@ public:
 	, gpio(com::diag::amigo::GPIO::gpio2base(myss))
 	, mask(com::diag::amigo::GPIO::gpio2mask(myss))
 	{
+		// Slave Select on W5100 is active low.
 		gpio.output(mask, mask);
+		// Software reset the W5100 to return its parameters to reset defaults.
+		com::diag::amigo::CriticalSection cs(*mutex);
+		com::diag::amigo::ToggleOff ss(gpio, mask);
+		spi->master(0xf0);
+		spi->master(0x00);
+		spi->master(0x00);
+		spi->master(0x80);
+		com::diag::amigo::Task::delay(com::diag::amigo::Task::milliseconds2ticks(10));
+	}
+	~W5100() {
+		// Software reset the W5100 to return its parameters to reset defaults.
+		com::diag::amigo::CriticalSection cs(*mutex);
+		com::diag::amigo::ToggleOff ss(gpio, mask);
+		spi->master(0xf0);
+		spi->master(0x00);
+		spi->master(0x00);
+		spi->master(0x80);
+		com::diag::amigo::Task::delay(com::diag::amigo::Task::milliseconds2ticks(10));
 	}
 	int read(uint16_t address) {
 		com::diag::amigo::CriticalSection cs(*mutex);
@@ -1925,21 +1944,39 @@ void UnitTestTask::task() {
 
 #if 1
 	UNITTEST("SPI (requires WIZnet W5100)");
-	do {
+	// There seems to be an issue with reset on the W5100 ("WIZRST" on the
+	// schematics) on the Freetronics EtherMega. The W5100 looks like it should
+	// be reset whenever the reset button is actuated, or when DTR is used on
+	// the serial port to generate reset ("RESET" on the schematics). But
+	// checking for the documented default values for RTR and RCR started to
+	// fail once I added unit tests to actually use the W5100 on the network.
+	// I'm guessing that under some conditions it isn't actually being reset
+	// and has retained the prior values. If I print the incorrect values, they
+	// seem plausible. I suspect this is why the Arduino Ethernet library (and
+	// my own Amigo W5100 class) software-resets the W5100 upon initialization.
+	// I think this is probably a good idea anyway to place the W5100 in a sane
+	// state following the configuration of its Slave Select pin; who knows what
+	// it thinks it saw on the SPI bus if the pin floats or just happens to be
+	// in the active low state? BTW, minimum WIZRST duration is documented as
+	// 2us, and maximum W5100 reset duration is documented as 10ms (which is
+	// a loooong time).
+	// Reference: Freetronics, EtherMega schematics, Version 1.1, 2011-10-26
+	// Reference: WIZnet, W5100 Datasheet, Version 1.2.4, 2011
+	{
 		com::diag::amigo::SPI spi;
-		if (!spi) {
-			FAILED(__LINE__);
-			break;
-		}
-		{
-			com::diag::amigo::SPI bogus(com::diag::amigo::SPI::FAIL);
-			if (bogus) {
+		do {
+			if (!spi) {
 				FAILED(__LINE__);
 				break;
 			}
-		}
-		spi.start();
-		do {
+			{
+				com::diag::amigo::SPI bogus(com::diag::amigo::SPI::FAIL);
+				if (bogus) {
+					FAILED(__LINE__);
+					break;
+				}
+			}
+			spi.start();
 			W5100 w5100(*mutexsemaphorep, com::diag::amigo::GPIO::arduino2gpio(10), spi);
 			static const uint16_t RTR0 = 0x0017;
 			static const uint16_t RTR1 = 0x0018;
@@ -1947,7 +1984,6 @@ void UnitTestTask::task() {
 			uint8_t rtr0 = w5100.read(RTR0);
 			uint8_t rtr1 = w5100.read(RTR1);
 			uint8_t rcr = w5100.read(RCR);
-			// Reference: WIZnet, W5100 Datasheet, Version 1.2.4, 2011
 			if (rtr0 != 0x07) {
 				FAILED(__LINE__);
 				break;
@@ -1960,21 +1996,25 @@ void UnitTestTask::task() {
 				FAILED(__LINE__);
 				break;
 			}
+			if (static_cast<uint8_t>(spi) == 0) {
+				FAILED(__LINE__);
+				break;
+			}
 			PASSED();
 		} while (false);
 		spi.stop();
-	} while (false);
+	}
 #endif
 
 #if 1
 	UNITTEST("W5100 (requires WIZnet W5100)");
+	// Same caveats as above.
 	do {
 		com::diag::amigo::SPI spi;
 		com::diag::amigo::W5100::W5100 w5100(*mutexsemaphorep, com::diag::amigo::GPIO::arduino2gpio(10), spi);
 		spi.start();
 		w5100.start();
 		do {
-			// Reference: WIZnet, W5100 Datasheet, Version 1.2.4, 2011
 			uint16_t rtr = w5100.getRetransmissionTime();
 			if (rtr != 2000) {
 				FAILED(__LINE__);
@@ -2004,6 +2044,7 @@ void UnitTestTask::task() {
 		com::diag::amigo::SPI spi;
 		com::diag::amigo::W5100::W5100 w5100(*mutexsemaphorep, com::diag::amigo::GPIO::PIN_B4, spi);
 		com::diag::amigo::W5100::Socket w5100socket(w5100);
+		w5100socket.provide(*mutexsemaphorep);
 		com::diag::amigo::Socket & socket = w5100socket;
 		spi.start();
 		w5100.start();
@@ -2037,12 +2078,7 @@ void UnitTestTask::task() {
 				FAILED(__LINE__);
 				break;
 			}
-			com::diag::amigo::Socket::port_t port = socket.allocate();
-			if (port == 0) {
-				FAILED(__LINE__);
-				break;
-			}
-			if (!socket.socket(socket.PROTOCOL_TCP, port)) {
+			if (!socket.socket(socket.PROTOCOL_TCP, socket.NOPORT)) {
 				FAILED(__LINE__);
 				break;
 			}
@@ -2115,6 +2151,7 @@ void UnitTestTask::task() {
 		com::diag::amigo::SPI spi;
 		com::diag::amigo::W5100::W5100 w5100(*mutexsemaphorep, com::diag::amigo::GPIO::PIN_B4, spi);
 		com::diag::amigo::W5100::Socket w5100socket(w5100);
+		w5100socket.provide(*mutexsemaphorep);
 		com::diag::amigo::Socket & socket = w5100socket;
 		spi.start();
 		w5100.start();

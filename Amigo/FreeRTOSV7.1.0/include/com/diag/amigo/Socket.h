@@ -10,7 +10,6 @@
  */
 
 #include "com/diag/amigo/types.h"
-#include "com/diag/amigo/MutexSemaphore.h"
 
 namespace com {
 namespace diag {
@@ -184,15 +183,6 @@ public:
 public:
 
 	/**
-	 * Allocate a new local port number that is unlikely to have been used
-	 * for a while. The underlying code does not actually keep track of whether
-	 * port numbers are in use or not. It merely wraps around the local port
-	 * range from LOCAL to 65535 (0xffff) inclusive.
-	 * @return a new local port number.
-	 */
-	static port_t allocate();
-
-	/**
 	 * Return the state of this socket.
 	 * @return the state of this socket.
 	 */
@@ -328,10 +318,8 @@ public:
 
 protected:
 
-	static MutexSemaphore mutex;
-	static port_t localport;
-
 	socket_t sock;
+
 };
 
 }

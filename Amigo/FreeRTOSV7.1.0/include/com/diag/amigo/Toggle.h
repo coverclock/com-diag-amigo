@@ -20,7 +20,9 @@ namespace amigo {
  * ToggleOff toggles zero or more bits in a GPIO port off (low) in its
  * constructor, and on (high) in its destructor. A typical use is to toggle a
  * SPI Slave Select (SS) signal that is active low within a lexical scope in
- * which the caller is acting as an SPI master.
+ * which the caller is acting as an SPI master. Note that this class assumes
+ * the GPIO bits are already defined to be outputs; not doing so would prevent
+ * passing a 0 as a mask to effectively make this a no-op.
  */
 class ToggleOff {
 
@@ -55,7 +57,9 @@ private:
 /**
  * ToggleOn toggles zero or more bits in a GPIO port on (high) in its
  * constructor, and off (low) in its destructor. A typical use is to turn an
- * LED on and off in a lexical scope.
+ * LED on and off in a lexical scope. Note that this class assumes
+ * the GPIO bits are already defined to be outputs; not doing so would prevent
+ * passing a 0 as a mask to effectively make this a no-op.
  */
 class ToggleOn {
 

@@ -12,12 +12,23 @@
  */
 
 #include "com/diag/amigo/W5100/Socket.h"
-#include "com/diag/amigo/target/Console.h"
+#include "com/diag/amigo/CriticalSection.h"
+#include "com/diag/amigo/countof.h"
 
 namespace com {
 namespace diag {
 namespace amigo {
 namespace W5100 {
+
+static Socket::port_t busy[W5100::SOCKETS] = { Socket::NOPORT };
+
+static MutexSemaphore * mutex = 0;
+
+static Socket::port_t localport = Socket::LOCALPORT;
+
+void Socket::provide(MutexSemaphore & mymutex) {
+	mutex = &mymutex;
+}
 
 Socket::~Socket() {
 	close();
@@ -77,13 +88,34 @@ bool Socket::socket(Protocol protocol, port_t port, uint8_t flag) {
 		return false;
 	}
 
+	{
+		CriticalSection cs(mutex);
+
+		// Since there are far more local port numbers than there are sockets
+		// in the W5100, this is guaranteed to complete. If the application
+		// has a resource leak because it forgot to close a socket, then it
+		// may never find an unused socket number to assign to this object.
+		// But that won't effect this algorithm.
+
+		while (port == NOPORT) {
+			port = localport++;
+			if (localport == NOPORT) {
+				localport = LOCALPORT;
+			}
+			for (uint8_t ii = 0; ii < countof(busy); ++ii) {
+				if (busy[ii] == port) {
+					port = NOPORT;
+					break;
+				}
+			}
+		}
+
+		busy[sock] = port;
+	}
+
 	w5100->execCmdSn(sock, W5100::Sock_CLOSE);
 	w5100->writeSnIR(sock, 0xFF);
-
 	w5100->writeSnMR(sock, proto | flag);
-	if (port == 0) {
-		port = allocate();
-	}
 	w5100->writeSnPORT(sock, port);
 	w5100->execCmdSn(sock, W5100::Sock_OPEN);
 
@@ -91,11 +123,16 @@ bool Socket::socket(Protocol protocol, port_t port, uint8_t flag) {
 }
 
 void Socket::close() {
-	if (sock < W5100::SOCKETS) {
-		w5100->execCmdSn(sock, W5100::Sock_CLOSE);
-		w5100->writeSnIR(sock, 0xFF);
-		sock = NOSOCKET;
+	if (sock >= W5100::SOCKETS) {
+		return;
 	}
+	w5100->execCmdSn(sock, W5100::Sock_CLOSE);
+	w5100->writeSnIR(sock, 0xFF);
+	{
+		CriticalSection cs(mutex);
+		busy[sock] = NOPORT;
+	}
+	sock = NOSOCKET;
 }
 
 bool Socket::listen() {

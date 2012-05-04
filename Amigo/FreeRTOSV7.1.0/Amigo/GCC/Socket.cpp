@@ -7,24 +7,10 @@
  */
 
 #include "com/diag/amigo/Socket.h"
-#include "com/diag/amigo/CriticalSection.h"
 
 namespace com {
 namespace diag {
 namespace amigo {
-
-MutexSemaphore Socket::mutex;
-
-Socket::port_t Socket::localport = LOCALPORT;
-
-Socket::port_t Socket::allocate() {
-	CriticalSection cs(mutex);
-	port_t port = localport++;
-	if (localport == NOPORT) {
-		localport = LOCALPORT;
-	}
-	return port;
-}
 
 Socket::~Socket() {}
 
