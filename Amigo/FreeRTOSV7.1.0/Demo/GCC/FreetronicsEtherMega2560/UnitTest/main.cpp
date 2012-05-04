@@ -50,7 +50,30 @@ com::diag::amigo::Serial * serialp = 0;
 static int errors = 0;
 
 /*******************************************************************************
- * UNIT TEST FRAMEWORK (SUCH AS IT IS)
+ * NETWORK PARAMETERS
+ ******************************************************************************/
+
+// It's funny, thinking about how to store this stuff. Here, I place
+// them in data space. But they're implicitly copied from program space
+// to data space during run-time initialization. I could put them
+// explicitly in program space. But then I'd have to explicitly copy
+// them to local variables in data space. And then they'd be on the
+// stack, and stack space is precious. This architecture really forces
+// you to think about how stuff works under the hood. "There ain't no such
+// thing as a free lunch" a.k.a. TANSTAAFL [Heinlein, 1966].
+
+static const com::diag::amigo::Socket::ipv4address_t GATEWAY[] = { 192, 168, 1, 1 };
+static const com::diag::amigo::Socket::ipv4address_t SUBNET[] = { 255, 255, 255, 0 };
+static const com::diag::amigo::Socket::macaddress_t MACADDRESS[] = { 0x90, 0xa2, 0xda, 0x0d, 0x03, 0x4c };
+static const com::diag::amigo::Socket::ipv4address_t IPADDRESS[] = { 192, 168, 1, 253 };
+static const com::diag::amigo::Socket::ipv4address_t WEBSERVER[] = { 129, 42, 60, 216 }; // www.ibm.com
+static const com::diag::amigo::Socket::port_t HTTP = 80;
+static const com::diag::amigo::Socket::port_t TELNET = 23;
+
+#define SOCKET_SERVER_COMMAND "netcat 192.168.1.253 23"
+
+/*******************************************************************************
+ * UNIT TEST FRAMEWORK
  ******************************************************************************/
 
 static const char UNITTEST_FAILED[] PROGMEM = "FAILED at line %d!\n";
@@ -87,11 +110,11 @@ extern void * __data_load_start			__attribute__ ((weak)); // 0000cb5a A __data_l
 extern void * __data_load_end			__attribute__ ((weak)); // 0000ce90 A __data_load_end
 
 inline void * htonvp(void * vp) {
-	return reinterpret_cast<void*>(com::diag::amigo::htons(reinterpret_cast<uintptr_t>(vp)));
+	return reinterpret_cast<void*>(htons(reinterpret_cast<uintptr_t>(vp)));
 }
 
 // Deliberately not in PROGMEM in order to test Console::dump().
-// Nonexistent weak external references will print as zero (NULL).
+// Undefined weak external references will print as NULL (zero).
 // Put in network byte order just to make dump more readable.
 static const void * const MAP[] = {
 	htonvp(&__heap_end),
@@ -604,31 +627,115 @@ void UnitTestTask::task() {
 	UNITTEST("littleendian and byteorder");
 	// megaAVR is little-endian.
 	do {
+		if (amigo_byteswap16(0x1234U) != 0x3412U) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (amigo_byteswap32(0x12345678UL) != 0x78563412UL) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (amigo_byteswap64(0x123456789ABCDEF0ULL) != 0xF0DEBC9A78563412ULL) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::swapbytes(0x1234) != 0x3412) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::swapbytes(0x12345678L) != 0x78563412L) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::swapbytes(0x123456789ABCDEF0LL) != 0xF0DEBC9A78563412LL) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::swapbytes(0x1234U) != 0x3412U) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::swapbytes(0x12345678UL) != 0x78563412UL) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::swapbytes(0x123456789ABCDEF0ULL) != 0xF0DEBC9A78563412ULL) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (!amigo_littleendian16()) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (!amigo_littleendian32()) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (!amigo_littleendian64()) {
+			FAILED(__LINE__);
+			break;
+		}
 		if (!com::diag::amigo::littleendian()) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::byteswap16(0x1234) != 0x3412) {
+		if (!com::diag::amigo::littleendian16()) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::htons(0x1234) != 0x3412) {
+		if (!com::diag::amigo::littleendian32()) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::ntohs(0x1234) != 0x3412) {
+		if (!com::diag::amigo::littleendian64()) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::byteswap32(0x12345678) != 0x78563412UL) {
+		if (htons(0x1234U) != 0x3412U) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::htonl(0x12345678) != 0x78563412UL) {
+		if (ntohs(0x1234U) != 0x3412U) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::ntohl(0x12345678) != 0x78563412UL) {
+		if (htonl(0x12345678UL) != 0x78563412UL) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (ntohl(0x12345678UL) != 0x78563412UL) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (htonll(0x123456789ABCDEF0ULL) != 0xF0DEBC9A78563412ULL) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (ntohll(0x123456789ABCDEF0ULL) != 0xF0DEBC9A78563412ULL) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::swapbytesif(0x1234) != 0x3412) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::swapbytesif(0x12345678L) != 0x78563412L) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::swapbytesif(0x123456789ABCDEF0LL) != 0xF0DEBC9A78563412LL) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::swapbytesif(0x1234U) != 0x3412U) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::swapbytesif(0x12345678UL) != 0x78563412UL) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (com::diag::amigo::swapbytesif(0x123456789ABCDEF0ULL) != 0xF0DEBC9A78563412ULL) {
 			FAILED(__LINE__);
 			break;
 		}
@@ -1817,7 +1924,7 @@ void UnitTestTask::task() {
 #endif
 
 #if 1
-	UNITTEST("SPI (sanity)");
+	UNITTEST("SPI (requires WIZnet W5100)");
 	do {
 		com::diag::amigo::SPI spi;
 		if (!spi) {
@@ -1831,14 +1938,6 @@ void UnitTestTask::task() {
 				break;
 			}
 		}
-		PASSED();
-	} while (false);
-#endif
-
-#if 1
-	UNITTEST("SPI (requires WIZnet W5100)");
-	do {
-		com::diag::amigo::SPI spi;
 		spi.start();
 		do {
 			W5100 w5100(*mutexsemaphorep, com::diag::amigo::GPIO::arduino2gpio(10), spi);
@@ -1908,19 +2007,6 @@ void UnitTestTask::task() {
 		com::diag::amigo::Socket & socket = w5100socket;
 		spi.start();
 		w5100.start();
-		// It's funny, thinking about how to store this stuff. Here, I place
-		// them in data space. But they're actually copied from program space
-		// to data space during run-time initialization. I could put them
-		// explicitly in program space, but I'd still have to explicitly copy
-		// them to local variables in data space. But then they'd be on the
-		// stack, and stack space is precious. This architecture really forces
-		// you to think about how stuff works under the hood.
-		static const uint8_t GATEWAY[] = { 192, 168, 1, 1 };
-		static const uint8_t SUBNET[] = { 255, 255, 255, 0 };
-		static const uint8_t MACADDRESS[] = { 0x90, 0xa2, 0xda, 0x0d, 0x03, 0x4c };
-		static const uint8_t IPADDRESS[] = { 192, 168, 1, 253 };
-		static const uint8_t WEBSERVER[] = { 129, 42, 60, 216 }; // www.ibm.com
-		static const com::diag::amigo::Socket::port_t HTTP = 80;
 		com::diag::amigo::Socket::State state;
 		do {
 			w5100.setGatewayIp(GATEWAY);
@@ -2018,7 +2104,7 @@ void UnitTestTask::task() {
 #endif
 
 #if 1
-	UNITTESTLN("Socket server (requires remote 'netcat 192.168.1.253 23')");
+	UNITTESTLN("Socket server (requires remote '" SOCKET_SERVER_COMMAND "')");
 	{
 		com::diag::amigo::SPI spi;
 		com::diag::amigo::W5100::W5100 w5100(*mutexsemaphorep, com::diag::amigo::GPIO::PIN_B4, spi);
@@ -2026,11 +2112,6 @@ void UnitTestTask::task() {
 		com::diag::amigo::Socket & socket = w5100socket;
 		spi.start();
 		w5100.start();
-		static const uint8_t GATEWAY[] = { 192, 168, 1, 1 };
-		static const uint8_t SUBNET[] = { 255, 255, 255, 0 };
-		static const uint8_t MACADDRESS[] = { 0x90, 0xa2, 0xda, 0x0d, 0x03, 0x4c };
-		static const uint8_t IPADDRESS[] = { 192, 168, 1, 253 };
-		static const com::diag::amigo::Socket::port_t TELNET = 23;
 		bool notpassed = false;
 		com::diag::amigo::Socket::State state = socket.STATE_OTHER;
 		do {

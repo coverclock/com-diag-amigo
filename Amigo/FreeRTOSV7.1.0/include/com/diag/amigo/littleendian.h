@@ -23,6 +23,52 @@
  */
 
 #include "com/diag/amigo/types.h"
+#include "com/diag/amigo/cxxcapi.h"
+
+// Naturally I wouldn't expect shorts, longs, and longs longs to have different
+// byte orders. Nor does the AVR have such a peculiarity. But it would be very
+// good indeed to know if an architecture had a strange byte ordering. Since
+// I expect the compiler to optimize these down to just true or false, this is
+// no real additional overhead.
+
+/**
+ *  Return true if the target has little-endian byte order, false if
+ *  big-endian. True means that multi-byte integer types on this host
+ *  must be swapped to be in network byte order, which is big-endian.
+ *  It is entirely possible that the compiler will optimize this completely
+ *  away to a constant value since it can be determined at compile time.
+ *  @return true if little-endian, false if big-endian.
+ */
+CXXCINLINE bool amigo_littleendian16() {
+    static union { uint16_t word; uint8_t byte[sizeof(uint16_t)]; } datum = { 1 };
+    return (datum.byte[0] != 0);
+}
+
+/**
+ *  Return true if the target has little-endian byte order, false if
+ *  big-endian. True means that multi-byte integer types on this host
+ *  must be swapped to be in network byte order, which is big-endian.
+ *  It is entirely possible that the compiler will optimize this completely
+ *  away to a constant value since it can be determined at compile time.
+ *  @return true if little-endian, false if big-endian.
+ */
+CXXCINLINE bool amigo_littleendian32() {
+    static union { uint32_t word; uint8_t byte[sizeof(uint32_t)]; } datum = { 1 };
+    return (datum.byte[0] != 0);
+}
+
+/**
+ *  Return true if the target has little-endian byte order, false if
+ *  big-endian. True means that multi-byte integer types on this host
+ *  must be swapped to be in network byte order, which is big-endian.
+ *  It is entirely possible that the compiler will optimize this completely
+ *  away to a constant value since it can be determined at compile time.
+ *  @return true if little-endian, false if big-endian.
+ */
+CXXCINLINE bool amigo_littleendian64() {
+    static union { uint64_t word; uint8_t byte[sizeof(uint64_t)]; } datum = { 1 };
+    return (datum.byte[0] != 0);
+}
 
 namespace com {
 namespace diag {
@@ -37,8 +83,43 @@ namespace amigo {
  *  @return true if little-endian, false if big-endian.
  */
 inline bool littleendian() {
-    static union { uint16_t word; uint8_t byte[sizeof(uint16_t)]; } datum = { 1 };
-    return (datum.byte[0] != 0);
+	return amigo_littleendian16();
+}
+
+/**
+ *  Return true if the target has little-endian byte order, false if
+ *  big-endian. True means that multi-byte integer types on this host
+ *  must be swapped to be in network byte order, which is big-endian.
+ *  It is entirely possible that the compiler will optimize this completely
+ *  away to a constant value since it can be determined at compile time.
+ *  @return true if little-endian, false if big-endian.
+ */
+inline bool littleendian16() {
+	return amigo_littleendian16();
+}
+
+/**
+ *  Return true if the target has little-endian byte order, false if
+ *  big-endian. True means that multi-byte integer types on this host
+ *  must be swapped to be in network byte order, which is big-endian.
+ *  It is entirely possible that the compiler will optimize this completely
+ *  away to a constant value since it can be determined at compile time.
+ *  @return true if little-endian, false if big-endian.
+ */
+inline bool littleendian32() {
+	return amigo_littleendian32();
+}
+
+/**
+ *  Return true if the target has little-endian byte order, false if
+ *  big-endian. True means that multi-byte integer types on this host
+ *  must be swapped to be in network byte order, which is big-endian.
+ *  It is entirely possible that the compiler will optimize this completely
+ *  away to a constant value since it can be determined at compile time.
+ *  @return true if little-endian, false if big-endian.
+ */
+inline bool littleendian64() {
+	return amigo_littleendian64();
 }
 
 }
