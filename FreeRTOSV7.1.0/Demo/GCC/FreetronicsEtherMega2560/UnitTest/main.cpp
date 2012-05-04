@@ -2017,7 +2017,12 @@ void UnitTestTask::task() {
 				FAILED(__LINE__);
 				break;
 			}
-			for (com::diag::amigo::W5100::Socket::socket_t sock = 0; sock <= w5100.SOCKETS; ++sock) {
+			socket = socket.NOSOCKET;
+			if (socket) {
+				FAILED(__LINE__);
+				break;
+			}
+			for (com::diag::amigo::W5100::Socket::socket_t sock = 0; sock < w5100.SOCKETS; ++sock) {
 				socket = sock;
 				if (!socket) {
 					break;
@@ -2026,6 +2031,7 @@ void UnitTestTask::task() {
 				if ((state == socket.STATE_CLOSED) || (state == socket.STATE_FIN_WAIT)) {
 					break;
 				}
+				socket = socket.NOSOCKET;
 			}
 			if (!socket) {
 				FAILED(__LINE__);
@@ -2123,6 +2129,11 @@ void UnitTestTask::task() {
 				FAILED(__LINE__);
 				break;
 			}
+			socket = socket.NOSOCKET;
+			if (socket) {
+				FAILED(__LINE__);
+				break;
+			}
 			for (com::diag::amigo::Socket::socket_t sock = 0; sock < w5100.SOCKETS; ++sock) {
 				socket = sock;
 				if (!socket) {
@@ -2132,6 +2143,7 @@ void UnitTestTask::task() {
 				if (state == socket.STATE_CLOSED) {
 					break;
 				}
+				socket = socket.NOSOCKET;
 			}
 			if (!socket) {
 				FAILED(__LINE__);
