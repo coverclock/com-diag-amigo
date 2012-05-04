@@ -63,6 +63,13 @@ public:
 	typedef com::diag::amigo::Socket::macaddress_t macaddress_t;
 
 	/**
+	 * The W5100 is software-reset every time it is started. This is the
+	 * default number of milliseconds (not ticks) to delay after starting.
+	 * This is a long time, relatively speaking. See "Reset Timing", p. 64.
+	 */
+	static const ticks_t MILLISECONDS = 10;
+
+	/**
 	 * Legitimate values for variables of type socket_t in this implementation
 	 * range from zero to (SOCKETS - 1). A value outside of this range (like,
 	 * SOCKETS to pick an example completely at random, or NOSOCKET defined
@@ -119,13 +126,15 @@ public:
 
 	/**
 	 * Start the W5100.
+	 * @param delay is the number of milliseconds (not ticks) to delay.
 	 */
-	void start();
+	void start(ticks_t milliseconds = MILLISECONDS);
 
 	/**
 	 * Stop the W5100.
+	 * @param delay is the number of milliseconds (not ticks) to delay.
 	 */
-	void stop();
+	void stop(ticks_t milliseconds = MILLISECONDS);
 
 	/***************************************************************************
 	 * INITIALIZING
@@ -487,6 +496,17 @@ public:
 	 * ANCILLARY STUFF
 	 **************************************************************************/
 
+protected:
+
+	MutexSemaphore * mutex;
+	SPI * spi;
+	GPIO gpio;
+	uint8_t mask;
+	address_t sbase[SOCKETS]; // Tx buffer base address
+	address_t rbase[SOCKETS]; // Rx buffer base address
+
+	void reset(ticks_t milliseconds);
+
 private:
 
     /**
@@ -502,15 +522,6 @@ private:
      *  @param that refers to an R-value object of this type.
      */
 	W5100 & operator=(const W5100& that);
-
-protected:
-
-	MutexSemaphore * mutex;
-	SPI * spi;
-	GPIO gpio;
-	uint8_t mask;
-	address_t sbase[SOCKETS]; // Tx buffer base address
-	address_t rbase[SOCKETS]; // Rx buffer base address
 
 };
 

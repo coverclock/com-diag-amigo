@@ -14,7 +14,7 @@
 #include "com/diag/amigo/W5100/W5100.h"
 #include "com/diag/amigo/CriticalSection.h"
 #include "com/diag/amigo/Toggle.h"
-#include "com/diag/amigo/target/Console.h"
+#include "com/diag/amigo/Task.h"
 #include "com/diag/amigo/countof.h"
 
 namespace com {
@@ -40,14 +40,22 @@ W5100::~W5100() {
  * STARTING AND STOPPING
  ******************************************************************************/
 
-void W5100::start() {
-	gpio.output(mask, mask); // Active low hence initially high.
+void W5100::reset(ticks_t milliseconds) {
 	writeMR(1 << RST);
-	writeTMSR(0x55);
-	writeRMSR(0x55);
+	if (milliseconds > 0) {
+		Task::delay(Task::milliseconds2ticks(milliseconds));
+	}
 }
 
-void W5100::stop() {
+void W5100::start(ticks_t milliseconds) {
+	gpio.output(mask, mask); // Active low hence initially high.
+	reset(milliseconds);
+	writeTMSR(0x55); // 2KB to each of four sockets for transmitting.
+	writeRMSR(0x55); // 2KB to each of four sockets for receiving.
+}
+
+void W5100::stop(ticks_t milliseconds) {
+	reset(milliseconds);
 }
 
 /*******************************************************************************

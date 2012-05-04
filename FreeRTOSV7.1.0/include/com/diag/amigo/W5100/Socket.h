@@ -16,6 +16,7 @@
 
 #include "com/diag/amigo/Socket.h"
 #include "com/diag/amigo/W5100/W5100.h"
+#include "com/diag/amigo/MutexSemaphore.h"
 
 namespace com {
 namespace diag {
@@ -37,6 +38,25 @@ class Socket
 {
 
 public:
+
+	/**
+	 * The underlying implementation optionally uses a MutexSemaphore to
+	 * serialize access to an internal database common to all objects of this
+	 * this class. This serialization is only necessary if multiple tasks are
+	 * using objects of this class. Even more importantly, having a common
+	 * class MutexSemaphore either runs the risk of the "static initialization
+	 * order fiasco" or requires the use of the new operator to dynamically
+	 * allocate a MutexSemaphore. So instead, the application is responsible
+	 * for providing a MutexSemaphore for use by this class if it is necessary.
+	 * This needs to be done at most once, ever, if at all, but it is not an
+	 * error to do it more than once; subsequent calls replace the prior
+	 * MutexSemaphore. If memory is really tight, you might consider using the
+	 * same MutexSemaphore for both this and SPI serialization with the W5100
+	 * object, if the latter is also necessary; common serialization using the
+	 * same MutexSemaphore is unlikely to be an issue.
+	 * @oaram mutex refers to a MutexSemaphore object.
+	 */
+	static void provide(MutexSemaphore & mymutex);
 
 	/**
 	 * Constructor.
