@@ -119,31 +119,6 @@ public:
 		PROTOCOL_PPPOE
 	};
 
-	/**
-	 * These are the connection states we know about. The underlying hardware
-	 * may or may not implement all of these. Or it may implement others we
-	 * don't know about.
-	 */
-	enum State {
-		STATE_CLOSED,
-		STATE_INIT,
-		STATE_LISTEN,
-		STATE_ESTABLISHED,
-		STATE_CLOSE_WAIT,
-		STATE_UDP,
-		STATE_IPRAW,
-		STATE_MACRAW,
-		STATE_PPPOE,
-		STATE_SYNSENT,
-		STATE_SYNRECV,
-		STATE_FIN_WAIT,
-		STATE_CLOSING,
-		STATE_TIME_WAIT,
-		STATE_LAST_ACK,
-		STATE_ARP,
-		STATE_OTHER
-	};
-
 	/***************************************************************************
 	 * CONSTRUCTING AND DESTRUCTING
 	 **************************************************************************/
@@ -182,21 +157,23 @@ public:
 
 public:
 
-	/**
-	 * Return the state of this socket.
-	 * @return the state of this socket.
-	 */
-	virtual State state() = 0;
 
 	/**
-	 * Initialize this socket for a given protocol and port number. If the port
+	 * Associate this socket to an unused underlying physical resource if it is
+	 * available. If this fails then all the sockets are busy.
+	 * @return true if successful, false otherwise.
+	 */
+	virtual bool socket() = 0;
+
+	/**
+	 * Bind this socket to a given protocol and port number. If the port
 	 * number is zero, a local port is automatically allocated and used.
 	 * @param protocol is the desired layer-3 protocol.
 	 * @param port is the port number or zero.
 	 * @param flag is an implementation-dependent flag.
 	 * @return true if successful, false otherwise.
 	 */
-	virtual bool socket(Protocol protocol, port_t port = NOPORT, uint8_t flag = 0x00) = 0;
+	virtual bool bind(Protocol protocol, port_t port = NOPORT, uint8_t flag = 0x00) = 0;
 
 	/**
 	 * Close this socket. Any underlying connection is broken.
@@ -227,11 +204,62 @@ public:
 	 */
 	virtual bool listen() = 0;
 
+	/**
+	 * Return true if a connection request as arrived from a far end client.
+	 * This is a non-blocking action; the application is responsible for
+	 * polling using this method and also checking for states in which this
+	 * method can never succeed.
+	 * @return true if successful, false otherwise.
+	 */
+	virtual bool accept() = 0;
+
 	/***************************************************************************
 	 * MONITORING
 	 **************************************************************************/
 
 public:
+
+	/**
+	 * Return true if the socket is in the listening state, false otherwise.
+	 * Only sockets used by the near end acting as a server and waiting for
+	 * incoming connection requests will be in this state.
+	 * @return true if listening, false otherwise.
+	 */
+	virtual bool listening() = 0;
+
+	/**
+	 * Return true if the socket is in a connected state, false otherwise. A
+	 * socket that is closing is still considered connected if there is incoming
+	 * data queued and waiting to be received by the application.
+	 * @return true if connected, false otherwise.
+	 */
+	virtual bool connected() = 0;
+
+	/**
+	 * Return true if the socket is in a disconnected state, false otherwise.
+	 * A socket is considered disconnected only if the far end disconnected and
+	 * there is no incoming data queued and waiting to be received by the
+	 * application.
+	 * @return true if disconnected, false otherwise.
+	 */
+	virtual bool disconnected() = 0;
+
+	/**
+	 * Return true if the socket is in a closing state, false otherwise. This
+	 * is a transitional state in which the near end and far end are negotiating
+	 * closing down the socket. The socket will be in this state only very
+	 * briefly.
+	 * @return true if closing, false otherwise.
+	 */
+	virtual bool closing() = 0;
+
+	/**
+	 * Return true if the socket is in the closed state, false otherwise. No
+	 * further action on this socket is possible. The application still needs
+	 * to do a close() on the near end to release resources.
+	 * @return true if closed, false otherwise.
+	 */
+	virtual bool closed() = 0;
 
 	/**
 	 * Return the number of buffer bytes free for outgoing packets to be

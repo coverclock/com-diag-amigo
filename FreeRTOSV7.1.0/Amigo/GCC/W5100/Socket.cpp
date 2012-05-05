@@ -43,36 +43,25 @@ Socket & Socket::operator=(socket_t mysocket) {
 	return *this;
 }
 
-Socket::State Socket::state() {
-	if (sock >= W5100::SOCKETS) {
-		return STATE_OTHER;
+bool Socket::socket() {
+	uint8_t state;
+	if (sock < W5100::SOCKETS) {
+		state = w5100->state(sock);
+		if (state != W5100::SnSR::CLOSED) {
+			close();
+		}
 	}
-
-	State state;
-	switch (w5100->state(sock)) {
-	case W5100::SnSR::CLOSED:		state = STATE_CLOSED;		break;
-	case W5100::SnSR::INIT:			state = STATE_INIT;			break;
-	case W5100::SnSR::LISTEN:		state = STATE_LISTEN;		break;
-	case W5100::SnSR::ESTABLISHED:	state = STATE_ESTABLISHED;	break;
-	case W5100::SnSR::CLOSE_WAIT:	state = STATE_CLOSE_WAIT;	break;
-	case W5100::SnSR::UDP:			state = STATE_UDP;			break;
-	case W5100::SnSR::IPRAW:		state = STATE_IPRAW;		break;
-	case W5100::SnSR::MACRAW:		state = STATE_MACRAW;		break;
-	case W5100::SnSR::PPPOE:		state = STATE_PPPOE;		break;
-	case W5100::SnSR::SYNSENT:		state = STATE_SYNSENT;		break;
-	case W5100::SnSR::SYNRECV:		state = STATE_SYNRECV;		break;
-	case W5100::SnSR::FIN_WAIT:		state = STATE_FIN_WAIT;		break;
-	case W5100::SnSR::CLOSING:		state = STATE_CLOSING;		break;
-	case W5100::SnSR::TIME_WAIT:	state = STATE_TIME_WAIT;	break;
-	case W5100::SnSR::LAST_ACK:		state = STATE_LAST_ACK;		break;
-	case W5100::SnSR::ARP:			state = STATE_ARP;			break;
-	default:						state = STATE_OTHER;		break;
+	for (socket_t candidate = 0; candidate < W5100::SOCKETS; ++candidate) {
+		state = w5100->state(candidate);
+		if (state == W5100::SnSR::CLOSED) {
+			sock = candidate;
+			break;
+		}
 	}
-
-	return state;
+	return (sock != NOSOCKET);
 }
 
-bool Socket::socket(Protocol protocol, port_t port, uint8_t flag) {
+bool Socket::bind(Protocol protocol, port_t port, uint8_t flag) {
 	if (sock >= W5100::SOCKETS) {
 		return false;
 	}
@@ -139,11 +128,16 @@ bool Socket::listen() {
 	if (sock >= W5100::SOCKETS) {
 		return false;
 	}
-	if (w5100->readSnSR(sock) != W5100::SnSR::INIT) {
+	if (w5100->state(sock) != W5100::SnSR::INIT) {
 		return false;
 	}
 	w5100->execCmdSn(sock, W5100::Sock_LISTEN);
 	return true;
+}
+
+bool Socket::accept() {
+	uint8_t state = w5100->state(sock);
+	return ((state == W5100::SnSR::ESTABLISHED) || (state == W5100::SnSR::CLOSE_WAIT));
 }
 
 bool Socket::connect(const ipv4address_t * address, port_t port) {
@@ -174,17 +168,40 @@ void Socket::disconnect() {
 }
 
 size_t Socket::free() {
-	if (sock >= W5100::SOCKETS) {
-		return 0;
-	}
-	return w5100->getTXFreeSize(sock);
+	return ((sock < W5100::SOCKETS) ? w5100->getTXFreeSize(sock) : 0);
 }
 
 size_t Socket::available() {
-	if (sock >= W5100::SOCKETS) {
-		return 0;
-	}
-	return w5100->getRXReceivedSize(sock);
+	return ((sock < W5100::SOCKETS) ? w5100->getRXReceivedSize(sock) : 0);
+}
+
+bool Socket::listening() {
+	return ((sock < W5100::SOCKETS) && (w5100->state(sock) == W5100::SnSR::LISTEN));
+}
+
+bool Socket::connected() {
+	if (sock >= W5100::SOCKETS) { return false; }
+	uint8_t state = w5100->state(sock);
+	// We do it this way because the far end could have connected, sent us some
+	// data, and disconnected, all before we did this check. So there is data
+	// for us to receive even though the far end is gone.
+	return ((state == W5100::SnSR::ESTABLISHED) || ((state == W5100::SnSR::CLOSE_WAIT) && (w5100->getRXReceivedSize(sock) > 0)));
+}
+
+bool Socket::disconnected() {
+	// We only consider our self truly disconnected if there is no data for us
+	// to read.
+	return ((sock < W5100::SOCKETS) && (w5100->state(sock) == W5100::SnSR::CLOSE_WAIT) && (w5100->getRXReceivedSize(sock) == 0));
+}
+
+bool Socket::closing() {
+	if (sock >= W5100::SOCKETS) { return false; }
+	uint8_t state = w5100->state(sock);
+	return ((state == W5100::SnSR::FIN_WAIT) || (state == W5100::SnSR::CLOSING) || (state == W5100::SnSR::TIME_WAIT) || (state == W5100::SnSR::LAST_ACK));
+}
+
+bool Socket::closed() {
+	return ((sock < W5100::SOCKETS) && (w5100->state(sock) == W5100::SnSR::CLOSED));
 }
 
 ssize_t Socket::send(const void * data, size_t length) {
@@ -213,7 +230,7 @@ ssize_t Socket::send(const void * data, size_t length) {
 	/* +2008.01 bj */
 	while ((w5100->readSnIR(sock) & W5100::SnIR::SEND_OK) != W5100::SnIR::SEND_OK) {
 		/* m2008.01 [bj] : reduce code */
-		if (w5100->readSnSR(sock) == W5100::SnSR::CLOSED ) {
+		if (w5100->state(sock) == W5100::SnSR::CLOSED) {
 			close();
 			return 0;
 		}
@@ -235,7 +252,7 @@ ssize_t Socket::recv(void * buffer, size_t length) {
 
 	if (result == 0) {
 		// No data available.
-		switch (w5100->readSnSR(sock)) {
+		switch (w5100->state(sock)) {
 		case W5100::SnSR::LISTEN:
 		case W5100::SnSR::CLOSED:
 		case W5100::SnSR::CLOSE_WAIT:
