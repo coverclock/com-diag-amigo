@@ -2073,27 +2073,19 @@ void UnitTestTask::task() {
 					FAILED(__LINE__);
 					break;
 				}
-				com::diag::amigo::Socket::State state = socket.STATE_OTHER;
-				for (com::diag::amigo::W5100::Socket::socket_t sock = 0; sock < w5100.SOCKETS; ++sock) {
-					socket = sock;
-					if (!socket) {
-						break;
-					}
-					state = socket.state();
-					if ((state == socket.STATE_CLOSED) || (state == socket.STATE_FIN_WAIT)) {
-						break;
-					}
-					socket = socket.NOSOCKET;
+				if (!socket.socket()) {
+					FAILED(__LINE__);
+					break;
 				}
 				if (!socket) {
 					FAILED(__LINE__);
 					break;
 				}
-				if (!((state == socket.STATE_CLOSED) || (state == socket.STATE_FIN_WAIT))) {
+				if (!socket.closed()) {
 					FAILED(__LINE__);
 					break;
 				}
-				if (!socket.socket(socket.PROTOCOL_TCP, socket.NOPORT)) {
+				if (!socket.bind(socket.PROTOCOL_TCP, socket.NOPORT)) {
 					FAILED(__LINE__);
 					break;
 				}
@@ -2101,15 +2093,14 @@ void UnitTestTask::task() {
 					FAILED(__LINE__);
 					break;
 				}
-				while (socket.state() != socket.STATE_ESTABLISHED) {
+				while (!socket.connected()) {
 					delay(milliseconds2ticks(10));
-					if (socket.state() == socket.STATE_CLOSED) {
+					if (socket.closed()) {
 						FAILED(__LINE__);
 						break;
 					}
 				}
-				state = socket.state();
-				if ((state == socket.STATE_LISTEN) || (state == socket.STATE_CLOSED) || (state == socket.STATE_FIN_WAIT)) {
+				if (!socket.connected()) {
 					FAILED(__LINE__);
 					break;
 				}
@@ -2192,27 +2183,19 @@ void UnitTestTask::task() {
 					FAILED(__LINE__);
 					break;
 				}
-				com::diag::amigo::Socket::State state = socket.STATE_OTHER;
-				for (com::diag::amigo::Socket::socket_t sock = 0; sock < w5100.SOCKETS; ++sock) {
-					socket = sock;
-					if (!socket) {
-						break;
-					}
-					state = socket.state();
-					if (state == socket.STATE_CLOSED) {
-						break;
-					}
-					socket = socket.NOSOCKET;
+				if (!socket.socket()) {
+					FAILED(__LINE__);
+					break;
 				}
 				if (!socket) {
 					FAILED(__LINE__);
 					break;
 				}
-				if (state != socket.STATE_CLOSED) {
+				if (!socket.closed()) {
 					FAILED(__LINE__);
 					break;
 				}
-				if (!socket.socket(socket.PROTOCOL_TCP, TELNET)) {
+				if (!socket.bind(socket.PROTOCOL_TCP, TELNET)) {
 					FAILED(__LINE__);
 					break;
 				}
@@ -2220,7 +2203,7 @@ void UnitTestTask::task() {
 					FAILED(__LINE__);
 					break;
 				}
-				if (socket.state() != socket.STATE_LISTEN) {
+				if (!socket.listening()) {
 					FAILED(__LINE__);
 					break;
 				}
@@ -2235,20 +2218,18 @@ void UnitTestTask::task() {
 				// which is not true with the Berkeley sockets. I believe the
 				// Arduino Ethernet library only supports one server connection
 				// at a time, and I suspect that's one of the reasons why.
-				state = socket.state();
-				for (uint8_t ii = 0; (state != socket.STATE_ESTABLISHED) && (state != socket.STATE_CLOSE_WAIT) && (ii < 100); ++ii) {
+				for (uint8_t ii = 0; (!socket.accept()) && (ii < 100); ++ii) {
 					delay(milliseconds2ticks(100));
-					state = socket.state();
-					if ((state == socket.STATE_CLOSED) || (state == socket.STATE_FIN_WAIT)) {
+					if (socket.closing() || socket.closed()) {
 						break;
 					}
 				}
-				if (state == socket.STATE_LISTEN) {
+				if (socket.listening()) {
 					// Not a failure, but operator didn't try to connect.
 					SKIPPED();
 					break;
 				}
-				if ((state == socket.STATE_CLOSED) || (state == socket.STATE_FIN_WAIT)) {
+				if (socket.closing() || socket.closed()) {
 					FAILED(__LINE__);
 					break;
 				}
@@ -2256,7 +2237,7 @@ void UnitTestTask::task() {
 				ssize_t received;
 				ssize_t sent;
 				bool failed = false;
-				for (state = socket.state(); (state == socket.STATE_ESTABLISHED) || (state == socket.STATE_CLOSE_WAIT); state = socket.state()) {
+				while (socket.connected()) {
 					while (socket.available() > 0) {
 						received = socket.recv(buffer, sizeof(buffer));
 						if (!((0 < received) && (received <= sizeof(buffer)))) {
@@ -2282,7 +2263,7 @@ void UnitTestTask::task() {
 					if (failed) {
 						break;
 					}
-					if (state == socket.STATE_CLOSE_WAIT) {
+					if (socket.disconnected()) {
 						// Not an error: the far end disconnected, which is
 						// nominal. But the code above consumes any data that
 						// may have arrived from the far end before it did so.
@@ -2298,7 +2279,7 @@ void UnitTestTask::task() {
 					FAILED(__LINE__);
 					break;
 				}
-				for (uint8_t ii = 0; (socket.state() != socket.STATE_CLOSED) && (ii < 100); ++ii) {
+				for (uint8_t ii = 0; (!socket.closed()) && (ii < 100); ++ii) {
 					delay(milliseconds2ticks(100));
 				}
 				socket.close();

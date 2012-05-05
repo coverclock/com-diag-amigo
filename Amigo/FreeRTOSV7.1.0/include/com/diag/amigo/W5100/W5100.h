@@ -126,13 +126,13 @@ public:
 
 	/**
 	 * Start the W5100.
-	 * @param delay is the number of milliseconds (not ticks) to delay.
+	 * @param milliseconds is the number of milliseconds (not ticks) to delay.
 	 */
 	void start(ticks_t milliseconds = MILLISECONDS);
 
 	/**
 	 * Stop the W5100.
-	 * @param delay is the number of milliseconds (not ticks) to delay.
+	 * @param milliseconds is the number of milliseconds (not ticks) to delay.
 	 */
 	void stop(ticks_t milliseconds = MILLISECONDS);
 

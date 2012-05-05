@@ -54,7 +54,7 @@ public:
 	 * same MutexSemaphore for both this and SPI serialization with the W5100
 	 * object, if the latter is also necessary; common serialization using the
 	 * same MutexSemaphore is unlikely to be an issue.
-	 * @oaram mutex refers to a MutexSemaphore object.
+	 * @param mymutex refers to a MutexSemaphore object.
 	 */
 	static void provide(MutexSemaphore & mymutex);
 
@@ -107,9 +107,19 @@ public:
 
 	virtual Socket & operator=(socket_t mysocket);
 
-	virtual State state();
+	virtual bool listening();
 
-	virtual bool socket(Protocol protocol, port_t port = NOPORT, uint8_t flag = 0x00);
+	virtual bool connected();
+
+	virtual bool disconnected();
+
+	virtual bool closing();
+
+	virtual bool closed();
+
+	virtual bool socket();
+
+	virtual bool bind(Protocol protocol, port_t port = NOPORT, uint8_t flag = 0x00);
 
 	virtual void close();
 
@@ -118,6 +128,8 @@ public:
 	virtual void disconnect();
 
 	virtual bool listen();
+
+	virtual bool accept();
 
 	virtual size_t free();
 
