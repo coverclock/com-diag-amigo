@@ -14,11 +14,12 @@
  * borrows from the SPI test fixture in the Amigo unit test suite.
  */
 
-#include "com/diag/amigo/MutexSemaphore.h"
 #include "com/diag/amigo/Socket.h"
 #include "com/diag/amigo/target/GPIO.h"
 #include "com/diag/amigo/target/SPI.h"
 #include "com/diag/amigo/types.h"
+#include "com/diag/amigo/MutexSemaphore.h"
+#include "com/diag/amigo/Task.h"
 
 namespace com {
 namespace diag {
@@ -64,10 +65,10 @@ public:
 
 	/**
 	 * The W5100 is software-reset every time it is started. This is the
-	 * default number of milliseconds (not ticks) to delay after starting.
+	 * default number of ticks to delay after starting.
 	 * This is a long time, relatively speaking. See "Reset Timing", p. 64.
 	 */
-	static const ticks_t MILLISECONDS = 10;
+	static const ticks_t RESETTING = 10 /* milliseconds */ / Task::PERIOD;
 
 	/**
 	 * Legitimate values for variables of type socket_t in this implementation
@@ -128,13 +129,13 @@ public:
 	 * Start the W5100.
 	 * @param milliseconds is the number of milliseconds (not ticks) to delay.
 	 */
-	void start(ticks_t milliseconds = MILLISECONDS);
+	void start(ticks_t resetting = RESETTING);
 
 	/**
 	 * Stop the W5100.
 	 * @param milliseconds is the number of milliseconds (not ticks) to delay.
 	 */
-	void stop(ticks_t milliseconds = MILLISECONDS);
+	void stop(ticks_t resetting = RESETTING);
 
 	/***************************************************************************
 	 * INITIALIZING
@@ -505,7 +506,7 @@ protected:
 	address_t sbase[SOCKETS]; // Tx buffer base address
 	address_t rbase[SOCKETS]; // Rx buffer base address
 
-	void reset(ticks_t milliseconds);
+	void reset(ticks_t resetting);
 
 private:
 

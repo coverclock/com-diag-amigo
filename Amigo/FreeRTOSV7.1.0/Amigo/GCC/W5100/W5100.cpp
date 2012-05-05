@@ -40,22 +40,22 @@ W5100::~W5100() {
  * STARTING AND STOPPING
  ******************************************************************************/
 
-void W5100::reset(ticks_t milliseconds) {
+void W5100::reset(ticks_t resetting) {
 	writeMR(1 << RST);
-	if (milliseconds > 0) {
-		Task::delay(Task::milliseconds2ticks(milliseconds));
+	if (resetting > 0) {
+		Task::delay(resetting);
 	}
 }
 
-void W5100::start(ticks_t milliseconds) {
+void W5100::start(ticks_t resetting) {
 	gpio.output(mask, mask); // Active low hence initially high.
-	reset(milliseconds);
+	reset(resetting);
 	writeTMSR(0x55); // 2KB to each of four sockets for transmitting.
 	writeRMSR(0x55); // 2KB to each of four sockets for receiving.
 }
 
-void W5100::stop(ticks_t milliseconds) {
-	reset(milliseconds);
+void W5100::stop(ticks_t resetting) {
+	reset(resetting);
 }
 
 /*******************************************************************************
