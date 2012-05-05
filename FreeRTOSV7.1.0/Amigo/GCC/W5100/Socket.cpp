@@ -125,19 +125,27 @@ void Socket::close() {
 }
 
 bool Socket::listen() {
-	if (sock >= W5100::SOCKETS) {
-		return false;
-	}
-	if (w5100->state(sock) != W5100::SnSR::INIT) {
-		return false;
-	}
+	if (sock >= W5100::SOCKETS) { return false; }
+	if (w5100->state(sock) != W5100::SnSR::INIT) { return false; }
 	w5100->execCmdSn(sock, W5100::Sock_LISTEN);
 	return true;
 }
 
-bool Socket::accept() {
+bool Socket::accept(ticks_t timeout, ticks_t iteration) {
+	if (sock >= W5100::SOCKETS) { return false; }
 	uint8_t state = w5100->state(sock);
-	return ((state == W5100::SnSR::ESTABLISHED) || (state == W5100::SnSR::CLOSE_WAIT));
+	if ((state == W5100::SnSR::ESTABLISHED) || (state == W5100::SnSR::CLOSE_WAIT)) { return true; }
+	if (timeout == IMMEDIATELY) { return false; }
+	ticks_t then = Task::elapsed();
+	while (true) {
+		Task::delay(iteration);
+		if (sock >= W5100::SOCKETS) { return false; }
+		state = w5100->state(sock);
+		if ((state == W5100::SnSR::ESTABLISHED) || (state == W5100::SnSR::CLOSE_WAIT)) { return true; }
+		if ((state == W5100::SnSR::CLOSED) || (state == W5100::SnSR::FIN_WAIT) || (state == W5100::SnSR::CLOSING) || (state == W5100::SnSR::TIME_WAIT) || (state == W5100::SnSR::LAST_ACK)) { return false; }
+		if (timeout == NEVER) { continue; }
+		if ((Task::elapsed() - then) >= timeout) { return false; }
+	}
 }
 
 bool Socket::connect(const ipv4address_t * address, port_t port) {
@@ -148,7 +156,7 @@ bool Socket::connect(const ipv4address_t * address, port_t port) {
 	if (
 		((address[0] == 0xff) && (address[1] == 0xff) && (address[2] == 0xff) && (address[3] == 0xff)) ||
 		((address[0] == 0x00) && (address[1] == 0x00) && (address[2] == 0x00) && (address[3] == 0x00)) ||
-		(port == 0x0000)
+		(port == NOPORT)
 	) {
 		return false;
 	}

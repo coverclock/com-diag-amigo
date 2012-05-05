@@ -10,6 +10,8 @@
  */
 
 #include "com/diag/amigo/types.h"
+#include "com/diag/amigo/Queue.h"
+#include "com/diag/amigo/Task.h"
 
 namespace com {
 namespace diag {
@@ -119,6 +121,21 @@ public:
 		PROTOCOL_PPPOE
 	};
 
+	/**
+	 * Defines the timeout value in ticks that causes the application to never
+	 * block waiting for a socket to become connected, but instead be
+	 * returned an error.
+	 */
+	static const ticks_t IMMEDIATELY = Queue::IMMEDIATELY;
+
+	/**
+	 * Defines the timeout value in ticks that causes the application to block
+	 * indefinitely waiting for a socket to become connected.
+	 */
+	static const ticks_t NEVER = Queue::NEVER;
+
+	static const ticks_t ITERATION = 10 /* milliseconds */ / Task::PERIOD;
+
 	/***************************************************************************
 	 * CONSTRUCTING AND DESTRUCTING
 	 **************************************************************************/
@@ -206,12 +223,13 @@ public:
 
 	/**
 	 * Return true if a connection request as arrived from a far end client.
-	 * This is a non-blocking action; the application is responsible for
-	 * polling using this method and also checking for states in which this
-	 * method can never succeed.
+	 * The application can explicitly poll this routine, or by providing
+	 * appropriate timeout and iteration durations in ticks, have the method
+	 * poll itself. The method fails if there is no connection request, or if
+	 * the socket has been or is being closed.
 	 * @return true if successful, false otherwise.
 	 */
-	virtual bool accept() = 0;
+	virtual bool accept(ticks_t timeout = IMMEDIATELY, ticks_t iteration = ITERATION) = 0;
 
 	/***************************************************************************
 	 * MONITORING

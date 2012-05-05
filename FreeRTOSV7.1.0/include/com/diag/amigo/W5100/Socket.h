@@ -129,7 +129,7 @@ public:
 
 	virtual bool listen();
 
-	virtual bool accept();
+	virtual bool accept(ticks_t timeout = IMMEDIATELY, ticks_t iteration = ITERATION);
 
 	virtual size_t free();
 

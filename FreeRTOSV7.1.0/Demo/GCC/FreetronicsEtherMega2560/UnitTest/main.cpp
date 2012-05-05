@@ -2218,18 +2218,13 @@ void UnitTestTask::task() {
 				// which is not true with the Berkeley sockets. I believe the
 				// Arduino Ethernet library only supports one server connection
 				// at a time, and I suspect that's one of the reasons why.
-				for (uint8_t ii = 0; (!socket.accept()) && (ii < 100); ++ii) {
-					delay(milliseconds2ticks(100));
-					if (socket.closing() || socket.closed()) {
-						break;
-					}
-				}
-				if (socket.listening()) {
+				if (socket.accept(milliseconds2ticks(10000))) {
+					// Fall through.
+				} else if (socket.listening()) {
 					// Not a failure, but operator didn't try to connect.
 					SKIPPED();
 					break;
-				}
-				if (socket.closing() || socket.closed()) {
+				} else {
 					FAILED(__LINE__);
 					break;
 				}
