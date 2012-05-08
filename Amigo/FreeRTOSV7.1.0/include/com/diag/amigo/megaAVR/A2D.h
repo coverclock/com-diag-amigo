@@ -13,6 +13,7 @@
 
 #include <avr/io.h>
 #include "com/diag/amigo/types.h"
+#include "com/diag/amigo/constants.h"
 #include "com/diag/amigo/TypedQueue.h"
 #include "com/diag/amigo/target/GPIO.h"
 
@@ -147,19 +148,6 @@ public:
 		D64,
 		D128
 	};
-
-	/**
-	 * Defines the timeout value in ticks that causes the application to never
-	 * block waiting for ring buffer space or data, but instead be returned an
-	 * error.
-	 */
-	static const ticks_t IMMEDIATELY = Queue::IMMEDIATELY;
-
-	/**
-	 * Defines the timeout value in ticks that causes the application to block
-	 * indefinitely waiting for ring buffer space or data.
-	 */
-	static const ticks_t NEVER = Queue::NEVER;
 
 	/**
 	 * Defines the default request ring buffer size in bytes.

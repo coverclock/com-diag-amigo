@@ -20,14 +20,66 @@ namespace diag {
 namespace amigo {
 namespace W5100 {
 
-static Socket::port_t busy[W5100::SOCKETS] = { Socket::NOPORT };
-
 static MutexSemaphore * mutex = 0;
 
-static Socket::port_t localport = Socket::LOCALPORT;
+static Socket::socket_t nextsocket = 0;
+
+static Socket::port_t nextport = Socket::LOCALPORT;
+
+static Socket * sockets[W5100::SOCKETS] = { 0, 0, 0, 0 };
+
+static Socket::port_t ports[W5100::SOCKETS] = { Socket::NOPORT, Socket::NOPORT, Socket::NOPORT, Socket::NOPORT };
 
 void Socket::provide(MutexSemaphore & mymutex) {
 	mutex = &mymutex;
+}
+
+Socket::socket_t Socket::allocate(socket_t sock) {
+	if (sock >= W5100::SOCKETS) {
+		socket_t candidate;
+		for (uint8_t ii = 0; ii < countof(sockets); ++ii) {
+			candidate = nextsocket++;
+			if (nextsocket >= W5100::SOCKETS) {
+				nextsocket = 0;
+			}
+			if (sockets[candidate] == 0) {
+				sock = candidate;
+				sockets[sock] = this;
+				break;
+			}
+		}
+	}
+	return sock;
+}
+
+void Socket::deallocate(socket_t sock) {
+	sockets[sock] = 0;
+}
+
+Socket::port_t Socket::allocate(socket_t sock, port_t port) {
+	// Since there are far more local port numbers than there are sockets
+	// in the W5100, this is guaranteed to complete. If the application
+	// has a resource leak because it forgot to close a socket, then it
+	// may never find an unused socket number to assign to this object.
+	// But that won't effect this algorithm.
+	while (port == NOPORT) {
+		port = nextport++;
+		if (nextport == NOPORT) {
+			nextport = LOCALPORT;
+		}
+		for (uint8_t ii = 0; ii < countof(ports); ++ii) {
+			if (ports[ii] == port) {
+				port = NOPORT;
+				break;
+			}
+		}
+	}
+	ports[sock] = port;
+	return port;
+}
+
+void Socket::deallocate(socket_t sock, port_t port) {
+	ports[sock] = NOPORT;
 }
 
 Socket::~Socket() {
@@ -44,20 +96,10 @@ Socket & Socket::operator=(socket_t mysocket) {
 }
 
 bool Socket::socket() {
-	uint8_t state;
-	if (sock < W5100::SOCKETS) {
-		state = w5100->state(sock);
-		if (state != W5100::SnSR::CLOSED) {
-			close();
-		}
-	}
-	for (socket_t candidate = 0; candidate < W5100::SOCKETS; ++candidate) {
-		state = w5100->state(candidate);
-		if (state == W5100::SnSR::CLOSED) {
-			sock = candidate;
-			break;
-		}
-	}
+	CriticalSection cs(mutex);
+
+	sock = allocate(sock);
+
 	return (sock != NOSOCKET);
 }
 
@@ -77,30 +119,9 @@ bool Socket::bind(Protocol protocol, port_t port, uint8_t flag) {
 		return false;
 	}
 
-	{
-		CriticalSection cs(mutex);
+	CriticalSection cs(mutex);
 
-		// Since there are far more local port numbers than there are sockets
-		// in the W5100, this is guaranteed to complete. If the application
-		// has a resource leak because it forgot to close a socket, then it
-		// may never find an unused socket number to assign to this object.
-		// But that won't effect this algorithm.
-
-		while (port == NOPORT) {
-			port = localport++;
-			if (localport == NOPORT) {
-				localport = LOCALPORT;
-			}
-			for (uint8_t ii = 0; ii < countof(busy); ++ii) {
-				if (busy[ii] == port) {
-					port = NOPORT;
-					break;
-				}
-			}
-		}
-
-		busy[sock] = port;
-	}
+	port = allocate(sock, port);
 
 	w5100->execCmdSn(sock, W5100::Sock_CLOSE);
 	w5100->writeSnIR(sock, 0xFF);
@@ -115,37 +136,81 @@ void Socket::close() {
 	if (sock >= W5100::SOCKETS) {
 		return;
 	}
+
+	CriticalSection cs(mutex);
+
 	w5100->execCmdSn(sock, W5100::Sock_CLOSE);
 	w5100->writeSnIR(sock, 0xFF);
-	{
-		CriticalSection cs(mutex);
-		busy[sock] = NOPORT;
-	}
+
+	deallocate(sock, NOPORT);
+	deallocate(sock);
+
 	sock = NOSOCKET;
 }
 
 bool Socket::listen() {
-	if (sock >= W5100::SOCKETS) { return false; }
-	if (w5100->state(sock) != W5100::SnSR::INIT) { return false; }
+	if (sock >= W5100::SOCKETS) {
+		return false;
+	}
+
+	CriticalSection cs(mutex);
+
+	if (w5100->state(sock) != W5100::SnSR::INIT) {
+		return false;
+	}
+
 	w5100->execCmdSn(sock, W5100::Sock_LISTEN);
+
 	return true;
 }
 
 bool Socket::accept(ticks_t timeout, ticks_t iteration) {
-	if (sock >= W5100::SOCKETS) { return false; }
-	uint8_t state = w5100->state(sock);
-	if ((state == W5100::SnSR::ESTABLISHED) || (state == W5100::SnSR::CLOSE_WAIT)) { return true; }
-	if (timeout == IMMEDIATELY) { return false; }
-	ticks_t then = Task::elapsed();
-	while (true) {
-		Task::delay(iteration);
-		if (sock >= W5100::SOCKETS) { return false; }
-		state = w5100->state(sock);
-		if ((state == W5100::SnSR::ESTABLISHED) || (state == W5100::SnSR::CLOSE_WAIT)) { return true; }
-		if ((state == W5100::SnSR::CLOSED) || (state == W5100::SnSR::FIN_WAIT) || (state == W5100::SnSR::CLOSING) || (state == W5100::SnSR::TIME_WAIT) || (state == W5100::SnSR::LAST_ACK)) { return false; }
-		if (timeout == NEVER) { continue; }
-		if ((Task::elapsed() - then) >= timeout) { return false; }
+	if (sock >= W5100::SOCKETS) {
+		return false;
 	}
+
+	CriticalSection cs(mutex);
+
+	uint8_t state = w5100->state(sock);
+	if ((state == W5100::SnSR::ESTABLISHED) || (state == W5100::SnSR::CLOSE_WAIT)) {
+		return true;
+	}
+
+	if (timeout == IMMEDIATELY) {
+		return false;
+	}
+
+	ticks_t then = Task::elapsed();
+
+	while (true) {
+
+		Task::delay(iteration);
+
+		if (sock >= W5100::SOCKETS) {
+			break;
+		}
+
+		state = w5100->state(sock);
+
+		if ((state == W5100::SnSR::ESTABLISHED) || (state == W5100::SnSR::CLOSE_WAIT)) {
+			return true;
+		}
+
+		if ((state == W5100::SnSR::CLOSED) || (state == W5100::SnSR::FIN_WAIT) || (state == W5100::SnSR::CLOSING) || (state == W5100::SnSR::TIME_WAIT) || (state == W5100::SnSR::LAST_ACK)) {
+			break;
+		}
+
+		if (timeout == NEVER) {
+			continue;
+		}
+
+		if ((Task::elapsed() - then) >= timeout) {
+			break;
+		}
+
+	}
+
+	return false;
 }
 
 bool Socket::connect(const ipv4address_t * address, port_t port) {
@@ -161,7 +226,8 @@ bool Socket::connect(const ipv4address_t * address, port_t port) {
 		return false;
 	}
 
-	// Set destination IP.
+	CriticalSection cs(mutex);
+
 	w5100->writeSnDIPR(sock, address);
 	w5100->writeSnDPORT(sock, port);
 	w5100->execCmdSn(sock, W5100::Sock_CONNECT);
@@ -170,25 +236,40 @@ bool Socket::connect(const ipv4address_t * address, port_t port) {
 }
 
 void Socket::disconnect() {
-	if (sock < W5100::SOCKETS) {
-		w5100->execCmdSn(sock, W5100::Sock_DISCON);
+	if (sock >= W5100::SOCKETS) {
+		return;
 	}
+
+	CriticalSection cs(mutex);
+
+	w5100->execCmdSn(sock, W5100::Sock_DISCON);
 }
 
 size_t Socket::free() {
+	CriticalSection cs(mutex);
+
 	return ((sock < W5100::SOCKETS) ? w5100->getTXFreeSize(sock) : 0);
 }
 
 size_t Socket::available() {
+	CriticalSection cs(mutex);
+
 	return ((sock < W5100::SOCKETS) ? w5100->getRXReceivedSize(sock) : 0);
 }
 
 bool Socket::listening() {
+	CriticalSection cs(mutex);
+
 	return ((sock < W5100::SOCKETS) && (w5100->state(sock) == W5100::SnSR::LISTEN));
 }
 
 bool Socket::connected() {
-	if (sock >= W5100::SOCKETS) { return false; }
+	if (sock >= W5100::SOCKETS) {
+		return false;
+	}
+
+	CriticalSection cs(mutex);
+
 	uint8_t state = w5100->state(sock);
 	// We do it this way because the far end could have connected, sent us some
 	// data, and disconnected, all before we did this check. So there is data
@@ -197,19 +278,36 @@ bool Socket::connected() {
 }
 
 bool Socket::disconnected() {
+	if (sock >= W5100::SOCKETS) {
+		return true;
+	}
+
+	CriticalSection cs(mutex);
+
 	// We only consider our self truly disconnected if there is no data for us
 	// to read.
-	return ((sock < W5100::SOCKETS) && (w5100->state(sock) == W5100::SnSR::CLOSE_WAIT) && (w5100->getRXReceivedSize(sock) == 0));
+	return ((w5100->state(sock) == W5100::SnSR::CLOSE_WAIT) && (w5100->getRXReceivedSize(sock) == 0));
 }
 
 bool Socket::closing() {
-	if (sock >= W5100::SOCKETS) { return false; }
+	if (sock >= W5100::SOCKETS) {
+		return false;
+	}
+
+	CriticalSection cs(mutex);
+
 	uint8_t state = w5100->state(sock);
 	return ((state == W5100::SnSR::FIN_WAIT) || (state == W5100::SnSR::CLOSING) || (state == W5100::SnSR::TIME_WAIT) || (state == W5100::SnSR::LAST_ACK));
 }
 
 bool Socket::closed() {
-	return ((sock < W5100::SOCKETS) && (w5100->state(sock) == W5100::SnSR::CLOSED));
+	if (sock >= W5100::SOCKETS) {
+		return true;
+	}
+
+	CriticalSection cs(mutex);
+
+	return (w5100->state(sock) == W5100::SnSR::CLOSED);
 }
 
 ssize_t Socket::send(const void * data, size_t length) {
@@ -220,6 +318,8 @@ ssize_t Socket::send(const void * data, size_t length) {
 	ssize_t result = (length < W5100::SSIZE) ? length : W5100::SSIZE; // check size not to exceed MAX size.
 	size_t freesize;
 	uint8_t state;
+
+	CriticalSection cs(mutex);
 
 	// If freebuf is available, start.
 	do {
@@ -256,6 +356,8 @@ ssize_t Socket::recv(void * buffer, size_t length) {
 		return -2;
 	}
 
+	CriticalSection cs(mutex);
+
 	size_t result = w5100->getRXReceivedSize(sock); // Check how much data is available
 
 	if (result == 0) {
@@ -288,7 +390,11 @@ ssize_t Socket::peek(void * buffer) {
 	if (sock >= W5100::SOCKETS) {
 		return -2;
 	}
+
+	CriticalSection cs(mutex);
+
 	w5100->recv_data_processing(sock, buffer, 1, 1);
+
 	return 1;
 }
 
@@ -304,30 +410,30 @@ ssize_t Socket::sendto(const void * data, size_t length, const ipv4address_t * a
 		(port == 0x0000) ||
 		(result == 0)
 	) {
-		/* +2008.01 [bj] : added return value */
-		result = 0;
-	} else {
-		w5100->writeSnDIPR(sock, address);
-		w5100->writeSnDPORT(sock, port);
-
-		// Copy data.
-		w5100->send_data_processing(sock, data, result);
-		w5100->execCmdSn(sock, W5100::Sock_SEND);
-
-		/* +2008.01 bj */
-		while ( (w5100->readSnIR(sock) & W5100::SnIR::SEND_OK) != W5100::SnIR::SEND_OK )
-		{
-			if (w5100->readSnIR(sock) & W5100::SnIR::TIMEOUT)
-			{
-				/* +2008.01 [bj]: clear interrupt */
-				w5100->writeSnIR(sock, (W5100::SnIR::SEND_OK | W5100::SnIR::TIMEOUT)); /* clear SEND_OK & TIMEOUT */
-				return 0;
-			}
-		}
-
-		/* +2008.01 bj */
-		w5100->writeSnIR(sock, W5100::SnIR::SEND_OK);
+		return 0;
 	}
+
+	CriticalSection cs(mutex);
+
+	w5100->writeSnDIPR(sock, address);
+	w5100->writeSnDPORT(sock, port);
+
+	// Copy data.
+	w5100->send_data_processing(sock, data, result);
+	w5100->execCmdSn(sock, W5100::Sock_SEND);
+
+	/* +2008.01 bj */
+	while ((w5100->readSnIR(sock) & W5100::SnIR::SEND_OK) != W5100::SnIR::SEND_OK) {
+		if (w5100->readSnIR(sock) & W5100::SnIR::TIMEOUT) {
+			/* +2008.01 [bj]: clear interrupt */
+			w5100->writeSnIR(sock, (W5100::SnIR::SEND_OK | W5100::SnIR::TIMEOUT)); /* clear SEND_OK & TIMEOUT */
+			return 0;
+		}
+	}
+
+	/* +2008.01 bj */
+	w5100->writeSnIR(sock, W5100::SnIR::SEND_OK);
+
 	return result;
 }
 
@@ -338,10 +444,13 @@ ssize_t Socket::recvfrom(void * buffer, size_t length, ipv4address_t * address, 
 	}
 
 	ssize_t result = 0;
-	uint8_t head[8];
-	W5100::address_t ptr = 0;
 
 	if (length > 0) {
+
+		CriticalSection cs(mutex);
+
+		uint8_t head[8];
+		W5100::address_t ptr = 0;
 
 		ptr = w5100->readSnRX_RD(sock);
 
@@ -421,6 +530,8 @@ ssize_t Socket::igmpsend(const void * data, size_t length) {
 		return 0;
 	}
 
+	CriticalSection cs(mutex);
+
 	w5100->send_data_processing(sock, data, result);
 	w5100->execCmdSn(sock, W5100::Sock_SEND);
 
@@ -444,6 +555,8 @@ ssize_t Socket::bufferData(size_t offset, const void * data, size_t length) {
 		return -2;
 	}
 
+	CriticalSection cs(mutex);
+
 	size_t free = w5100->getTXFreeSize(sock);
 	ssize_t result = (length < free) ? length : free;
 
@@ -462,17 +575,22 @@ bool Socket::startUDP(const ipv4address_t * address, port_t port) {
 		(port == 0x00)
 	) {
 		return false;
-	} else {
-		w5100->writeSnDIPR(sock, address);
-		w5100->writeSnDPORT(sock, port);
-		return true;
 	}
+
+	CriticalSection cs(mutex);
+
+	w5100->writeSnDIPR(sock, address);
+	w5100->writeSnDPORT(sock, port);
+
+	return true;
 }
 
 bool Socket::sendUDP() {
 	if (sock >= W5100::SOCKETS) {
 		return false;
 	}
+
+	CriticalSection cs(mutex);
 
 	w5100->execCmdSn(sock, W5100::Sock_SEND);
 

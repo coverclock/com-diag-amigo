@@ -73,6 +73,7 @@ CXXCINLINE bool amigo_littleendian64() {
 namespace com {
 namespace diag {
 namespace amigo {
+namespace byteorder {
 
 /**
  *  Return true if the target has little-endian byte order, false if
@@ -122,6 +123,7 @@ inline bool littleendian64() {
 	return amigo_littleendian64();
 }
 
+}
 }
 }
 }

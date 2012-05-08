@@ -151,6 +151,14 @@ protected:
 
 	W5100 * w5100;
 
+	socket_t allocate(socket_t sock);
+
+	void deallocate(socket_t sock);
+
+	port_t allocate(socket_t sock, port_t port);
+
+	void deallocate(socket_t sock, port_t port);
+
 };
 
 }

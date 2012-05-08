@@ -61,12 +61,12 @@ public:
 	/**
 	 * Defines the maximum delay value in ticks. The actual delay depends on
 	 * the duration of a system tick, the width of the ticks data type, and
-	 * any underlying scheduling latency. Forever may be as short as about 131
+	 * any underlying scheduling latency. This may be as short as about 131
 	 * seconds given a two millisecond tick duration and a sixteen-bit ticks
-	 * data type. If you really want to delay forever, you must put your
-	 * delay() in a loop.
+	 * data type. If you want to delay forever, you must put your delay() in
+	 * a loop.
 	 */
-	static const ticks_t FOREVER = portMAX_DELAY; // Nominally (ticks_t)~0.
+	static const ticks_t EPOCH = portMAX_DELAY; // Nominally (ticks_t)~0.
 
 	/***************************************************************************
 	 * CONSTRUCTING AND DESTRUCTING
