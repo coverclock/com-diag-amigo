@@ -127,13 +127,13 @@ public:
 
 	/**
 	 * Start the W5100.
-	 * @param milliseconds is the number of milliseconds (not ticks) to delay.
+	 * @param resetting is the number of ticks to delay following a reset.
 	 */
 	void start(ticks_t resetting = RESETTING);
 
 	/**
 	 * Stop the W5100.
-	 * @param milliseconds is the number of milliseconds (not ticks) to delay.
+	 * @param resetting is the number of ticks to delay following a reset.
 	 */
 	void stop(ticks_t resetting = RESETTING);
 
