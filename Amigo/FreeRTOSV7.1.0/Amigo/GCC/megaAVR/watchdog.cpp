@@ -11,6 +11,25 @@
 #include "com/diag/amigo/target/watchdog.h"
 #include "com/diag/amigo/target/Uninterruptible.h"
 
+CXXCAPI uint8_t amigo_watchdog_disable(void) {
+	com::diag::amigo::Uninterruptible uninterruptible;
+	wdt_reset();
+	uint8_t reason = MCUSR;
+	MCUSR = 0;
+	wdt_disable();
+	return reason;
+}
+
+#if defined(COM_DIAG_AMIGO_WATCHDOG_ENABLE)
+
+CXXCAPI void amigo_watchdog_restart(void) {
+	(*static_cast<void(*)(void)>(0))();
+}
+
+#endif
+
+#if defined(COM_DIAG_AMIGO_WATCHDOG_ENABLE)
+
 CXXCAPI void amigo_watchdog_enable(void) {
 	com::diag::amigo::Uninterruptible uninterruptible;
 	// Note that the AVR libc function expects all four prescaler bits to be
@@ -26,14 +45,7 @@ CXXCAPI void amigo_watchdog_enable(void) {
 	wdt_enable(WDTO_8S);
 }
 
-CXXCAPI uint8_t amigo_watchdog_disable(void) {
-	com::diag::amigo::Uninterruptible uninterruptible;
-	wdt_reset();
-	uint8_t reason = MCUSR;
-	MCUSR = 0;
-	wdt_disable();
-	return reason;
-}
+#endif
 
 CXXCAPI void amigo_watchdog_reset(void) {
 	com::diag::amigo::Uninterruptible uninterruptible;

@@ -26,12 +26,19 @@ CXXCAPI void amigo_event(PGM_P file, int line) {
 CXXCAPI void amigo_panic(PGM_P file, int line) {
 	com::diag::amigo::Uninterruptible uninterruptible;
 	log(PSTR("PANIC"), file, line);
+#if defined(COM_DIAG_AMIGO_WATCHDOG_ENABLE)
 	// Attempt to get the watch dog timer to reset the system. This is different
-	// from merely branching to the reset vector, which does not reset all of
+	// from merely jumping to the reset vector, which does not reset all of
 	// the hardware in the processor.
 	com::diag::amigo::watchdog::enable();
 	// Eventually the watch dog timer will perform software reset of the target.
 	// If it doesn't, this is equivalent to amigo_fatal().
+#elif defined(COM_DIAG_AMIGO_WATCHDOG_RESTART)
+	// This just jumps to the reset vector.
+	com::diag::amigo::watchdog::restart();
+	// The function above should transfer control to the system reset vector.
+	// If it doesn't, this is equivalent to amigo_fatal().
+#endif
 	while (!0) {}
 }
 
