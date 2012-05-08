@@ -16,11 +16,14 @@
 
 /**
  * Enable interrupts system-wide. This is typically called once in main()
- * when interrupt-driven I/O is desired. The prior state of the system
- * status register (SREG) is _not_ saved.
+ * when interrupt-driven I/O is desired. This function can be called from either
+ * C or C++ translation units.
+ * @return the prior SREG value before interrupts were enabled.
  */
-CXXCINLINE void amigo_interrupts_enable(void) {
+CXXCINLINE uint8_t amigo_interrupts_enable(void) {
+	uint8_t sreg = SREG;
 	sei();
+	return sreg;
 }
 
 /**
@@ -53,11 +56,12 @@ namespace interrupts {
 
 /**
  * Enable interrupts system-wide. This is typically called once in main()
- * when interrupt-driven I/O is desired. The prior state of the system
- * status register (SREG) is _not_ saved.
+ * when interrupt-driven I/O is desired. This function can be called from either
+ * C or C++ translation units.
+ * @return the prior SREG value before interrupts were enabled.
  */
-inline void enable() {
-	amigo_interrupts_enable();
+inline uint8_t enable() {
+	return amigo_interrupts_enable();
 }
 
 /**

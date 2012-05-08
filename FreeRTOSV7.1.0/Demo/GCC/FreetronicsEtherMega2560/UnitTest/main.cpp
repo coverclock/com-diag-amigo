@@ -53,7 +53,7 @@ com::diag::amigo::Serial * serialp = 0;
 
 static int errors = 0;
 
-static uint8_t reason = 0;
+static uint8_t resetreason = 0;
 
 /*******************************************************************************
  * NETWORK PARAMETERS
@@ -395,6 +395,26 @@ void UnitTestTask::task() {
 	serialp->start();
 
 #if 1
+	UNITTEST("watchdog");
+	if ((resetreason & _BV(JTRF)) != 0) {
+		printf(PSTR("JTAG "));
+	}
+	if ((resetreason & _BV(WDRF)) != 0) {
+		printf(PSTR("WDT "));
+	}
+	if ((resetreason & _BV(BORF)) != 0) {
+		printf(PSTR("brown out "));
+	}
+	if ((resetreason & _BV(EXTRF)) != 0) {
+		printf(PSTR("external "));
+	}
+	if ((resetreason & _BV(PORF)) != 0) {
+		printf(PSTR("power on "));
+	}
+	PASSED();
+#endif
+
+#if 1
 	UNITTEST("Serial");
 	do {
 		if (!(*serialp)) {
@@ -420,7 +440,7 @@ void UnitTestTask::task() {
 
 #if 0
 	UNITTEST("panic");
-	if ((reason & _BV(WDRF)) == 0) {
+	if ((resetreason & _BV(WDRF)) == 0) {
 		com::diag::amigo::panic(PSTR(__FILE__), __LINE__);
 		FAILED(__LINE__);
 	} else {
@@ -2545,7 +2565,7 @@ int main() __attribute__((OS_main));
 int main() {
 	// Disable the hardware watch dog timer; really important to do this as
 	// soon as practical.
-	reason = com::diag::amigo::watchdog::disable();
+	resetreason = com::diag::amigo::watchdog::disable();
 
 	// Enable interrupts system-wide.
 	com::diag::amigo::interrupts::enable();
