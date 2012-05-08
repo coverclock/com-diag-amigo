@@ -9,6 +9,7 @@
 
 #include <string.h>
 #include <avr/io.h>
+#include <avr/wdt.h>
 #include "com/diag/amigo/configuration.h"
 #include "com/diag/amigo/types.h"
 #include "com/diag/amigo/constants.h"
@@ -17,6 +18,8 @@
 #include "com/diag/amigo/byteorder.h"
 #include "com/diag/amigo/heap.h"
 #include "com/diag/amigo/target/harvard.h"
+#include "com/diag/amigo/target/interrupts.h"
+#include "com/diag/amigo/target/watchdog.h"
 #include "com/diag/amigo/target/Morse.h"
 #include "com/diag/amigo/target/Serial.h"
 #include "com/diag/amigo/target/SPI.h"
@@ -25,7 +28,6 @@
 #include "com/diag/amigo/target/A2D.h"
 #include "com/diag/amigo/target/Uninterruptible.h"
 #include "com/diag/amigo/target/Console.h"
-#include "com/diag/amigo/target/watchdog.h"
 #include "com/diag/amigo/Task.h"
 #include "com/diag/amigo/SerialSink.h"
 #include "com/diag/amigo/SerialSource.h"
@@ -50,6 +52,8 @@ extern "C" void vApplicationStackOverflowHook(xTaskHandle pxTask, signed char * 
 com::diag::amigo::Serial * serialp = 0;
 
 static int errors = 0;
+
+static uint8_t reason = 0;
 
 /*******************************************************************************
  * NETWORK PARAMETERS
@@ -96,7 +100,13 @@ static const char UNITTEST_TRACE[] PROGMEM = "TRACE at line %d; ";
 
 static const char VINTAGE[] PROGMEM = "VINTAGE=" COM_DIAG_AMIGO_VINTAGE;
 
-																// e.g. (from UnitTest.map):
+// This is a good example of how you can access special external symbols
+// defined by the linker script at link time by the application at run time.
+// Note that these are "weak", i.e. if they are not defined you don't get a
+// link time error but instead they default to being defined as NULL (zero).
+// This is very useful for determining if optional components have been linked
+// into the application, and doing something else if they have not.
+//										                           e.g. (from a UnitTest.map):
 extern void * __heap_end				__attribute__ ((weak)); // 00000000 W __heap_end
 extern void * __data_start				__attribute__ ((weak)); // 00800200 D __data_start
 extern void * __data_end				__attribute__ ((weak)); // 00800536 D __data_end
@@ -299,9 +309,13 @@ static int source2sink(com::diag::amigo::Source & source, com::diag::amigo::Sink
 	size_t out;
 	char * controld;
 	bool eof = false;
+	bool pending = true;
+	com::diag::amigo::ticks_t then = com::diag::amigo::Task::elapsed();
+	com::diag::amigo::ticks_t now;
 	while (!eof) {
 		com::diag::amigo::Task::yield();
 		while ((have = source.available()) > 0) {
+			pending = false;
 			if (have > (sizeof(buffer) - 1)) {
 				have = sizeof(buffer) - 1;
 			}
@@ -321,6 +335,12 @@ static int source2sink(com::diag::amigo::Source & source, com::diag::amigo::Sink
 			out = sink.write(buffer, in);
 			if (out != in) {
 				return __LINE__;
+			}
+		}
+		if (pending) {
+			now = com::diag::amigo::Task::elapsed();
+			if ((now - then) > (com::diag::amigo::Task::EPOCH / 2)) {
+				return -1;
 			}
 		}
 	}
@@ -400,8 +420,12 @@ void UnitTestTask::task() {
 
 #if 0
 	UNITTEST("panic");
-	com::diag::amigo::panic(PSTR(__FILE__), __LINE__);
-	FAILED(__LINE__);
+	if ((reason & _BV(WDRF)) == 0) {
+		com::diag::amigo::panic(PSTR(__FILE__), __LINE__);
+		FAILED(__LINE__);
+	} else {
+		SKIPPED();
+	}
 #endif
 
 #if 0
@@ -1306,7 +1330,7 @@ void UnitTestTask::task() {
 	// wired up on the board. It is specific to the EtherMega 2560 board.
 	// PE4 (Arduino Mega pin 2) wired to ground.
 	// PE5 (Arduino Mega pin 3) wired to 5V.
-	// PG5 (Arduino Mega pin 4) is otherwise in use.
+	// PG5 (Arduino Mega pin 4) is otherwise in use (and may read high or low).
 	// PE3 (Arduino Mega pin 5) connected to PH3 (Arduino Mega pin 6).
 	// PH4 (Arduino Mega pin 7) not connected.
 	do {
@@ -2486,8 +2510,13 @@ void UnitTestTask::task() {
 	{
 		int line;
 		do {
-			if ((line = source2sink(serialsource, serialsink)) != 0) {
+			line = source2sink(serialsource, serialsink);
+			if (line > 0) {
 				FAILED(line);
+				break;
+			}
+			if (line < 0) {
+				SKIPPED();
 				break;
 			}
 			if (static_cast<uint8_t>(*serialp) > 0) {
@@ -2514,8 +2543,9 @@ void UnitTestTask::task() {
 
 int main() __attribute__((OS_main));
 int main() {
-	// Disable the hardware watch dog timer.
-	com::diag::amigo::watchdog::disable();
+	// Disable the hardware watch dog timer; really important to do this as
+	// soon as practical.
+	reason = com::diag::amigo::watchdog::disable();
 
 	// Enable interrupts system-wide.
 	com::diag::amigo::interrupts::enable();
