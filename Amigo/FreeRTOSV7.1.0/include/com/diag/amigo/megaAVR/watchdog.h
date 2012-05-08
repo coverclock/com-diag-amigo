@@ -10,6 +10,7 @@
  */
 
 #include "com/diag/amigo/cxxcapi.h"
+#include "com/diag/amigo/types.h"
 
 /**
  * Enable the hardware watch dog timer. If not periodically patted, the hardware
@@ -21,8 +22,9 @@ CXXCAPI void amigo_watchdog_enable(void);
 
 /**
  * Disable the watch dog timer.
+ * @return the prior value of the MCUSR indicating the prior RESET reason.
  */
-CXXCAPI void amigo_watchdog_disable(void);
+CXXCAPI uint8_t amigo_watchdog_disable(void);
 
 /**
  * Pat the watch dog timer by resetting the timer.
@@ -49,8 +51,8 @@ inline void enable() {
 /**
  * Disable the watch dog timer.
  */
-inline void disable() {
-	amigo_watchdog_disable();
+inline uint8_t disable() {
+	return amigo_watchdog_disable();
 }
 
 /**
