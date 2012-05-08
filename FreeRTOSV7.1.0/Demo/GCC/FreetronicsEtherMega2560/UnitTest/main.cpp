@@ -11,6 +11,7 @@
 #include <avr/io.h>
 #include "com/diag/amigo/configuration.h"
 #include "com/diag/amigo/types.h"
+#include "com/diag/amigo/constants.h"
 #include "com/diag/amigo/fatal.h"
 #include "com/diag/amigo/littleendian.h"
 #include "com/diag/amigo/byteorder.h"
@@ -24,6 +25,7 @@
 #include "com/diag/amigo/target/A2D.h"
 #include "com/diag/amigo/target/Uninterruptible.h"
 #include "com/diag/amigo/target/Console.h"
+#include "com/diag/amigo/target/watchdog.h"
 #include "com/diag/amigo/Task.h"
 #include "com/diag/amigo/SerialSink.h"
 #include "com/diag/amigo/SerialSource.h"
@@ -110,7 +112,7 @@ extern void * __data_load_start			__attribute__ ((weak)); // 0000cb5a A __data_l
 extern void * __data_load_end			__attribute__ ((weak)); // 0000ce90 A __data_load_end
 
 inline void * htonvp(void * vp) {
-	return reinterpret_cast<void*>(com::diag::amigo::swapbytesif(reinterpret_cast<uintptr_t>(vp)));
+	return reinterpret_cast<void*>(com::diag::amigo::byteorder::swapbytesif(reinterpret_cast<uintptr_t>(vp)));
 }
 
 // Deliberately not in PROGMEM in order to test Console::dump().
@@ -189,7 +191,7 @@ void PeriodicTimer::timer() {
 }
 
 /*******************************************************************************
- * WIZNET W5100 TEST FIXTURE (FOR TESTING SPI, Toggle, and GPIO.
+ * WIZNET W5100 TEST FIXTURE
  ******************************************************************************/
 
 static com::diag::amigo::MutexSemaphore * mutexsemaphorep = 0;
@@ -237,6 +239,24 @@ private:
 	com::diag::amigo::SPI * spi;
 	com::diag::amigo::GPIO gpio;
 	uint8_t mask;
+};
+
+/*******************************************************************************
+ * SOCKET TEST FIXTURE
+ ******************************************************************************/
+
+class Socket : public com::diag::amigo::W5100::Socket {
+public:
+	explicit Socket(com::diag::amigo::W5100::W5100 & myw5100)
+	: com::diag::amigo::W5100::Socket(myw5100)
+	{}
+	// The base class methods are protected because they deliberately do not
+	// lock the mutex (because it's already locked in the calling method, which
+	// saves us a little time even though the mutex is recursive and could be
+	// safely relocked). So doing this kind of thing is okay to expose the
+	// protected methods to unit testing, but is not good idea in practice.
+	port_t myallocate(socket_t sock, port_t port) { return allocate(sock, port); }
+	void mydeallocate(socket_t sock, port_t port) { deallocate(sock, port); }
 };
 
 /*******************************************************************************
@@ -376,6 +396,12 @@ void UnitTestTask::task() {
 	UNITTEST("event");
 	com::diag::amigo::event(PSTR(__FILE__), __LINE__);
 	PASSED();
+#endif
+
+#if 0
+	UNITTEST("panic");
+	com::diag::amigo::panic(PSTR(__FILE__), __LINE__);
+	FAILED(__LINE__);
 #endif
 
 #if 0
@@ -658,27 +684,27 @@ void UnitTestTask::task() {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::swapbytes(0x1234) != 0x3412) {
+		if (com::diag::amigo::byteorder::swapbytes(0x1234) != 0x3412) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::swapbytes(0x12345678L) != 0x78563412L) {
+		if (com::diag::amigo::byteorder::swapbytes(0x12345678L) != 0x78563412L) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::swapbytes(0x123456789ABCDEF0LL) != 0xF0DEBC9A78563412LL) {
+		if (com::diag::amigo::byteorder::swapbytes(0x123456789ABCDEF0LL) != 0xF0DEBC9A78563412LL) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::swapbytes(0x1234U) != 0x3412U) {
+		if (com::diag::amigo::byteorder::swapbytes(0x1234U) != 0x3412U) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::swapbytes(0x12345678UL) != 0x78563412UL) {
+		if (com::diag::amigo::byteorder::swapbytes(0x12345678UL) != 0x78563412UL) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::swapbytes(0x123456789ABCDEF0ULL) != 0xF0DEBC9A78563412ULL) {
+		if (com::diag::amigo::byteorder::swapbytes(0x123456789ABCDEF0ULL) != 0xF0DEBC9A78563412ULL) {
 			FAILED(__LINE__);
 			break;
 		}
@@ -694,19 +720,19 @@ void UnitTestTask::task() {
 			FAILED(__LINE__);
 			break;
 		}
-		if (!com::diag::amigo::littleendian()) {
+		if (!com::diag::amigo::byteorder::littleendian()) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (!com::diag::amigo::littleendian16()) {
+		if (!com::diag::amigo::byteorder::littleendian16()) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (!com::diag::amigo::littleendian32()) {
+		if (!com::diag::amigo::byteorder::littleendian32()) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (!com::diag::amigo::littleendian64()) {
+		if (!com::diag::amigo::byteorder::littleendian64()) {
 			FAILED(__LINE__);
 			break;
 		}
@@ -734,27 +760,27 @@ void UnitTestTask::task() {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::swapbytesif(0x1234) != 0x3412) {
+		if (com::diag::amigo::byteorder::swapbytesif(0x1234) != 0x3412) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::swapbytesif(0x12345678L) != 0x78563412L) {
+		if (com::diag::amigo::byteorder::swapbytesif(0x12345678L) != 0x78563412L) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::swapbytesif(0x123456789ABCDEF0LL) != 0xF0DEBC9A78563412LL) {
+		if (com::diag::amigo::byteorder::swapbytesif(0x123456789ABCDEF0LL) != 0xF0DEBC9A78563412LL) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::swapbytesif(0x1234U) != 0x3412U) {
+		if (com::diag::amigo::byteorder::swapbytesif(0x1234U) != 0x3412U) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::swapbytesif(0x12345678UL) != 0x78563412UL) {
+		if (com::diag::amigo::byteorder::swapbytesif(0x12345678UL) != 0x78563412UL) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (com::diag::amigo::swapbytesif(0x123456789ABCDEF0ULL) != 0xF0DEBC9A78563412ULL) {
+		if (com::diag::amigo::byteorder::swapbytesif(0x123456789ABCDEF0ULL) != 0xF0DEBC9A78563412ULL) {
 			FAILED(__LINE__);
 			break;
 		}
@@ -830,11 +856,11 @@ void UnitTestTask::task() {
 #endif
 
 #if 0
-	UNITTEST("FOREVER");
+	UNITTEST("EPOCH");
 	// This delays about two minutes and eleven seconds so I don't normally
 	// run it. But it does verify that the FreeRTOS scheduler doesn't do
 	// something unexpected with the maximum possible tick value.
-	delay(FOREVER);
+	delay(EPOCH);
 	PASSED();
 #endif
 
@@ -977,15 +1003,15 @@ void UnitTestTask::task() {
 			FAILED(__LINE__);
 			break;
 		}
-		if (!countingsemaphore.take(com::diag::amigo::CountingSemaphore::IMMEDIATELY)) {
+		if (!countingsemaphore.take(com::diag::amigo::IMMEDIATELY)) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (!countingsemaphore.take(com::diag::amigo::CountingSemaphore::IMMEDIATELY)) {
+		if (!countingsemaphore.take(com::diag::amigo::IMMEDIATELY)) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (countingsemaphore.take(com::diag::amigo::CountingSemaphore::IMMEDIATELY)) {
+		if (countingsemaphore.take(com::diag::amigo::IMMEDIATELY)) {
 			FAILED(__LINE__);
 			break;
 		}
@@ -993,7 +1019,7 @@ void UnitTestTask::task() {
 			FAILED(__LINE__);
 			break;
 		}
-		if (!countingsemaphore.take(com::diag::amigo::CountingSemaphore::IMMEDIATELY)) {
+		if (!countingsemaphore.take(com::diag::amigo::IMMEDIATELY)) {
 			FAILED(__LINE__);
 			break;
 		}
@@ -1021,7 +1047,7 @@ void UnitTestTask::task() {
 			FAILED(__LINE__);
 			break;
 		}
-		if (!mutexsemaphore.take(com::diag::amigo::MutexSemaphore::IMMEDIATELY)) {
+		if (!mutexsemaphore.take(com::diag::amigo::IMMEDIATELY)) {
 			FAILED(__LINE__);
 			break;
 		}
@@ -1029,11 +1055,11 @@ void UnitTestTask::task() {
 			FAILED(__LINE__);
 			break;
 		}
-		if (!mutexsemaphore.take(com::diag::amigo::MutexSemaphore::IMMEDIATELY)) {
+		if (!mutexsemaphore.take(com::diag::amigo::IMMEDIATELY)) {
 			FAILED(__LINE__);
 			break;
 		}
-		if (!mutexsemaphore.take(com::diag::amigo::MutexSemaphore::IMMEDIATELY)) {
+		if (!mutexsemaphore.take(com::diag::amigo::IMMEDIATELY)) {
 			FAILED(__LINE__);
 			break;
 		}
@@ -1279,7 +1305,7 @@ void UnitTestTask::task() {
 	// This is a separate test because it requires a simple text fixture to be
 	// wired up on the board. It is specific to the EtherMega 2560 board.
 	// PE4 (Arduino Mega pin 2) wired to ground.
-	// PE5 (Arduino Mega pin 3) wired to Vcc.
+	// PE5 (Arduino Mega pin 3) wired to 5V.
 	// PG5 (Arduino Mega pin 4) is otherwise in use.
 	// PE3 (Arduino Mega pin 5) connected to PH3 (Arduino Mega pin 6).
 	// PH4 (Arduino Mega pin 7) not connected.
@@ -1786,7 +1812,7 @@ void UnitTestTask::task() {
 			break;
 		}
 #else
-#	main must be modified for this microcontroller!
+#	warning main must be modified for this microcontroller!
 #endif
 		if (com::diag::amigo::A2D::a2d2gpio(com::diag::amigo::A2D::INVALID) != com::diag::amigo::GPIO::INVALID) {
 			FAILED(__LINE__);
@@ -1804,7 +1830,7 @@ void UnitTestTask::task() {
 	UNITTEST("Analog Input (requires test fixture on EtherMega)");
 	// This is a separate test because it requires a simple text fixture to be
 	// wired up on the board. It is specific to the EtherMega 2560 board.
-	// PF7 (Arduino Mega digital pin 61 or analog pin A7) wired to 3.3V.
+	// PF0 (Arduino Mega digital pin 54 or analog pin A0) wired to 3.3V.
 	// PK7 (Arduino Mega digital pin 69 or analog pin A15) wired to ground.
 	// A better test would be to combine PWM and A2D but I didn't want the
 	// basic tests to depend upon one another.
@@ -1896,7 +1922,7 @@ void UnitTestTask::task() {
 				FAILED(__LINE__);
 				break;
 			}
-			conversion = a2d.conversion(a2d.IMMEDIATELY);
+			conversion = a2d.conversion(com::diag::amigo::IMMEDIATELY);
 			if (!((607 <= conversion) && (conversion <= 742))) {
 				FAILED(__LINE__);
 				break;
@@ -1905,7 +1931,7 @@ void UnitTestTask::task() {
 				FAILED(__LINE__);
 				break;
 			}
-			conversion = a2d.conversion(a2d.IMMEDIATELY);
+			conversion = a2d.conversion(com::diag::amigo::IMMEDIATELY);
 			if (conversion != 0) {
 				FAILED(__LINE__);
 				break;
@@ -1914,7 +1940,7 @@ void UnitTestTask::task() {
 				FAILED(__LINE__);
 				break;
 			}
-			conversion = a2d.conversion(a2d.IMMEDIATELY);
+			conversion = a2d.conversion(com::diag::amigo::IMMEDIATELY);
 			if (!((607 <= conversion) && (conversion <= 742))) {
 				FAILED(__LINE__);
 				break;
@@ -1923,7 +1949,7 @@ void UnitTestTask::task() {
 				FAILED(__LINE__);
 				break;
 			}
-			conversion = a2d.conversion(a2d.IMMEDIATELY);
+			conversion = a2d.conversion(com::diag::amigo::IMMEDIATELY);
 			if (conversion != 0) {
 				FAILED(__LINE__);
 				break;
@@ -1932,7 +1958,7 @@ void UnitTestTask::task() {
 				FAILED(__LINE__);
 				break;
 			}
-			if ((conversion = a2d.conversion(a2d.IMMEDIATELY)) >= 0) {
+			if ((conversion = a2d.conversion(com::diag::amigo::IMMEDIATELY)) >= 0) {
 				FAILED(__LINE__);
 				break;
 			}
@@ -2037,6 +2063,163 @@ void UnitTestTask::task() {
 			}
 			PASSED();
 		} while (false);
+		w5100.stop();
+		spi.stop();
+	}
+#endif
+
+#if 1
+	UNITTEST("Socket (requires WIZnet W5100)");
+	{
+		com::diag::amigo::SPI spi;
+		com::diag::amigo::W5100::W5100 w5100(com::diag::amigo::GPIO::PIN_B4, spi);
+		Socket sock0(w5100);
+		Socket sock1(w5100);
+		Socket sock2(w5100);
+		Socket sock3(w5100);
+		Socket sock4(w5100);
+		static const Socket::port_t PORT_0 = Socket::LOCALPORT;
+		static const Socket::port_t PORT_1 = Socket::LOCALPORT + ((Socket::MAXIMUMPORT - Socket::LOCALPORT) / 2);
+		static const Socket::port_t PORT_2 = Socket::MAXIMUMPORT;
+		bool successful;
+		do {
+			spi.start();
+			w5100.start();
+			w5100.setGatewayIp(GATEWAY);
+			w5100.setSubnetMask(SUBNET);
+			w5100.setMACAddress(MACADDRESS);
+			w5100.setIPAddress(IPADDRESS);
+			successful = sock0.socket();
+			if (!successful) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (static_cast<Socket::socket_t>(sock0) >= w5100.SOCKETS) {
+				FAILED(__LINE__);
+				break;
+			}
+			successful = sock1.socket();
+			if (!successful) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (static_cast<Socket::socket_t>(sock1) >= w5100.SOCKETS) {
+				FAILED(__LINE__);
+				break;
+			}
+			successful = sock2.socket();
+			if (!successful) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (static_cast<Socket::socket_t>(sock2) >= w5100.SOCKETS) {
+				FAILED(__LINE__);
+				break;
+			}
+			successful = sock4.socket();
+			if (!successful) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (static_cast<Socket::socket_t>(sock4) >= w5100.SOCKETS) {
+				FAILED(__LINE__);
+				break;
+			}
+			successful = sock3.socket();
+			if (successful) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (static_cast<Socket::socket_t>(sock3) < w5100.SOCKETS) {
+				FAILED(__LINE__);
+				break;
+			}
+			sock4.close();
+			if (static_cast<Socket::socket_t>(sock4) != sock4.NOSOCKET) {
+				FAILED(__LINE__);
+				break;
+			}
+			successful = sock3.socket();
+			if (!successful) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (static_cast<Socket::socket_t>(sock3) >= w5100.SOCKETS) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (sock0.myallocate(static_cast<Socket::socket_t>(sock0), PORT_0) != PORT_0) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (sock1.myallocate(static_cast<Socket::socket_t>(sock1), PORT_1) != PORT_1) {
+				FAILED(__LINE__);
+				break;
+			}
+			if (sock2.myallocate(static_cast<Socket::socket_t>(sock2), PORT_2) != PORT_2) {
+				FAILED(__LINE__);
+				break;
+			}
+			com::diag::amigo::Socket::port_t port;
+			com::diag::amigo::Socket::port_t priorport = Socket::NOPORT;
+			// Yeah, we really do iterate across all values that could possibly
+			// be port numbers, local or otherwise. What, does the controller
+			// have anything else to do? This happens so fast, you won't be
+			// aware of it (and I put in a check to make sure it actually did
+			// all 65,536 iterations). That's what happens when you have a
+			// 16MHz microcontroller.
+			com::diag::amigo::Socket::port_t ii = 0;
+			uint32_t nn = 0;
+			do {
+				port = sock3.myallocate(static_cast<Socket::socket_t>(sock3), Socket::NOPORT);
+				if (!((Socket::LOCALPORT <= port) && (port <= Socket::MAXIMUMPORT))) {
+					FAILED(__LINE__);
+					port = Socket::NOPORT;
+					break;
+				}
+				if (port == priorport) {
+					FAILED(__LINE__);
+					port = Socket::NOPORT;
+					break;
+				}
+				if (port == PORT_0) {
+					FAILED(__LINE__);
+					port = Socket::NOPORT;
+					break;
+				}
+				if (port == PORT_1) {
+					FAILED(__LINE__);
+					port = Socket::NOPORT;
+					break;
+				}
+				if (port == PORT_2) {
+					FAILED(__LINE__);
+					port = Socket::NOPORT;
+					break;
+				}
+				sock3.mydeallocate(static_cast<Socket::socket_t>(sock3), port);
+				priorport = port;
+				nn++;
+			} while ((++ii) != 0);
+			if (port == Socket::NOPORT) {
+				break;
+			}
+			if (nn != 0x10000UL) {
+				// This is really a failure of the unit test, not the feature
+				// under test.
+				FAILED(__LINE__);
+				break;
+			}
+			PASSED();
+		} while (false);
+		sock3.mydeallocate(static_cast<Socket::socket_t>(sock3), Socket::NOPORT);
+		sock2.mydeallocate(static_cast<Socket::socket_t>(sock2), PORT_2);
+		sock1.mydeallocate(static_cast<Socket::socket_t>(sock1), PORT_1);
+		sock0.mydeallocate(static_cast<Socket::socket_t>(sock0), PORT_0);
+		sock3.close();
+		sock2.close();
+		sock1.close();
+		sock0.close();
 		w5100.stop();
 		spi.stop();
 	}
@@ -2331,6 +2514,12 @@ void UnitTestTask::task() {
 
 int main() __attribute__((OS_main));
 int main() {
+	// Disable the hardware watch dog timer.
+	com::diag::amigo::watchdog::disable();
+
+	// Enable interrupts system-wide.
+	com::diag::amigo::interrupts::enable();
+
 	// The constructor of Scope emits our start up message. You may see this
 	// message more than once, or see some garbage printed before this message.
 	// This is because on a stock Arduino or clone, connecting to the board via
@@ -2343,9 +2532,6 @@ int main() {
 	// During this the bootloader may emit some bytes to talk to avrdude, and
 	// those bytes may be unprintable.
 	Scope scope;
-
-	// Enable interrupts system-wide.
-	com::diag::amigo::interrupts::enable();
 
 	// The fact that main() never exits means local variables allocated on
 	// its stack in its outermost braces never go out of scope. We can take
@@ -2373,7 +2559,7 @@ int main() {
 		}
 		com::diag::amigo::Task::begin();
 		// Should never get here unless the Task::start() or Task::begin()
-		// methods fail, or the Task::begin() methods returns. All are
+		// methods fail, or the Task::begin() method returns. All are
 		// fatal errors.
 	} while (false);
 

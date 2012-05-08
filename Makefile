@@ -99,6 +99,11 @@ SERIAL=/dev/tty.usbmodem441
 BAUD=115200
 FORMAT=cs8
 
+# This IPV4 address and port number are embedded in the unit test suite. So
+# you'll need to change them both here and there.
+TARGETIPADDRESS=192.168.1.253
+TARGETPORTNUMBER=23
+
 ################################################################################
 # HOST
 ################################################################################
@@ -229,6 +234,7 @@ AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/$(TARGET)/Serial.cpp
 AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/$(TARGET)/SPI.cpp
 AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/$(TARGET)/PWM.cpp
 AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/$(TARGET)/unexpected.cpp
+AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/$(TARGET)/watchdog.cpp
 
 # Amigo W5100-specific files
 AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/W5100/Socket.cpp
@@ -474,6 +480,10 @@ upload2:
 	stty -f $(SERIAL) hupcl
 	$(AVRDUDE) -v -C$(AVRDUDE_CONF) -p$(PART) -c$(CONFIG) -P$(SERIAL) -b$(BAUD) -D -Uflash:w:$(BUILD_PLATFORM).hex:i
 
+# This is just like upload2 but uses the AVRISP mkII to do the upload.
+upload3:
+	$(AVRDUDE) -v -C$(AVRDUDE_CONF) -p$(PART) -c$(ISP) -Pusb -D -Uflash:w:$(BUILD_PLATFORM).hex:i
+
 # This uses the bootloader to load the debug image produced by AVR Studio 5.1.
 debug:	$(AVRSTUDIO_DIR)/$(NAME).hex
 	stty -f $(SERIAL) hupcl
@@ -482,8 +492,8 @@ debug:	$(AVRSTUDIO_DIR)/$(NAME).hex
 # This uses the AVRISP mkII to unlock the bootloader, initialize all fuses to
 # Arduino defaults, reflash the bootloader, and relock the bootloader.
 flash:	$(BOOTLOADER_HEX)
-	$(AVRDUDE) -C$(AVRDUDE_CONF) -p$(PART) -c$(ISP) -Pusb -e -Ulock:w:0x3F:m -Uefuse:w:$(EFUSE):m -Uhfuse:w:$(HFUSE):m -Ulfuse:w:$(LFUSE):m
-	$(AVRDUDE) -C$(AVRDUDE_CONF) -p$(PART) -c$(ISP) -Pusb -Uflash:w:$(BOOTLOADER_HEX):i -Ulock:w:0x0F:m 
+	$(AVRDUDE) -C$(AVRDUDE_CONF) -p$(PART) -c$(ISP) -b$(BAUD) -Pusb -e -Ulock:w:0x3F:m -Uefuse:w:$(EFUSE):m -Uhfuse:w:$(HFUSE):m -Ulfuse:w:$(LFUSE):m
+	$(AVRDUDE) -C$(AVRDUDE_CONF) -p$(PART) -c$(ISP) -b$(BAUD) -Pusb -Uflash:w:$(BOOTLOADER_HEX):i -Ulock:w:0x0F:m 
 
 ifeq ($(BUILD_TARGET),FreetronicsEtherMega2560)
 
@@ -498,6 +508,11 @@ enablejtag:
 endif
 
 endif
+
+connect:
+	stty sane dec
+	netcat $(TARGETIPADDRESS) $(TARGETPORTNUMBER)
+	stty sane dec
 
 ################################################################################
 # PATTERNS

@@ -121,6 +121,7 @@ CXXCINLINE uint64_t ntohll(uint64_t datum) {
 namespace com {
 namespace diag {
 namespace amigo {
+namespace byteorder {
 
 // Eclipse doesn't seem to grok the polymorphism of the functions below. This
 // is made more complicated by the fact that the C++ function selection rules
@@ -239,6 +240,7 @@ inline int64_t swapbytesif(int64_t datum) {
 	return (amigo_littleendian64() ? amigo_byteswap64(datum) : datum);
 }
 
+}
 }
 }
 }

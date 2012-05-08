@@ -13,16 +13,6 @@
 #include "com/diag/amigo/target/harvard.h"
 
 /**
- * This is the function from which nothing ever returns. It disables
- * interrupts, takes over the console serial port, prints a message if it can
- * using busy waiting, and infinite loops. This version can be called from
- * either C or C++ translation units.
- * @param file points to a file name in program space, typically PSTR(__FILE__).
- * @param line is a line number, typically __LINE__.
- */
-CXXCAPI void amigo_fatal(PGM_P file, int line);
-
-/**
  * This function prints a warning to the console serial port using busy waiting.
  * While the event it reports is not fatal, it is pretty serious, for example a
  * resource leak or failure in the underlying implementation. This version can
@@ -31,23 +21,32 @@ CXXCAPI void amigo_fatal(PGM_P file, int line);
  * @param line is a line number, typically __LINE__.
  */
 CXXCAPI void amigo_event(PGM_P file, int line);
+/**
+ * This is a function from which nothing ever returns. It disables
+ * interrupts, takes over the console serial port, prints a message if it can
+ * using busy waiting, and attempts to software reset the target. If the
+ * target fails to reset for any reason, this function infinite loops.
+ * This version can be called from either C or C++ translation units.
+ * @param file points to a file name in program space, typically PSTR(__FILE__).
+ * @param line is a line number, typically __LINE__.
+ */
+CXXCAPI void amigo_panic(PGM_P file, int line);
+
+/**
+ * This is a function from which nothing ever returns. It disables
+ * interrupts, takes over the console serial port, prints a message if it can
+ * using busy waiting, and infinite loops. This version can be called from
+ * either C or C++ translation units.
+ * @param file points to a file name in program space, typically PSTR(__FILE__).
+ * @param line is a line number, typically __LINE__.
+ */
+CXXCAPI void amigo_fatal(PGM_P file, int line);
 
 #if defined(__cplusplus)
 
 namespace com {
 namespace diag {
 namespace amigo {
-
-/**
- * This is the function from which nothing ever returns. It disables
- * interrupts, takes over the console serial port, prints a message if it can
- * using busy waiting, and infinite loops.
- * @param file points to a file name in program space, typically PSTR(__FILE__).
- * @param line is a line number, typically __LINE__.
- */
-inline void fatal(PGM_P file, int line) {
-	amigo_fatal(file, line);
-}
 
 /**
  * This function prints a warning to the console serial port using busy waiting.
@@ -59,6 +58,30 @@ inline void fatal(PGM_P file, int line) {
  */
 inline void event(PGM_P file, int line) {
 	amigo_event(file, line);
+}
+
+/**
+ * This is a function from which nothing ever returns. It disables
+ * interrupts, takes over the console serial port, prints a message if it can
+ * using busy waiting, and attempts to software reset the target. If the
+ * target fails to reset for any reason, this function infinite loops.
+ * This version can be called from either C or C++ translation units.
+ * @param file points to a file name in program space, typically PSTR(__FILE__).
+ * @param line is a line number, typically __LINE__.
+ */
+inline void panic(PGM_P file, int line) {
+	amigo_panic(file, line);
+}
+
+/**
+ * This is the function from which nothing ever returns. It disables
+ * interrupts, takes over the console serial port, prints a message if it can
+ * using busy waiting, and infinite loops.
+ * @param file points to a file name in program space, typically PSTR(__FILE__).
+ * @param line is a line number, typically __LINE__.
+ */
+inline void fatal(PGM_P file, int line) {
+	amigo_fatal(file, line);
 }
 
 }

@@ -13,6 +13,7 @@
 #include "FreeRTOS.h"
 #include "semphr.h"
 #include "com/diag/amigo/types.h"
+#include "com/diag/amigo/constants.h"
 #include "com/diag/amigo/unused.h"
 #include "com/diag/amigo/Queue.h"
 
@@ -33,19 +34,6 @@ class BinarySemaphore
 {
 
 public:
-
-	/**
-	 * Defines the timeout value in ticks that causes the application to never
-	 * block waiting for the semaphore to become available, but instead be
-	 * returned an error.
-	 */
-	static const ticks_t IMMEDIATELY = Queue::IMMEDIATELY;
-
-	/**
-	 * Defines the timeout value in ticks that causes the application to block
-	 * indefinitely waiting for the semaphore to become available.
-	 */
-	static const ticks_t NEVER = Queue::NEVER;
 
 	/**
 	 * Constructor.

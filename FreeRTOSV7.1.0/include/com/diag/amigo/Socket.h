@@ -10,7 +10,7 @@
  */
 
 #include "com/diag/amigo/types.h"
-#include "com/diag/amigo/Queue.h"
+#include "com/diag/amigo/constants.h"
 #include "com/diag/amigo/Task.h"
 
 namespace com {
@@ -85,13 +85,18 @@ public:
 	/**
 	 * When we allocate temporary local ports, this is the number we start at.
 	 * We increment it for each additional local port and wrap around when we
-	 * reach 65535 or 0xffff. It is actually fairly important to separate the
+	 * reach MAXIMUMPORT. It is actually fairly important to separate the
 	 * use of the same port number in time: even though we may think the socket
 	 * has been closed, the far end may not have completed closing its own end
 	 * of the connection; reusing the same port number too quickly may look to
-	 * the far end like we're part of the prior connection.
+	 * the far end like we're part of the prior connection. Wackiness may ensue.
 	 */
 	static const port_t LOCALPORT = 4097;
+
+	/**
+	 * This is the largest possible port value, local or otherwise.
+	 */
+	static const port_t MAXIMUMPORT = ~0;
 
 	/**
 	 * Zero is not a valid port number and can be used to indicate no port.
@@ -122,18 +127,9 @@ public:
 	};
 
 	/**
-	 * Defines the timeout value in ticks that causes the application to never
-	 * block waiting for a socket to become connected, but instead be
-	 * returned an error.
+	 * This is the default number of ticks the accept() methods delays between
+	 * checking for socket connections.
 	 */
-	static const ticks_t IMMEDIATELY = Queue::IMMEDIATELY;
-
-	/**
-	 * Defines the timeout value in ticks that causes the application to block
-	 * indefinitely waiting for a socket to become connected.
-	 */
-	static const ticks_t NEVER = Queue::NEVER;
-
 	static const ticks_t ITERATION = 10 /* milliseconds */ / Task::PERIOD;
 
 	/***************************************************************************
@@ -161,6 +157,12 @@ public:
 	 * @param mysocket identifies a specific socket or possibly no socket.
 	 */
 	virtual Socket & operator=(socket_t mysocket) { sock = mysocket; return *this; }
+
+	/**
+	 * Return the socket number for this object.
+	 * @return the socket number for this object.
+	 */
+	virtual operator socket_t() const { return sock; }
 
 	/**
 	 * Return true if this object represents an underlying socket.

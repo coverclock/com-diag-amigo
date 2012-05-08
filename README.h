@@ -1,4 +1,3 @@
-/* vim: set ts=4 expandtab shiftwidth=4: */
 #ifndef _H_COM_DIAG_AMIGO_README_
 #define _H_COM_DIAG_AMIGO_README_
 
@@ -11,7 +10,7 @@
 	LICENSE
 
 	This file is part of the Digital Aggregates Corporation Amigo
-	package.  Software specific to Amigo is licensed under the
+	package. Software specific to Amigo is licensed under the
 	terms specified in this file. Software that is part of or derived
 	directly from the FreeRTOS distribution, the Arduino distribution,
 	or Phillip Stevens' port of FreeRTOS to the Freetronics EtherMega,

@@ -30,8 +30,8 @@ inline void Task::task(Task * that) {
 	that->handle = 0;
 #endif
 	// If task deletion is enabled in FreeRTOS we should never get here. But
-	// whether it is or not, we delay literally forever.
-	while (!0) { delay(FOREVER); }
+	// whether it is or not, we delay indefinitely.
+	while (!0) { delay(EPOCH); }
 }
 
 #if defined(__AVR_3_BYTE_PC__)
