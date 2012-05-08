@@ -1,23 +1,24 @@
 Unit Test Console
-VINTAGE=3.1.0
-332E312E30
+VINTAGE=4.0.0
+342E302E30
 __heap_end=0x0000
 __data_start=0x0200
-__data_end=0x0550
-__bss_start=0x0550
-__bss_end=0x1663
-__trampolines_start=0x126C
-__trampolines_end=0x126C
-__ctors_start=0x1358
-__ctors_end=0x135E
-__dtors_start=0x135E
-__dtors_end=0x1364
-__data_load_start=0xDEC4
-__data_load_end=0xE214
+__data_end=0x0502
+__bss_start=0x0502
+__bss_end=0x1625
+__trampolines_start=0x12C2
+__trampolines_end=0x12C2
+__ctors_start=0x13AE
+__ctors_end=0x13B2
+__dtors_start=0x13B2
+__dtors_end=0x13B6
+__data_load_start=0xF40E
+__data_load_end=0xF710
 PASSED
+Unit Test watchdog external PASSED.
 Unit Test Serial PASSED.
 Unit Test event 
-EVENT: FreeRTOSV7.1.0/Demo/GCC/FreetronicsEtherMega2560/UnitTest/main.cpp@0x014F!
+EVENT: FreeRTOSV7.1.0/Demo/GCC/FreetronicsEtherMega2560/UnitTest/main.cpp@0x01B5!
 PASSED.
 Unit Test Morse PASSED.
 Unit Test Sink
@@ -92,9 +93,9 @@ Unit Test Task PASSED.
 idlestack=72
 timerstack=448
 takerstack=451
-unitteststack=37
+unitteststack=12
 Unit Test heap PASSED.
-freeheap=1776
+freeheap=1819
 Unit Test littleendian and byteorder PASSED.
 Unit Test delay (low precision) PASSED.
 Unit Test busywait (high precision) PASSED.
@@ -120,16 +121,14 @@ Unit Test A2D (specific to Arduino Uno, Mega etc.) PASSED.
 Unit Test Analog Input (requires test fixture on EtherMega) PASSED.
 A0=729=3.5V
 A15=0=0.0V
-Unit Test SPI (sanity) PASSED.
 Unit Test SPI (requires WIZnet W5100) PASSED.
 Unit Test W5100 (requires WIZnet W5100) PASSED.
+Unit Test Socket (requires WIZnet W5100) PASSED.
 Unit Test Socket client (requires internet connectivity) PASSED.
 Unit Test Socket server (requires remote 'netcat 192.168.1.253 23')
-Every good boy does fine.
-PASSED.
+SKIPPED.
 Unit Test errors=0 (so far)
 Unit Test Source (type <control d> to exit)
-England expects each man to do his duty.
-PASSED.
+SKIPPED.
 Unit Test errors=0
 Type <control a><control \>y to exit Mac screen utility.
