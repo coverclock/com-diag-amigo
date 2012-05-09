@@ -16,9 +16,5 @@
 // too far away.
 CXXCAPI void __vector_default(void) __attribute__ ((signal, section (".lowtext"), __INTR_ATTRS));
 CXXCAPI void __vector_default(void) {
-	// I'd really like to display the vector from whence we came. But
-	// experiments in unwinding the stack frame to reach the program counter
-	// for the RETI have thus far not been successful; it doesn't seem like it
-	// should be that hard.
 	com::diag::amigo::fatal(PSTR(__FILE__), __LINE__);
 }

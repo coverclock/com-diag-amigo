@@ -87,7 +87,7 @@ HTTP_URL=http://www.diag.com/navigation/downloads/$(NAME).html
 FTP_URL=http://www.diag.com/ftp/$(PROJECT)-$(MAJOR).$(MINOR).$(FIX).tgz
 SVN_URL=svn://graphite/$(PROJECT)/trunk/$(NAME)
 
-#BUILD_TARGET=ArduinoUno
+#BUILD_TARGET=FreetronicsEtherTen
 BUILD_TARGET=FreetronicsEtherMega2560
 BUILD_HOST=$(shell uname -s)
 BUILD_PLATFORM=UnitTest
@@ -143,7 +143,7 @@ endif
 # TARGET
 ################################################################################
 
-ifeq ($(BUILD_TARGET),ArduinoUno)
+ifeq ($(BUILD_TARGET),FreetronicsEtherTen)
 ARCH=avr
 RELAX=
 CROSS_COMPILE=$(ARCH)-
@@ -234,7 +234,6 @@ AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/$(TARGET)/Serial.cpp
 AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/$(TARGET)/SPI.cpp
 AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/$(TARGET)/PWM.cpp
 AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/$(TARGET)/unexpected.cpp
-AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/$(TARGET)/watchdog.cpp
 
 # Amigo W5100-specific files
 AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/W5100/Socket.cpp

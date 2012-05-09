@@ -396,9 +396,11 @@ void UnitTestTask::task() {
 
 #if 1
 	UNITTEST("watchdog");
+#if defined(JTRF)
 	if ((resetreason & _BV(JTRF)) != 0) {
 		printf(PSTR("JTAG "));
 	}
+#endif
 	if ((resetreason & _BV(WDRF)) != 0) {
 		printf(PSTR("WDT "));
 	}
@@ -451,6 +453,12 @@ void UnitTestTask::task() {
 #if 0
 	UNITTEST("fatal");
 	com::diag::amigo::fatal(PSTR(__FILE__), __LINE__);
+	FAILED(__LINE__);
+#endif
+
+#if 0
+	UNITTEST("restart");
+	com::diag::amigo::watchdog::restart();
 	FAILED(__LINE__);
 #endif
 
@@ -2320,12 +2328,8 @@ void UnitTestTask::task() {
 					FAILED(__LINE__);
 					break;
 				}
-				while (!socket.connected()) {
+				while ((!socket.connected()) && (!socket.closed())) {
 					delay(milliseconds2ticks(10));
-					if (socket.closed()) {
-						FAILED(__LINE__);
-						break;
-					}
 				}
 				if (!socket.connected()) {
 					FAILED(__LINE__);

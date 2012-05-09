@@ -398,7 +398,16 @@ void A2D::adc(uint8_t request) {
 
 	}
 
+// The AVRmega328P has MUX3..MUX0 and we only care about MUX2..MUX0. The
+// AVRmega2560 has MUX5 and MUX4..MUX0 and we only care about MUX5 and
+// MUX2..MUX0. Since we only support single ended inputs, we have to split our
+// four-bit channel number into MUX5 and MUX2..MUX0. The bits MUX4..MUX3 are
+// only used for differential inputs on the AVRmega2560, and for stuff we don't
+// care about on the AVRmega328P. So our channel number is effectively encoded
+// as MUX5 (if it exists), MUX2, MUX1, MUX0. Your mileage may vary.
+#if defined(MUX5)
 	A2DCSRB = (A2DCSRB & ~(1 << MUX5)) | (((channel >> 3) & 0x01) << MUX5);
+#endif
 	A2DMUX = refs | (channel & 0x07);
 	A2DCSRA |= _BV(ADIE);
 	A2DCSRA |= _BV(ADSC);

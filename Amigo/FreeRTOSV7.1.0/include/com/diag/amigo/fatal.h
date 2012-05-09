@@ -20,7 +20,7 @@
  * @param file points to a file name in program space, typically PSTR(__FILE__).
  * @param line is a line number, typically __LINE__.
  */
-CXXCAPI void amigo_event(PGM_P file, int line);
+CXXCAPI void amigo_event(PGM_P file, long line);
 /**
  * This is a function from which nothing ever returns. It disables
  * interrupts, takes over the console serial port, prints a message if it can
@@ -30,7 +30,7 @@ CXXCAPI void amigo_event(PGM_P file, int line);
  * @param file points to a file name in program space, typically PSTR(__FILE__).
  * @param line is a line number, typically __LINE__.
  */
-CXXCAPI void amigo_panic(PGM_P file, int line);
+CXXCAPI void amigo_panic(PGM_P file, long line);
 
 /**
  * This is a function from which nothing ever returns. It disables
@@ -40,7 +40,7 @@ CXXCAPI void amigo_panic(PGM_P file, int line);
  * @param file points to a file name in program space, typically PSTR(__FILE__).
  * @param line is a line number, typically __LINE__.
  */
-CXXCAPI void amigo_fatal(PGM_P file, int line);
+CXXCAPI void amigo_fatal(PGM_P file, long line);
 
 #if defined(__cplusplus)
 
@@ -56,7 +56,7 @@ namespace amigo {
  * @param file points to a file name in program space, typically PSTR(__FILE__).
  * @param line is a line number, typically __LINE__.
  */
-inline void event(PGM_P file, int line) {
+inline void event(PGM_P file, long line) {
 	amigo_event(file, line);
 }
 
@@ -69,7 +69,7 @@ inline void event(PGM_P file, int line) {
  * @param file points to a file name in program space, typically PSTR(__FILE__).
  * @param line is a line number, typically __LINE__.
  */
-inline void panic(PGM_P file, int line) {
+inline void panic(PGM_P file, long line) {
 	amigo_panic(file, line);
 }
 
@@ -80,7 +80,7 @@ inline void panic(PGM_P file, int line) {
  * @param file points to a file name in program space, typically PSTR(__FILE__).
  * @param line is a line number, typically __LINE__.
  */
-inline void fatal(PGM_P file, int line) {
+inline void fatal(PGM_P file, long line) {
 	amigo_fatal(file, line);
 }
 
