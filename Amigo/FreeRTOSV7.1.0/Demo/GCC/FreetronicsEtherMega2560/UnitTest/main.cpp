@@ -43,6 +43,8 @@
 #include "com/diag/amigo/Toggle.h"
 #include "com/diag/amigo/W5100/W5100.h"
 #include "com/diag/amigo/W5100/Socket.h"
+#include "com/diag/amigo/IPV4Address.h"
+#include "com/diag/amigo/MACAddress.h"
 
 extern "C" void vApplicationStackOverflowHook(xTaskHandle pxTask, signed char * pcTaskName);
 
@@ -1611,199 +1613,213 @@ void UnitTestTask::task() {
 #endif
 
 #if 1
+	// This is a separate test because it requires an operator to watch it,
+	// and is specific to the EtherMega 2560 board. It is designed
+	// not to conflict with the test fixture for the Digital I/O (GPIO) test.
+	// OC0A (Arduino Mega pin 13) pre-hard-wired to the red LED on EtherMega.
+	UNITTEST("Analog Output (uses red LED on EtherMega)");
+	do {
+		typedef com::diag::amigo::PWM PWM;
+		typedef com::diag::amigo::GPIO GPIO;
+		// LED turns off (if it was on), slowly brightens to its maximum
+		// intensity, then slowly dims until it is off. This is the simplest
+		// common application of Pulse Width Modulation. I'm betting it's
+		// how your Mac laptop pulses its power LED when it's charging.
+		// Yet I never fail to be amazed by it.
+		if (PWM::arduino2pwm(13) != PWM::PIN_0A) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (PWM::pwm2gpio(PWM::PIN_0A) != GPIO::PIN_B7) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (PWM::pwm2control(PWM::PIN_0A) != &TCCR0A) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (PWM::pwm2outputcompare8(PWM::PIN_0A) != &OCR0A) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (PWM::pwm2outputcompare16(PWM::PIN_0A) != 0) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (PWM::pwm2offset(PWM::PIN_0A) != COM0A1) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (PWM::pwm2mask(PWM::PIN_0A) != _BV(COM0A1)) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (PWM::pwm2timer(PWM::PIN_0A) != PWM::TIMER_0) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (!brightnesscontrol(PWM::arduino2pwm(13), milliseconds2ticks(500))) {
+			FAILED(__LINE__);
+			break;
+		}
+		PASSED();
+	} while (false);
+#endif
+
+#if 0
 	// This is a separate test because it requires a test fixture, an operator
 	// to watch it, and is specific to the EtherMega 2560 board. It is designed
 	// not to conflict with the test fixture for the Digital I/O (GPIO) test.
-	// OC0A (Arduino Mega pin 13) pre-hard-wired to the red LED on EtherMega.
-	// OC4C (Arduino Mega pin 8) wired to voltmeter or logic analyzer.
 	// OC2B (Arduino Mega pin 9) wired to voltmeter or logic analyzer.
-	{
+	UNITTEST("Analog Output Pin 9 (requires operator monitoring)");
+	do {
 		typedef com::diag::amigo::PWM PWM;
 		typedef com::diag::amigo::GPIO GPIO;
-		do {
-			UNITTEST("Analog Output (uses red LED on EtherMega)");
-			// LED turns off (if it was on), slowly brightens to its maximum
-			// intensity, then slowly dims until it is off. This is the simplest
-			// common application of Pulse Width Modulation. I'm betting it's
-			// how your Mac laptop pulses its power LED when it's charging.
-			// Yet I never fail to be amazed by it.
-			if (PWM::arduino2pwm(13) != PWM::PIN_0A) {
-				FAILED(__LINE__);
-				break;
-			}
-			if (PWM::pwm2gpio(PWM::PIN_0A) != GPIO::PIN_B7) {
-				FAILED(__LINE__);
-				break;
-			}
-			if (PWM::pwm2control(PWM::PIN_0A) != &TCCR0A) {
-				FAILED(__LINE__);
-				break;
-			}
-			if (PWM::pwm2outputcompare8(PWM::PIN_0A) != &OCR0A) {
-				FAILED(__LINE__);
-				break;
-			}
-			if (PWM::pwm2outputcompare16(PWM::PIN_0A) != 0) {
-				FAILED(__LINE__);
-				break;
-			}
-			if (PWM::pwm2offset(PWM::PIN_0A) != COM0A1) {
-				FAILED(__LINE__);
-				break;
-			}
-			if (PWM::pwm2mask(PWM::PIN_0A) != _BV(COM0A1)) {
-				FAILED(__LINE__);
-				break;
-			}
-			if (PWM::pwm2timer(PWM::PIN_0A) != PWM::TIMER_0) {
-				FAILED(__LINE__);
-				break;
-			}
-			if (!brightnesscontrol(PWM::arduino2pwm(13), milliseconds2ticks(500))) {
-				FAILED(__LINE__);
-				break;
-			}
-			PASSED();
-		} while (false);
-		do {
-			UNITTEST("Analog Output Pin 9 (requires operator monitoring)");
-			// Zero-volts for a few seconds, half-voltage for a few seconds,
-			// full-voltage for a few seconds, back to half-voltage for a few
-			// seconds, then back to zero-volts. For most Arduinos, like the
-			// Mega and compatibles and the Uno, full-voltage is 5V, but there
-			// are 3.3V Arduinos too.
-			PWM::Pin pin = PWM::arduino2pwm(9);
-			if (pin != PWM::PIN_2B) {
-				FAILED(__LINE__);
-				break;
-			}
-			if (PWM::pwm2gpio(pin) != GPIO::PIN_H6) {
-				FAILED(__LINE__);
-				break;
-			}
-			if (PWM::pwm2control(pin) != &TCCR2A) {
-				FAILED(__LINE__);
-				break;
-			}
-			if (PWM::pwm2outputcompare8(pin) != &OCR2B) {
-				FAILED(__LINE__);
-				break;
-			}
-			if (PWM::pwm2outputcompare16(pin) != 0) {
-				FAILED(__LINE__);
-				break;
-			}
-			if (PWM::pwm2offset(pin) != COM2B1) {
-				FAILED(__LINE__);
-				break;
-			}
-			if (PWM::pwm2mask(pin) != _BV(COM2B1)) {
-				FAILED(__LINE__);
-				break;
-			}
-			if (PWM::pwm2timer(pin) != PWM::TIMER_2) {
-				FAILED(__LINE__);
-				break;
-			}
-			PWM pwm(pin);
-			if (!pwm) {
-				FAILED(__LINE__);
-				break;
-			}
-			if (pwm.prestart() == PWM::NONE) {
-				FAILED(__LINE__);
-				break;
-			}
-			static const com::diag::amigo::ticks_t DELAY = milliseconds2ticks(5000);
-			(*serialp).write('L');
-			pwm.start(PWM::LOW);
-			delay(DELAY);
-			(*serialp).write('M');
-			pwm.start(PWM::HIGH / 2);
-			delay(DELAY);
-			(*serialp).write('H');
-			pwm.start(PWM::HIGH);
-			delay(DELAY);
-			(*serialp).write('M');
-			pwm.start(PWM::HIGH / 2);
-			delay(DELAY);
-			(*serialp).write('L');
-			pwm.start(PWM::LOW);
-			delay(DELAY);
-			(*serialp).write(' ');
-			pwm.stop();
-			PASSED();
-		} while (false);
-		do {
-			UNITTEST("Analog Output Pin 8 (requires operator monitoring)");
-			// Zero-volts for a few seconds, half-voltage for a few seconds,
-			// full-voltage for a few seconds, back to half-voltage for a few
-			// seconds, then back to zero-volts. For most Arduinos, like the
-			// Mega and compatibles and the Uno, full-voltage is 5V, but there
-			// are 3.3V Arduinos too.
-			PWM::Pin pin = PWM::arduino2pwm(8);
-			if (pin != PWM::PIN_4C) {
-				FAILED(__LINE__);
-				break;
-			}
-			if (PWM::pwm2gpio(pin) != GPIO::PIN_H5) {
-				FAILED(__LINE__);
-				break;
-			}
-			if (PWM::pwm2control(pin) != &TCCR4A) {
-				FAILED(__LINE__);
-				break;
-			}
-			if (PWM::pwm2outputcompare8(pin) != 0) {
-				FAILED(__LINE__);
-				break;
-			}
-			if (PWM::pwm2outputcompare16(pin) != &OCR4C) {
-				FAILED(__LINE__);
-				break;
-			}
-			if (PWM::pwm2offset(pin) != COM4C1) {
-				FAILED(__LINE__);
-				break;
-			}
-			if (PWM::pwm2mask(pin) != _BV(COM4C1)) {
-				FAILED(__LINE__);
-				break;
-			}
-			if (PWM::pwm2timer(pin) != PWM::TIMER_4) {
-				FAILED(__LINE__);
-				break;
-			}
-			PWM pwm(pin);
-			if (!pwm) {
-				FAILED(__LINE__);
-				break;
-			}
-			if (pwm.prestart() == PWM::NONE) {
-				FAILED(__LINE__);
-				break;
-			}
-			static const com::diag::amigo::ticks_t DELAY = milliseconds2ticks(5000);
-			(*serialp).write('L');
-			pwm.start(PWM::LOW);
-			delay(DELAY);
-			(*serialp).write('M');
-			pwm.start(PWM::HIGH / 2);
-			delay(DELAY);
-			(*serialp).write('H');
-			pwm.start(PWM::HIGH);
-			delay(DELAY);
-			(*serialp).write('M');
-			pwm.start(PWM::HIGH / 2);
-			delay(DELAY);
-			(*serialp).write('L');
-			pwm.start(PWM::LOW);
-			delay(DELAY);
-			(*serialp).write(' ');
-			pwm.stop(true);
-			PASSED();
-		} while (false);
-	}
+		// Zero-volts for a few seconds, half-voltage for a few seconds,
+		// full-voltage for a few seconds, back to half-voltage for a few
+		// seconds, then back to zero-volts. For most Arduinos, like the
+		// Mega and compatibles and the Uno, full-voltage is 5V, but there
+		// are 3.3V Arduinos too.
+		PWM::Pin pin = PWM::arduino2pwm(9);
+		if (pin != PWM::PIN_2B) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (PWM::pwm2gpio(pin) != GPIO::PIN_H6) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (PWM::pwm2control(pin) != &TCCR2A) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (PWM::pwm2outputcompare8(pin) != &OCR2B) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (PWM::pwm2outputcompare16(pin) != 0) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (PWM::pwm2offset(pin) != COM2B1) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (PWM::pwm2mask(pin) != _BV(COM2B1)) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (PWM::pwm2timer(pin) != PWM::TIMER_2) {
+			FAILED(__LINE__);
+			break;
+		}
+		PWM pwm(pin);
+		if (!pwm) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (pwm.prestart() == PWM::NONE) {
+			FAILED(__LINE__);
+			break;
+		}
+		static const com::diag::amigo::ticks_t DELAY = milliseconds2ticks(5000);
+		(*serialp).write('L');
+		pwm.start(PWM::LOW);
+		delay(DELAY);
+		(*serialp).write('M');
+		pwm.start(PWM::HIGH / 2);
+		delay(DELAY);
+		(*serialp).write('H');
+		pwm.start(PWM::HIGH);
+		delay(DELAY);
+		(*serialp).write('M');
+		pwm.start(PWM::HIGH / 2);
+		delay(DELAY);
+		(*serialp).write('L');
+		pwm.start(PWM::LOW);
+		delay(DELAY);
+		(*serialp).write(' ');
+		pwm.stop();
+		PASSED();
+	} while (false);
+#endif
+
+#if 0
+	// This is a separate test because it requires a test fixture, an operator
+	// to watch it, and is specific to the EtherMega 2560 board. It is designed
+	// not to conflict with the test fixture for the Digital I/O (GPIO) test.
+	// OC4C (Arduino Mega pin 8) wired to voltmeter or logic analyzer.
+	UNITTEST("Analog Output Pin 8 (requires operator monitoring)");
+	do {
+		typedef com::diag::amigo::PWM PWM;
+		typedef com::diag::amigo::GPIO GPIO;
+		// Zero-volts for a few seconds, half-voltage for a few seconds,
+		// full-voltage for a few seconds, back to half-voltage for a few
+		// seconds, then back to zero-volts. For most Arduinos, like the
+		// Mega and compatibles and the Uno, full-voltage is 5V, but there
+		// are 3.3V Arduinos too.
+		PWM::Pin pin = PWM::arduino2pwm(8);
+		if (pin != PWM::PIN_4C) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (PWM::pwm2gpio(pin) != GPIO::PIN_H5) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (PWM::pwm2control(pin) != &TCCR4A) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (PWM::pwm2outputcompare8(pin) != 0) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (PWM::pwm2outputcompare16(pin) != &OCR4C) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (PWM::pwm2offset(pin) != COM4C1) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (PWM::pwm2mask(pin) != _BV(COM4C1)) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (PWM::pwm2timer(pin) != PWM::TIMER_4) {
+			FAILED(__LINE__);
+			break;
+		}
+		PWM pwm(pin);
+		if (!pwm) {
+			FAILED(__LINE__);
+			break;
+		}
+		if (pwm.prestart() == PWM::NONE) {
+			FAILED(__LINE__);
+			break;
+		}
+		static const com::diag::amigo::ticks_t DELAY = milliseconds2ticks(5000);
+		(*serialp).write('L');
+		pwm.start(PWM::LOW);
+		delay(DELAY);
+		(*serialp).write('M');
+		pwm.start(PWM::HIGH / 2);
+		delay(DELAY);
+		(*serialp).write('H');
+		pwm.start(PWM::HIGH);
+		delay(DELAY);
+		(*serialp).write('M');
+		pwm.start(PWM::HIGH / 2);
+		delay(DELAY);
+		(*serialp).write('L');
+		pwm.start(PWM::LOW);
+		delay(DELAY);
+		(*serialp).write(' ');
+		pwm.stop(true);
+		PASSED();
+	} while (false);
 #endif
 
 #if 1
@@ -1922,8 +1938,8 @@ void UnitTestTask::task() {
 			uint16_t sample0 = conversion;
 			// Nominally: (3.3V * 1023) / 5.0V = 675 +/- 10% = 607 .. 742.
 			// Note that the data sheet specifies 1024 instead of 1023. I can't
-			// quite reconcile this in my head, unless it's impossible (and maybe
-			// it is) to read 100% of the reference voltage.
+			// quite reconcile this in my head, unless it's impossible (and
+			// maybe it is) to read 100% of the reference voltage.
 			// Reference: ATmega2560 data sheet, 2549N-AVR-05/11, pp. 288-289
 			if (!((607 <= sample0) && (sample0 <= 742))) {
 				FAILED(__LINE__);
@@ -2118,6 +2134,156 @@ void UnitTestTask::task() {
 		w5100.stop();
 		spi.stop();
 	}
+#endif
+
+#if 1
+	UNITTEST("IPV4Address");
+	do {
+		{
+			{
+				com::diag::amigo::IPV4Address address;
+				if (static_cast<uint32_t>(address) != 0) {
+					FAILED(__LINE__);
+					break;
+				}
+			}
+			{
+				const uint8_t octets[] = { 0xc0, 0xa8, 0x01, 0xfd };
+				com::diag::amigo::IPV4Address address(octets);
+				if (static_cast<uint32_t>(address) != 0xc0a801fdUL) {
+					FAILED(__LINE__);
+					break;
+				}
+			}
+			{
+				com::diag::amigo::IPV4Address address(0xc0a801fdUL);
+				if (static_cast<uint32_t>(address) != 0xc0a801fdUL) {
+					FAILED(__LINE__);
+					break;
+				}
+			}
+			{
+				com::diag::amigo::IPV4Address address(0xc0, 0xa8, 0x01, 0xfd);
+				if (static_cast<uint32_t>(address) != 0xc0a801fdUL) {
+					FAILED(__LINE__);
+					break;
+				}
+			}
+			{
+				com::diag::amigo::IPV4Address address;
+				if (!address.aton("192.168.1.253")) {
+					FAILED(__LINE__);
+					break;
+				}
+				if (static_cast<uint32_t>(address) != 0xc0a801fdUL) {
+					FAILED(__LINE__);
+					break;
+				}
+				char buffer[sizeof("255.255.255.255")];
+				if (address.ntoa(buffer, sizeof(buffer)) != buffer) {
+					FAILED(__LINE__);
+					break;
+				}
+				if (strcmp(buffer, "192.168.1.253") != 0) {
+					FAILED(__LINE__);
+					break;
+				}
+			}
+			{
+				// This isn't canonical but it just happens to work.
+				com::diag::amigo::IPV4Address address;
+				if (!address.aton("0xc0.0xa8.0x01.0xfd")) {
+					FAILED(__LINE__);
+					break;
+				}
+				if (static_cast<uint32_t>(address) != 0xc0a801fdUL) {
+					FAILED(__LINE__);
+					break;
+				}
+			}
+			{
+				com::diag::amigo::IPV4Address address;
+				if (address.aton("www.ibm.com")) {
+					FAILED(__LINE__);
+					break;
+				}
+				if (static_cast<uint32_t>(address) != 0) {
+					FAILED(__LINE__);
+					break;
+				}
+			}
+		}
+		PASSED();
+	} while (false);
+#endif
+
+#if 1
+	UNITTEST("MACAddress");
+	do {
+		{
+			{
+				com::diag::amigo::MACAddress address;
+				if (static_cast<uint64_t>(address) != 0) {
+					FAILED(__LINE__);
+					break;
+				}
+			}
+			{
+				const uint8_t octets[] = { 0x90, 0xa2, 0xda, 0x0d, 0x03, 0x4c };
+				com::diag::amigo::MACAddress address(octets);
+				if (static_cast<uint64_t>(address) != 0x90a2da0d034cULL) {
+					FAILED(__LINE__);
+					break;
+				}
+			}
+			{
+				com::diag::amigo::MACAddress address(0x90a2da0d034cULL);
+				if (static_cast<uint64_t>(address) != 0x90a2da0d034cULL) {
+					FAILED(__LINE__);
+					break;
+				}
+			}
+			{
+				com::diag::amigo::MACAddress address(0x90, 0xa2, 0xda, 0x0d, 0x03, 0x4c);
+				if (static_cast<uint64_t>(address) != 0x90a2da0d034cULL) {
+					FAILED(__LINE__);
+					break;
+				}
+			}
+			{
+				com::diag::amigo::MACAddress address;
+				if (!address.aton("90:a2:da:0d:03:4c")) {
+					FAILED(__LINE__);
+					break;
+				}
+				if (static_cast<uint64_t>(address) != 0x90a2da0d034cULL) {
+					FAILED(__LINE__);
+					break;
+				}
+				char buffer[sizeof("90:a2:da:0d:03:4c")];
+				if (address.ntoa(buffer, sizeof(buffer)) != buffer) {
+					FAILED(__LINE__);
+					break;
+				}
+				if (strcmp(buffer, "90:a2:da:0d:03:4c") != 0) {
+					FAILED(__LINE__);
+					break;
+				}
+			}
+			{
+				com::diag::amigo::MACAddress address;
+				if (address.aton("www.ibm.com")) {
+					FAILED(__LINE__);
+					break;
+				}
+				if (static_cast<uint64_t>(address) != 0) {
+					FAILED(__LINE__);
+					break;
+				}
+			}
+		}
+		PASSED();
+	} while (false);
 #endif
 
 #if 1
@@ -2604,7 +2770,7 @@ int main() {
 
 	do {
 		takertask.start();
-		unittesttask.start();
+		unittesttask.start(600UL);
 		if (takertask != true) {
 			break;
 		}

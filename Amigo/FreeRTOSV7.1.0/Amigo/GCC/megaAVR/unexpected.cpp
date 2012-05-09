@@ -16,5 +16,9 @@
 // too far away.
 CXXCAPI void __vector_default(void) __attribute__ ((signal, section (".lowtext"), __INTR_ATTRS));
 CXXCAPI void __vector_default(void) {
+	// I'd really like to print the vector we came through to get here, but I
+	// don't see a way to do that. The PC on the stack is that of the code
+	// that got the spurious interrupt. AFAICT it would require a separate
+	// function like this one for every single unused vector.
 	com::diag::amigo::fatal(PSTR(__FILE__), __LINE__);
 }
