@@ -45,6 +45,7 @@
 #include "com/diag/amigo/W5100/Socket.h"
 #include "com/diag/amigo/IPV4Address.h"
 #include "com/diag/amigo/MACAddress.h"
+#include "unittest.h"
 
 extern "C" void vApplicationStackOverflowHook(xTaskHandle pxTask, signed char * pcTaskName);
 
@@ -58,27 +59,21 @@ static int errors = 0;
 static uint8_t resetreason = 0;
 
 /*******************************************************************************
- * NETWORK PARAMETERS
+ * PARAMETERS
  ******************************************************************************/
 
-// It's funny, thinking about how to store this stuff. Here, I place
-// them in data space. But they're implicitly copied from program space
-// to data space during run-time initialization. I could put them
-// explicitly in program space. But then I'd have to explicitly copy
-// them to local variables in data space. And then they'd be on the
-// stack, and stack space is precious. This architecture really forces
-// you to think about how stuff works under the hood. "There ain't no such
-// thing as a free lunch" a.k.a. TANSTAAFL [Heinlein, 1966].
+static const char VINTAGE[] PROGMEM = "VINTAGE=" COM_DIAG_AMIGO_VINTAGE;
 
-static const com::diag::amigo::Socket::ipv4address_t GATEWAY[] = { 192, 168, 1, 1 };
-static const com::diag::amigo::Socket::ipv4address_t SUBNET[] = { 255, 255, 255, 0 };
-static const com::diag::amigo::Socket::macaddress_t MACADDRESS[] = { 0x90, 0xa2, 0xda, 0x0d, 0x03, 0x4c };
-static const com::diag::amigo::Socket::ipv4address_t IPADDRESS[] = { 192, 168, 1, 253 };
-static const com::diag::amigo::Socket::ipv4address_t WEBSERVER[] = { 129, 42, 60, 216 }; // www.ibm.com
-static const com::diag::amigo::Socket::port_t HTTP = 80;
-static const com::diag::amigo::Socket::port_t TELNET = 23;
+static const char MACADDRESS[] PROGMEM = COM_DIAG_AMIGO_MACADDRESS;
+static const char GATEWAY[] PROGMEM = COM_DIAG_AMIGO_IPGATEWAY;
+static const char SUBNET[] PROGMEM = COM_DIAG_AMIGO_IPSUBNET;
+static const char IPADDRESS[] PROGMEM = COM_DIAG_AMIGO_IPADDRESS;
+static const char WEBSERVER[] PROGMEM = COM_DIAG_AMIGO_WEBSERVER;
 
-#define SOCKET_SERVER_COMMAND "netcat 192.168.1.253 23"
+static const uint16_t HTTP = 80;
+static const uint16_t TELNET = 23;
+
+#define SOCKET_SERVER_COMMAND "netcat " COM_DIAG_AMIGO_IPADDRESS " 23"
 
 /*******************************************************************************
  * UNIT TEST FRAMEWORK
@@ -99,8 +94,6 @@ static const char UNITTEST_TRACE[] PROGMEM = "TRACE at line %d; ";
 /*******************************************************************************
  * CONSOLE TEST FIXTURE
  ******************************************************************************/
-
-static const char VINTAGE[] PROGMEM = "VINTAGE=" COM_DIAG_AMIGO_VINTAGE;
 
 // This is a good example of how you can access special external symbols
 // defined by the linker script at link time by the application at run time.
@@ -576,6 +569,8 @@ void UnitTestTask::task() {
 		SIZEOF(com::diag::amigo::Dump);
 		SIZEOF(com::diag::amigo::GPIO);
 		SIZEOF(com::diag::amigo::GPIO::Pin);
+		SIZEOF(com::diag::amigo::IPV4Address);
+		SIZEOF(com::diag::amigo::MACAddress);
 		SIZEOF(com::diag::amigo::Morse);
 		SIZEOF(com::diag::amigo::MutexSemaphore);
 		SIZEOF(com::diag::amigo::PeriodicTimer);
@@ -2212,6 +2207,26 @@ void UnitTestTask::task() {
 					break;
 				}
 			}
+			{
+				com::diag::amigo::IPV4Address address;
+				if (!address.aton_P(PSTR("192.168.1.253"))) {
+					FAILED(__LINE__);
+					break;
+				}
+				if (static_cast<uint32_t>(address) != 0xc0a801fdUL) {
+					FAILED(__LINE__);
+					break;
+				}
+				char buffer[sizeof("255.255.255.255")];
+				if (address.ntoa(buffer, sizeof(buffer)) != buffer) {
+					FAILED(__LINE__);
+					break;
+				}
+				if (strcmp(buffer, "192.168.1.253") != 0) {
+					FAILED(__LINE__);
+					break;
+				}
+			}
 		}
 		PASSED();
 	} while (false);
@@ -2272,11 +2287,20 @@ void UnitTestTask::task() {
 			}
 			{
 				com::diag::amigo::MACAddress address;
-				if (address.aton("www.ibm.com")) {
+				if (!address.aton_P(PSTR("90:a2:da:0d:03:4c"))) {
 					FAILED(__LINE__);
 					break;
 				}
-				if (static_cast<uint64_t>(address) != 0) {
+				if (static_cast<uint64_t>(address) != 0x90a2da0d034cULL) {
+					FAILED(__LINE__);
+					break;
+				}
+				char buffer[sizeof("90:a2:da:0d:03:4c")];
+				if (address.ntoa(buffer, sizeof(buffer)) != buffer) {
+					FAILED(__LINE__);
+					break;
+				}
+				if (strcmp(buffer, "90:a2:da:0d:03:4c") != 0) {
 					FAILED(__LINE__);
 					break;
 				}
@@ -2303,10 +2327,10 @@ void UnitTestTask::task() {
 		do {
 			spi.start();
 			w5100.start();
-			w5100.setGatewayIp(GATEWAY);
-			w5100.setSubnetMask(SUBNET);
-			w5100.setMACAddress(MACADDRESS);
-			w5100.setIPAddress(IPADDRESS);
+			w5100.setMACAddress(com::diag::amigo::IPV4Address_P(MACADDRESS));
+			w5100.setIPAddress(com::diag::amigo::IPV4Address_P(IPADDRESS));
+			w5100.setGatewayIp(com::diag::amigo::IPV4Address_P(GATEWAY));
+			w5100.setSubnetMask(com::diag::amigo::IPV4Address_P(SUBNET));
 			successful = sock0.socket();
 			if (!successful) {
 				FAILED(__LINE__);
@@ -2461,10 +2485,10 @@ void UnitTestTask::task() {
 			do {
 				spi.start();
 				w5100.start();
-				w5100.setGatewayIp(GATEWAY);
-				w5100.setSubnetMask(SUBNET);
-				w5100.setMACAddress(MACADDRESS);
-				w5100.setIPAddress(IPADDRESS);
+				w5100.setMACAddress(com::diag::amigo::IPV4Address_P(MACADDRESS));
+				w5100.setIPAddress(com::diag::amigo::IPV4Address_P(IPADDRESS));
+				w5100.setGatewayIp(com::diag::amigo::IPV4Address_P(GATEWAY));
+				w5100.setSubnetMask(com::diag::amigo::IPV4Address_P(SUBNET));
 				if (socket) {
 					FAILED(__LINE__);
 					break;
@@ -2490,7 +2514,7 @@ void UnitTestTask::task() {
 					FAILED(__LINE__);
 					break;
 				}
-				if (!socket.connect(WEBSERVER, HTTP)) {
+				if (!socket.connect(com::diag::amigo::IPV4Address_P(WEBSERVER), HTTP)) {
 					FAILED(__LINE__);
 					break;
 				}
@@ -2567,10 +2591,10 @@ void UnitTestTask::task() {
 			do {
 				spi.start();
 				w5100.start();
-				w5100.setGatewayIp(GATEWAY);
-				w5100.setSubnetMask(SUBNET);
-				w5100.setMACAddress(MACADDRESS);
-				w5100.setIPAddress(IPADDRESS);
+				w5100.setMACAddress(com::diag::amigo::IPV4Address_P(MACADDRESS));
+				w5100.setIPAddress(com::diag::amigo::IPV4Address_P(IPADDRESS));
+				w5100.setGatewayIp(com::diag::amigo::IPV4Address_P(GATEWAY));
+				w5100.setSubnetMask(com::diag::amigo::IPV4Address_P(SUBNET));
 				if (socket) {
 					FAILED(__LINE__);
 					break;
@@ -2770,7 +2794,7 @@ int main() {
 
 	do {
 		takertask.start();
-		unittesttask.start(600UL);
+		unittesttask.start(700);
 		if (takertask != true) {
 			break;
 		}

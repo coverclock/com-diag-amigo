@@ -34,21 +34,28 @@ bool MACAddress::aton(const char * string) {
 		string = end + 1;
 		long f = strtol(string, &end, 16);
 		if ((f > 255) || (*end != '\0')) { break; }
-		bytes[0] = 0;
-		bytes[1] = 0;
-		bytes[2] = a;
-		bytes[3] = b;
-		bytes[4] = c;
-		bytes[5] = d;
-		bytes[6] = e;
-		bytes[7] = f;
+		payload.bytes[0] = 0;
+		payload.bytes[1] = 0;
+		payload.bytes[2] = a;
+		payload.bytes[3] = b;
+		payload.bytes[4] = c;
+		payload.bytes[5] = d;
+		payload.bytes[6] = e;
+		payload.bytes[7] = f;
 		return true;
 	} while (false);
 	return false;
 }
 
+bool MACAddress::aton_P(PGM_P pstring) {
+	char string[sizeof("XX:XX:XX:XX:XX:XX")];
+	strncpy_P(string, pstring, sizeof(string));
+	string[sizeof(string) - 1] = '\0';
+	return aton(string);
+}
+
 const char * MACAddress::ntoa(char * buffer, size_t length) {
-	snprintf(buffer, length, "%2.2x:%2.2x:%2.2x:%2.2x:%2.2x:%2.2x", bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7]);
+	snprintf(buffer, length, "%2.2x:%2.2x:%2.2x:%2.2x:%2.2x:%2.2x", payload.bytes[2], payload.bytes[3], payload.bytes[4], payload.bytes[5], payload.bytes[6], payload.bytes[7]);
 	buffer[length - 1] = '\0';
 	return buffer;
 }

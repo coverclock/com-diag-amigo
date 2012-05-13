@@ -28,17 +28,24 @@ bool IPV4Address::aton(const char * string) {
 		string = end + 1;
 		long d = strtol(string, &end, 0);
 		if ((d > 255) || (*end != '\0')) { break; }
-		bytes[0] = a;
-		bytes[1] = b;
-		bytes[2] = c;
-		bytes[3] = d;
+		payload.bytes[0] = a;
+		payload.bytes[1] = b;
+		payload.bytes[2] = c;
+		payload.bytes[3] = d;
 		return true;
 	} while (false);
 	return false;
 }
 
+bool IPV4Address::aton_P(PGM_P pstring) {
+	char string[sizeof("NNN.NNN.NNN.NNN")];
+	strncpy_P(string, pstring, sizeof(string));
+	string[sizeof(string) - 1] = '\0';
+	return aton(string);
+}
+
 const char * IPV4Address::ntoa(char * buffer, size_t length) {
-	snprintf(buffer, length, "%u.%u.%u.%u", bytes[0], bytes[1], bytes[2], bytes[3]);
+	snprintf(buffer, length, "%u.%u.%u.%u", payload.bytes[0], payload.bytes[1], payload.bytes[2], payload.bytes[3]);
 	buffer[length - 1] = '\0';
 	return buffer;
 }

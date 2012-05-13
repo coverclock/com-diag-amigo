@@ -80,7 +80,7 @@ PROJECT=amigo
 NAME=Amigo
 
 MAJOR=4
-MINOR=2
+MINOR=3
 FIX=0
 
 HTTP_URL=http://www.diag.com/navigation/downloads/$(NAME).html
@@ -92,17 +92,20 @@ BUILD_TARGET=FreetronicsEtherMega2560
 BUILD_HOST=$(shell uname -s)
 BUILD_PLATFORM=UnitTest
 
-# SERIAL will depend on, for example, into which port you plug your USB cable.
+# What works here depends on what USB port you plug the Arduino cable into.
+# Your mileage will absolutely vary.
 #SERIAL=/dev/tty.usbmodem26421
 #SERIAL=/dev/tty.usbmodem411
-SERIAL=/dev/tty.usbmodem441
+#SERIAL=/dev/tty.usbmodem441
+SERIAL=/dev/tty.usbmodem621
 BAUD=115200
 FORMAT=cs8
 
-# This IPV4 address and port number are embedded in the unit test suite. So
-# you'll need to change them both here and there.
+TARGETMACADDRESS=90:a2:da:0d:03:4c
 TARGETIPADDRESS=192.168.1.253
-TARGETPORTNUMBER=23
+TARGETIPGATEWAY=192.168.1.1
+TARGETIPSUBNET=255.255.255.0
+TARGETWEBSERVER=$(shell eval "host arduino.cc | head -1 | cut -d\  -f 4")
 
 ################################################################################
 # HOST
@@ -294,7 +297,7 @@ CXXDIALECT=-fno-exceptions -ffunction-sections -fdata-sections -funsigned-char -
 CDEBUG=-g
 CWARN=-Wall
 CTUNING=-fno-exceptions -ffunction-sections -fdata-sections -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums# -mrelax
-CPPFLAGS=$(CARCH) -DF_CPU=$(FREQUENCY) -DARDUINO=$(ARDUINO) $(INCLUDES) -DCOM_DIAG_AMIGO_VINTAGE="\"$(MAJOR).$(MINOR).$(FIX)\""
+CPPFLAGS=$(CARCH) -DF_CPU=$(FREQUENCY) -DARDUINO=$(ARDUINO) $(INCLUDES)
 CFLAGS=$(CDIALECT) $(CDEBUG) -O$(OPT) $(CWARN) $(CEXTRA)
 CXXFLAGS=$(CXXDIALECT) $(CDEBUG) -O$(OPT) $(CWARN) $(CXXEXTRA)
 LDFLAGS=$(CARCH) $(RELAX) -O$(OPT) -Wl,--gc-sections
@@ -338,6 +341,22 @@ $(BUILD_PLATFORM).elf:	$(OFILES)
 
 $(FREERTOS_DIR)/include/com/diag/amigo/target:	$(FREERTOS_DIR)/include/com/diag/amigo/$(TARGET)
 	( cd $(FREERTOS_DIR)/include/com/diag/amigo; ln -f -s $(TARGET) target )
+
+PHONY+=parameters
+
+parameters $(FREERTOS_DIR)/Demo/$(TOOLCHAIN)/$(BOARD)/$(BUILD_PLATFORM)/unittest.h:
+	cp /dev/null $(FREERTOS_DIR)/Demo/$(TOOLCHAIN)/$(BOARD)/$(BUILD_PLATFORM)/unittest.h
+	echo "#define COM_DIAG_AMIGO_VINTAGE \"$(MAJOR).$(MINOR).$(FIX)\"" >> $(FREERTOS_DIR)/Demo/$(TOOLCHAIN)/$(BOARD)/$(BUILD_PLATFORM)/unittest.h
+	echo "#define COM_DIAG_AMIGO_TARGET \"$(BUILD_TARGET)\"" >> $(FREERTOS_DIR)/Demo/$(TOOLCHAIN)/$(BOARD)/$(BUILD_PLATFORM)/unittest.h
+	echo "#define COM_DIAG_AMIGO_HOST \"$(BUILD_HOST)\"" >> $(FREERTOS_DIR)/Demo/$(TOOLCHAIN)/$(BOARD)/$(BUILD_PLATFORM)/unittest.h
+	echo "#define COM_DIAG_AMIGO_PLATFORM \"$(BUILD_PLATFORM)\"" >> $(FREERTOS_DIR)/Demo/$(TOOLCHAIN)/$(BOARD)/$(BUILD_PLATFORM)/unittest.h
+	echo "#define COM_DIAG_AMIGO_MACADDRESS \"$(TARGETMACADDRESS)\"" >> $(FREERTOS_DIR)/Demo/$(TOOLCHAIN)/$(BOARD)/$(BUILD_PLATFORM)/unittest.h
+	echo "#define COM_DIAG_AMIGO_IPADDRESS \"$(TARGETIPADDRESS)\"" >> $(FREERTOS_DIR)/Demo/$(TOOLCHAIN)/$(BOARD)/$(BUILD_PLATFORM)/unittest.h
+	echo "#define COM_DIAG_AMIGO_IPSUBNET \"$(TARGETIPSUBNET)\"" >> $(FREERTOS_DIR)/Demo/$(TOOLCHAIN)/$(BOARD)/$(BUILD_PLATFORM)/unittest.h
+	echo "#define COM_DIAG_AMIGO_IPGATEWAY \"$(TARGETIPGATEWAY)\"" >> $(FREERTOS_DIR)/Demo/$(TOOLCHAIN)/$(BOARD)/$(BUILD_PLATFORM)/unittest.h
+	echo "#define COM_DIAG_AMIGO_WEBSERVER \"$(TARGETWEBSERVER)\"" >> $(FREERTOS_DIR)/Demo/$(TOOLCHAIN)/$(BOARD)/$(BUILD_PLATFORM)/unittest.h
+	
+ARTIFACTS+=$(FREERTOS_DIR)/Demo/$(TOOLCHAIN)/$(BOARD)/$(BUILD_PLATFORM)/unittest.h
 
 ################################################################################
 # DEPENDENCIES
@@ -411,11 +430,6 @@ manpages:
 ################################################################################
 
 PHONY+=parameters verify backup bundle path implicit
-
-parameters:
-	@echo BUILD_TARGET=$(BUILD_TARGET)
-	@echo BUILD_HOST=$(BUILD_HOST)
-	@echo BUILD_PLATFORM=$(BUILD_PLATFORM)
 
 verify:	$(CFILES) $(CXXFILES) $(HDIRECTORIES)
 
@@ -512,7 +526,7 @@ endif
 
 connect:
 	stty sane dec
-	netcat $(TARGETIPADDRESS) $(TARGETPORTNUMBER)
+	netcat $(TARGETIPADDRESS) 23
 	stty sane dec
 
 ################################################################################
