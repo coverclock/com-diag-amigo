@@ -14,19 +14,41 @@ namespace com {
 namespace diag {
 namespace amigo {
 
+// This is based on code from Diminuto::ipcalc.c.
+IPV4Address::Word IPV4Address::netmask(Word address) {
+    if ((address & 0x80000000UL) == 0x00000000UL) {
+    	address = 0xff000000UL;
+    } else if ((address & 0xc0000000UL) == 0x80000000UL) {
+    	address = 0xffff0000UL;
+    } else {
+    	address = 0xffffff00UL;
+    }
+    return address;
+}
+
+// This is based on code from Diminuto::ipcalc.c.
+IPV4Address::Word IPV4Address::broadcast(Word address, Word netmask) {
+    return (address & netmask) | ((~0) ^ netmask);
+}
+
+// This is based on code from Diminuto::ipcalc.c.
+IPV4Address::Word IPV4Address::address(Word address, Word netmask, Word hostpart) {
+	return (address & netmask) | (hostpart & (~netmask));
+}
+
 bool IPV4Address::aton(const char * string) {
 	do {
 		char * end;
-		long a = strtol(string, &end, 0);
+		long a = strtol(string, &end, 10);
 		if ((a > 255) || (*end != '.')) { break; }
 		string = end + 1;
-		long b = strtol(string, &end, 0);
+		long b = strtol(string, &end, 10);
 		if ((b > 255) || (*end != '.')) { break; }
 		string = end + 1;
-		long c = strtol(string, &end, 0);
+		long c = strtol(string, &end, 10);
 		if ((c > 255) || (*end != '.')) { break; }
 		string = end + 1;
-		long d = strtol(string, &end, 0);
+		long d = strtol(string, &end, 10);
 		if ((d > 255) || (*end != '\0')) { break; }
 		payload.bytes[0] = a;
 		payload.bytes[1] = b;

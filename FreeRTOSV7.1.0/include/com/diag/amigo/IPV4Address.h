@@ -35,6 +35,38 @@ public:
 	typedef uint32_t Word;
 
 	/**
+	 * Given a word containing an IPV4 address, generate a word containing
+	 * the standard default network mask for that class of IPV4 address.
+	 * @param address is an IPV4 address in host byte order.
+	 * @return a network mask in host byte order.
+	 */
+	static Word netmask(Word address);
+
+	/**
+	 * Given a word containing an IPV4 address, and a word containing a
+	 * network mask, generate a word containing the standard broadcast
+	 * address.
+	 * @param address is an IPV4 address in host byte order.
+	 * @param netmask is a network mask in host byte order.
+	 * @return a broadcast address in host byte order.
+	 */
+	static Word broadcast(Word address, Word netmask);
+
+	/**
+	 * given a word containing an IPV4 address, a word containing a
+	 * network mask, and a word containing the host part of a new address,
+	 * generate a new IPV4 address in the same subnetwork. For example, if
+	 * the host part represents 0.0.0.1, this could result in a gateway address.
+	 * If the host part represents 0.0.0.0, this could result in a subnetwork
+	 * number.
+	 * @param address is an IPV4 address in host byte order.
+	 * @param netmask is a network mask in host byte order.
+	 * @param hostpart is a host part of a new address in host byte order.
+	 * @return a new IPV4 address on the same subnetwork in host byte order.
+	 */
+	static Word address(Word address, Word netmask, Word hostpart);
+
+	/**
 	 * Constructor.
 	 * The constructed address is the "no address".
 	 */
@@ -138,6 +170,10 @@ protected:
 
 class IPV4Address_P : public IPV4Address {
 public: IPV4Address_P(PGM_P string) { aton_P(string); }
+};
+
+class IPV4Address_D : public IPV4Address {
+public: IPV4Address_D(const char * string) { aton(string); }
 };
 
 }

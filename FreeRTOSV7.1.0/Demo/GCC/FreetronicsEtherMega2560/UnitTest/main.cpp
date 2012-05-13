@@ -570,7 +570,11 @@ void UnitTestTask::task() {
 		SIZEOF(com::diag::amigo::GPIO);
 		SIZEOF(com::diag::amigo::GPIO::Pin);
 		SIZEOF(com::diag::amigo::IPV4Address);
+		SIZEOF(com::diag::amigo::IPV4Address_D);
+		SIZEOF(com::diag::amigo::IPV4Address_P);
 		SIZEOF(com::diag::amigo::MACAddress);
+		SIZEOF(com::diag::amigo::MACAddress_D);
+		SIZEOF(com::diag::amigo::MACAddress_P);
 		SIZEOF(com::diag::amigo::Morse);
 		SIZEOF(com::diag::amigo::MutexSemaphore);
 		SIZEOF(com::diag::amigo::PeriodicTimer);
@@ -2145,32 +2149,32 @@ void UnitTestTask::task() {
 			{
 				const uint8_t octets[] = { 0xc0, 0xa8, 0x01, 0xfd };
 				com::diag::amigo::IPV4Address address(octets);
-				if (static_cast<uint32_t>(address) != 0xc0a801fdUL) {
+				if (address != 0xc0a801fdUL) {
 					FAILED(__LINE__);
 					break;
 				}
 			}
 			{
-				com::diag::amigo::IPV4Address address(0xc0a801fdUL);
-				if (static_cast<uint32_t>(address) != 0xc0a801fdUL) {
+				com::diag::amigo::IPV4Address address(0xc0a802fcUL);
+				if (address != 0xc0a802fcUL) {
 					FAILED(__LINE__);
 					break;
 				}
 			}
 			{
-				com::diag::amigo::IPV4Address address(0xc0, 0xa8, 0x01, 0xfd);
-				if (static_cast<uint32_t>(address) != 0xc0a801fdUL) {
+				com::diag::amigo::IPV4Address address(0xc0, 0xa8, 0x03, 0xfb);
+				if (address != 0xc0a803fbUL) {
 					FAILED(__LINE__);
 					break;
 				}
 			}
 			{
 				com::diag::amigo::IPV4Address address;
-				if (!address.aton("192.168.1.253")) {
+				if (!address.aton("192.168.3.250")) {
 					FAILED(__LINE__);
 					break;
 				}
-				if (static_cast<uint32_t>(address) != 0xc0a801fdUL) {
+				if (address != 0xc0a803faUL) {
 					FAILED(__LINE__);
 					break;
 				}
@@ -2179,50 +2183,52 @@ void UnitTestTask::task() {
 					FAILED(__LINE__);
 					break;
 				}
-				if (strcmp(buffer, "192.168.1.253") != 0) {
-					FAILED(__LINE__);
-					break;
-				}
-			}
-			{
-				// This isn't canonical but it just happens to work.
-				com::diag::amigo::IPV4Address address;
-				if (!address.aton("0xc0.0xa8.0x01.0xfd")) {
-					FAILED(__LINE__);
-					break;
-				}
-				if (static_cast<uint32_t>(address) != 0xc0a801fdUL) {
+				if (strcmp(buffer, "192.168.3.250") != 0) {
 					FAILED(__LINE__);
 					break;
 				}
 			}
 			{
 				com::diag::amigo::IPV4Address address;
-				if (address.aton("www.ibm.com")) {
+				if (!address.aton_P(PSTR("192.168.4.249"))) {
 					FAILED(__LINE__);
 					break;
 				}
-				if (static_cast<uint32_t>(address) != 0) {
+				if (address != 0xc0a804f9UL) {
 					FAILED(__LINE__);
 					break;
 				}
 			}
 			{
-				com::diag::amigo::IPV4Address address;
-				if (!address.aton_P(PSTR("192.168.1.253"))) {
+				com::diag::amigo::IPV4Address_P address(PSTR("192.168.5.248"));
+				if (address != 0xc0a805f8UL) {
 					FAILED(__LINE__);
 					break;
 				}
-				if (static_cast<uint32_t>(address) != 0xc0a801fdUL) {
+			}
+			{
+				com::diag::amigo::IPV4Address_D address("192.168.6.247");
+				if (address != 0xc0a806f7UL) {
 					FAILED(__LINE__);
 					break;
 				}
-				char buffer[sizeof("255.255.255.255")];
-				if (address.ntoa(buffer, sizeof(buffer)) != buffer) {
+				com::diag::amigo::IPV4Address netmask(com::diag::amigo::IPV4Address::netmask(address));
+				if (netmask != 0xffffff00UL) {
 					FAILED(__LINE__);
 					break;
 				}
-				if (strcmp(buffer, "192.168.1.253") != 0) {
+				com::diag::amigo::IPV4Address broadcast(com::diag::amigo::IPV4Address::broadcast(address, netmask));
+				if (broadcast != 0xc0a806ff) {
+					FAILED(__LINE__);
+					break;
+				}
+				com::diag::amigo::IPV4Address subnet(com::diag::amigo::IPV4Address::address(address, netmask, 0));
+				if (subnet != 0xc0a80600) {
+					FAILED(__LINE__);
+					break;
+				}
+				com::diag::amigo::IPV4Address gateway(com::diag::amigo::IPV4Address::address(address, netmask, 246));
+				if (gateway != 0xc0a806f6) {
 					FAILED(__LINE__);
 					break;
 				}
@@ -2246,61 +2252,66 @@ void UnitTestTask::task() {
 			{
 				const uint8_t octets[] = { 0x90, 0xa2, 0xda, 0x0d, 0x03, 0x4c };
 				com::diag::amigo::MACAddress address(octets);
-				if (static_cast<uint64_t>(address) != 0x90a2da0d034cULL) {
+				if (address != 0x90a2da0d034cULL) {
 					FAILED(__LINE__);
 					break;
 				}
 			}
 			{
-				com::diag::amigo::MACAddress address(0x90a2da0d034cULL);
-				if (static_cast<uint64_t>(address) != 0x90a2da0d034cULL) {
+				com::diag::amigo::MACAddress address(0x91a2da0d034cULL);
+				if (address != 0x91a2da0d034cULL) {
 					FAILED(__LINE__);
 					break;
 				}
 			}
 			{
-				com::diag::amigo::MACAddress address(0x90, 0xa2, 0xda, 0x0d, 0x03, 0x4c);
-				if (static_cast<uint64_t>(address) != 0x90a2da0d034cULL) {
-					FAILED(__LINE__);
-					break;
-				}
-			}
-			{
-				com::diag::amigo::MACAddress address;
-				if (!address.aton("90:a2:da:0d:03:4c")) {
-					FAILED(__LINE__);
-					break;
-				}
-				if (static_cast<uint64_t>(address) != 0x90a2da0d034cULL) {
-					FAILED(__LINE__);
-					break;
-				}
-				char buffer[sizeof("90:a2:da:0d:03:4c")];
-				if (address.ntoa(buffer, sizeof(buffer)) != buffer) {
-					FAILED(__LINE__);
-					break;
-				}
-				if (strcmp(buffer, "90:a2:da:0d:03:4c") != 0) {
+				com::diag::amigo::MACAddress address(0x92, 0xa2, 0xda, 0x0d, 0x03, 0x4c);
+				if (address != 0x92a2da0d034cULL) {
 					FAILED(__LINE__);
 					break;
 				}
 			}
 			{
 				com::diag::amigo::MACAddress address;
-				if (!address.aton_P(PSTR("90:a2:da:0d:03:4c"))) {
+				if (!address.aton("93:a2:da:0d:03:4c")) {
 					FAILED(__LINE__);
 					break;
 				}
-				if (static_cast<uint64_t>(address) != 0x90a2da0d034cULL) {
+				if (address != 0x93a2da0d034cULL) {
 					FAILED(__LINE__);
 					break;
 				}
-				char buffer[sizeof("90:a2:da:0d:03:4c")];
+				char buffer[sizeof("93:a2:da:0d:03:4c")];
 				if (address.ntoa(buffer, sizeof(buffer)) != buffer) {
 					FAILED(__LINE__);
 					break;
 				}
-				if (strcmp(buffer, "90:a2:da:0d:03:4c") != 0) {
+				if (strcmp(buffer, "93:a2:da:0d:03:4c") != 0) {
+					FAILED(__LINE__);
+					break;
+				}
+			}
+			{
+				com::diag::amigo::MACAddress address;
+				if (!address.aton_P(PSTR("94:a2:da:0d:03:4c"))) {
+					FAILED(__LINE__);
+					break;
+				}
+				if (address != 0x94a2da0d034cULL) {
+					FAILED(__LINE__);
+					break;
+				}
+			}
+			{
+				com::diag::amigo::MACAddress_P address(PSTR("95:a2:da:0d:03:4c"));
+				if (address != 0x95a2da0d034cULL) {
+					FAILED(__LINE__);
+					break;
+				}
+			}
+			{
+				com::diag::amigo::MACAddress_D address("96:a2:da:0d:03:4c");
+				if (address != 0x96a2da0d034cULL) {
 					FAILED(__LINE__);
 					break;
 				}
