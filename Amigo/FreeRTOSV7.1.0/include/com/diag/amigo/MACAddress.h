@@ -148,6 +148,10 @@ class MACAddress_P : public MACAddress {
 public: MACAddress_P(PGM_P string) { aton_P(string); }
 };
 
+class MACAddress_D : public MACAddress {
+public: MACAddress_D(const char * string) { aton(string); }
+};
+
 }
 }
 }
