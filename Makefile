@@ -84,8 +84,12 @@ MINOR=4
 FIX=0
 
 HTTP_URL=http://www.diag.com/navigation/downloads/$(NAME).html
-FTP_URL=http://www.diag.com/ftp/$(PROJECT)-$(MAJOR).$(MINOR).$(FIX).tgz
+FTP_URL=ftp://www.diag.com/ftp/$(PROJECT)-$(MAJOR).$(MINOR).$(FIX).tgz
 SVN_URL=svn://graphite/$(PROJECT)/trunk/$(NAME)
+
+################################################################################
+# PARAMETERS
+################################################################################
 
 #BUILD_TARGET=FreetronicsEtherTen
 BUILD_TARGET=FreetronicsEtherMega2560
@@ -101,11 +105,20 @@ SERIAL=/dev/tty.usbmodem621
 BAUD=115200
 FORMAT=cs8
 
-TARGETMACADDRESS=90:a2:da:0d:03:4c
-TARGETIPADDRESS=192.168.1.253
-TARGETIPGATEWAY=192.168.1.1
-TARGETIPSUBNET=255.255.255.0
-TARGETWEBSERVER=$(shell eval "host arduino.cc | head -1 | cut -d\  -f 4")
+# These values are used by the Unit Test suite. Amigo doesn't currently support
+# DHCP (although that is a very good idea) so we have to configure it with
+# a static IPV4 address. "make connect" will try to talk to the target at this
+# address using the netcat utility (if you have it) over port 23 (TELNET)
+# for the Socket server unit test. You can use TELNET as well, although it sends
+# a lot of terminal-setup stuff that the Unit Test won't understand. The target
+# will try to talk to the specified web server during the Socket client unit
+# test. Amigo currently doesn't support DNS lookups (although that is a very
+# good idea) so we have to configure it with the IPV4 address of the web server.
+TARGET_MACADDRESS=90:a2:da:0d:03:4c
+TARGET_IPADDRESS=192.168.1.253
+TARGET_IPGATEWAY=192.168.1.1
+TARGET_IPSUBNET=255.255.255.0
+TARGET_WEBSERVER=$(shell eval "host arduino.cc | head -1 | cut -d\  -f 4")
 
 ################################################################################
 # HOST
@@ -351,11 +364,11 @@ parameters $(FREERTOS_DIR)/Demo/$(TOOLCHAIN)/$(BOARD)/$(BUILD_PLATFORM)/unittest
 	echo "#define COM_DIAG_AMIGO_TARGET \"$(BUILD_TARGET)\"" >> $(FREERTOS_DIR)/Demo/$(TOOLCHAIN)/$(BOARD)/$(BUILD_PLATFORM)/unittest.h
 	echo "#define COM_DIAG_AMIGO_HOST \"$(BUILD_HOST)\"" >> $(FREERTOS_DIR)/Demo/$(TOOLCHAIN)/$(BOARD)/$(BUILD_PLATFORM)/unittest.h
 	echo "#define COM_DIAG_AMIGO_PLATFORM \"$(BUILD_PLATFORM)\"" >> $(FREERTOS_DIR)/Demo/$(TOOLCHAIN)/$(BOARD)/$(BUILD_PLATFORM)/unittest.h
-	echo "#define COM_DIAG_AMIGO_MACADDRESS \"$(TARGETMACADDRESS)\"" >> $(FREERTOS_DIR)/Demo/$(TOOLCHAIN)/$(BOARD)/$(BUILD_PLATFORM)/unittest.h
-	echo "#define COM_DIAG_AMIGO_IPADDRESS \"$(TARGETIPADDRESS)\"" >> $(FREERTOS_DIR)/Demo/$(TOOLCHAIN)/$(BOARD)/$(BUILD_PLATFORM)/unittest.h
-	echo "#define COM_DIAG_AMIGO_IPSUBNET \"$(TARGETIPSUBNET)\"" >> $(FREERTOS_DIR)/Demo/$(TOOLCHAIN)/$(BOARD)/$(BUILD_PLATFORM)/unittest.h
-	echo "#define COM_DIAG_AMIGO_IPGATEWAY \"$(TARGETIPGATEWAY)\"" >> $(FREERTOS_DIR)/Demo/$(TOOLCHAIN)/$(BOARD)/$(BUILD_PLATFORM)/unittest.h
-	echo "#define COM_DIAG_AMIGO_WEBSERVER \"$(TARGETWEBSERVER)\"" >> $(FREERTOS_DIR)/Demo/$(TOOLCHAIN)/$(BOARD)/$(BUILD_PLATFORM)/unittest.h
+	echo "#define COM_DIAG_AMIGO_MACADDRESS \"$(TARGET_MACADDRESS)\"" >> $(FREERTOS_DIR)/Demo/$(TOOLCHAIN)/$(BOARD)/$(BUILD_PLATFORM)/unittest.h
+	echo "#define COM_DIAG_AMIGO_IPADDRESS \"$(TARGET_IPADDRESS)\"" >> $(FREERTOS_DIR)/Demo/$(TOOLCHAIN)/$(BOARD)/$(BUILD_PLATFORM)/unittest.h
+	echo "#define COM_DIAG_AMIGO_IPSUBNET \"$(TARGET_IPSUBNET)\"" >> $(FREERTOS_DIR)/Demo/$(TOOLCHAIN)/$(BOARD)/$(BUILD_PLATFORM)/unittest.h
+	echo "#define COM_DIAG_AMIGO_IPGATEWAY \"$(TARGET_IPGATEWAY)\"" >> $(FREERTOS_DIR)/Demo/$(TOOLCHAIN)/$(BOARD)/$(BUILD_PLATFORM)/unittest.h
+	echo "#define COM_DIAG_AMIGO_WEBSERVER \"$(TARGET_WEBSERVER)\"" >> $(FREERTOS_DIR)/Demo/$(TOOLCHAIN)/$(BOARD)/$(BUILD_PLATFORM)/unittest.h
 	
 ARTIFACTS+=$(FREERTOS_DIR)/Demo/$(TOOLCHAIN)/$(BOARD)/$(BUILD_PLATFORM)/unittest.h
 
@@ -366,7 +379,7 @@ ARTIFACTS+=$(FREERTOS_DIR)/Demo/$(TOOLCHAIN)/$(BOARD)/$(BUILD_PLATFORM)/unittest
 PHONY+=depend
 ARTIFACTS+=$(BUILD_PLATFORM).mk
 
-depend:
+depend:	$(PREREQUISITES)
 	cp /dev/null $(BUILD_PLATFORM).mk
 	for F in $(CFILES); do \
 		D=`dirname $$F`; \
@@ -527,7 +540,7 @@ endif
 
 connect:
 	stty sane dec
-	netcat $(TARGETIPADDRESS) 23
+	netcat $(TARGET_IPADDRESS) 23
 	stty sane dec
 
 ################################################################################
@@ -571,7 +584,7 @@ connect:
 	$(CROSS_COMPILE)$(SIZE) $(SIZEFLAGS) $< > $@
 
 ################################################################################
-# TARGETS
+# STANDARD
 ################################################################################
 
 PHONY+=all

@@ -35,6 +35,13 @@ public:
 	typedef uint64_t Word;
 
 	/**
+	 * For some applications it is convenient to store the MAC address as a
+	 * array of bytes. This is its length. Note that this is two bytes shorter
+	 * than the length of the MAC address stored in an integer type.
+	 */
+	static const size_t LENGTH = 6;
+
+	/**
 	 * Constructor.
 	 * The constructed address is the "no address".
 	 */
@@ -48,11 +55,11 @@ public:
 	 * @param address points to an array of six octets containing the
 	 * address in network byte order.
 	 */
-	MACAddress(const uint8_t * address /* [sizeof(bytes)] */)
+	MACAddress(const uint8_t * address /* [LENGTH] */)
 	{
 		payload.bytes[0] = 0;
 		payload.bytes[1] = 0;
-		memcpy(payload.bytes + 2, address, sizeof(payload.bytes));
+		memcpy(payload.bytes + sizeof(Word) - LENGTH, address, sizeof(payload.bytes));
 	}
 
 	/**
@@ -101,7 +108,7 @@ public:
 	 * Return a pointer to the octets of the address in network byte order.
 	 * @return a pointer to the octets of the address in network byte order.
 	 */
-	operator uint8_t * const () { return payload.bytes + 2; }
+	operator uint8_t * const () { return payload.bytes + sizeof(Word) - LENGTH; }
 
 	/**
 	 * Return the address in host byte order.
@@ -144,12 +151,36 @@ protected:
 
 };
 
-class MACAddress_P : public MACAddress {
-public: MACAddress_P(PGM_P string) { aton_P(string); }
+/**
+ * MACAddress_P extends MACAddress to permit construction of a Media Access
+ * Control address based on a C-string in program memory containing a MAC
+ * address is canonical hexadecimal colon notation, for example
+ * "01:23:45:67:89:AB".
+ */
+struct MACAddress_P : public MACAddress {
+	/**
+	 * Constructor.
+	 * @param string points to a C-string in program memory containing a
+	 * MAC address is canonical hexadecimal colon notation, for example
+	 * "01:23:45:67:89:AB".
+	 */
+	MACAddress_P(PGM_P string) { aton_P(string); }
 };
 
-class MACAddress_D : public MACAddress {
-public: MACAddress_D(const char * string) { aton(string); }
+/**
+ * MACAddress_D extends MACAddress to permit construction of a Media Access
+ * Control address based on a C-string in data memory containing a MAC
+ * address is canonical hexadecimal colon notation, for example
+ * "01:23:45:67:89:AB".
+ */
+struct MACAddress_D : public MACAddress {
+	/**
+	 * Constructor.
+	 * @param string points to a C-string in data memory containing a
+	 * MAC address is canonical hexadecimal colon notation, for example
+	 * "01:23:45:67:89:AB".
+	 */
+	MACAddress_D(const char * string) { aton(string); }
 };
 
 }
