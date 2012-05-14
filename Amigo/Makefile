@@ -14,6 +14,10 @@
 #	BUILD_HOST			Linux (a.k.a. Ubuntu 10.04)
 #	BUILD_PLATFORM		UnitTest
 #
+#	BUILD_TARGET		ArduinoMegaADK with Ethernet Shield
+#	BUILD_HOST			Darwin (a.k.a. Mac OS X 10.6.8)
+#	BUILD_PLATFORM		UnitTest
+#
 # TYPICAL TARGETS
 #
 #	depend			- generate dependencies
@@ -67,12 +71,13 @@
 #	Amigo has been built and tested tested with the following hardware.
 #
 #		VENDOR			BOARD			CONTROLLER
-#		Freetronics		EtherMega		ATmega2560
+#		Freetronics		EtherMega2560	ATmega2560
+#		Arduino			Mega ADK		ATmega2560
 #
-#	I have a variety of other Arduino and compatible boards (two Arduino Unos,
-#	an Arduino Mega ADK, and a Freetronics EtherTen) but haven't had time to
-#	try them yet. I would expect the Uno and the EtherTen to be quite
-#	challenging because of their constrained program and data memory.
+#	I have a variety of Arduino and compatible boards (two Arduino Unos,
+#	an Arduino Mega ADK, Freetronics EtherTen and EtherMega) but haven't had
+#	time to try all of them yet. I would expect the Uno and the EtherTen to
+#	be quite challenging because of their constrained program and data memory.
 #
 ################################################################################
 
@@ -80,7 +85,7 @@ PROJECT=amigo
 NAME=Amigo
 
 MAJOR=4
-MINOR=4
+MINOR=5
 FIX=0
 
 HTTP_URL=http://www.diag.com/navigation/downloads/$(NAME).html
@@ -92,6 +97,7 @@ SVN_URL=svn://graphite/$(PROJECT)/trunk/$(NAME)
 ################################################################################
 
 #BUILD_TARGET=FreetronicsEtherTen
+#BUILD_TARGET=ArduinoMegaADK
 BUILD_TARGET=FreetronicsEtherMega2560
 BUILD_HOST=$(shell uname -s)
 BUILD_PLATFORM=UnitTest
@@ -159,29 +165,6 @@ endif
 # TARGET
 ################################################################################
 
-ifeq ($(BUILD_TARGET),FreetronicsEtherTen)
-ARCH=avr
-RELAX=
-CROSS_COMPILE=$(ARCH)-
-FAMILY=avr5
-CONTROLLER=atmega328p
-FREQUENCY=16000000L
-ARDUINO=100
-CORE=arduino
-VARIANT=standard
-TARGET=megaAVR
-TOOLCHAIN=GCC
-BOARD=$(BUILD_TARGET)
-CONFIG=arduino
-PROGRAMMER=avrispmkII
-ISP=stk500v2
-PART=m328p
-BOOTLOADER_HEX=$(BOOTLOADER_DIR)/optiboot/optiboot_atmega328.hex
-EFUSE=0x05
-HFUSE=0xDE# ?0xD6 EESAVE?
-LFUSE=0xFF
-endif
-
 ifeq ($(BUILD_TARGET),FreetronicsEtherMega2560)
 ARCH=avr
 RELAX=-mrelax
@@ -202,6 +185,52 @@ PART=m2560
 BOOTLOADER_HEX=$(BOOTLOADER_DIR)/stk500v2/stk500boot_v2_mega2560.hex
 EFUSE=0xFD
 HFUSE=0xD8
+LFUSE=0xFF
+endif
+
+ifeq ($(BUILD_TARGET),ArduinoMegaADK)
+ARCH=avr
+RELAX=-mrelax
+CROSS_COMPILE=$(ARCH)-
+FAMILY=avr6
+CONTROLLER=atmega2560
+FREQUENCY=16000000L
+ARDUINO=100
+CORE=arduino
+VARIANT=mega
+TARGET=megaAVR
+TOOLCHAIN=GCC
+BOARD=$(BUILD_TARGET)
+CONFIG=stk500v2
+PROGRAMMER=avrispmkII
+ISP=stk500v2
+PART=m2560
+BOOTLOADER_HEX=$(BOOTLOADER_DIR)/stk500v2/stk500boot_v2_mega2560.hex
+EFUSE=0xFD
+HFUSE=0xD8
+LFUSE=0xFF
+endif
+
+ifeq ($(BUILD_TARGET),FreetronicsEtherTen)
+ARCH=avr
+RELAX=
+CROSS_COMPILE=$(ARCH)-
+FAMILY=avr5
+CONTROLLER=atmega328p
+FREQUENCY=16000000L
+ARDUINO=100
+CORE=arduino
+VARIANT=standard
+TARGET=megaAVR
+TOOLCHAIN=GCC
+BOARD=$(BUILD_TARGET)
+CONFIG=arduino
+PROGRAMMER=avrispmkII
+ISP=stk500v2
+PART=m328p
+BOOTLOADER_HEX=$(BOOTLOADER_DIR)/optiboot/optiboot_atmega328.hex
+EFUSE=0x05
+HFUSE=0xDE# ?0xD6 EESAVE?
 LFUSE=0xFF
 endif
 
