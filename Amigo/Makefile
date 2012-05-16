@@ -4,6 +4,30 @@
 # Chip Overclock <coverclock@diag.com>
 # http://www.diag.com/navigation/downloads/Amigo
 #
+# USUAL DISCLAIMERS
+#
+#	BECAUSE THE SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO
+#	WARRANTY FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE
+#	LAW.  EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT
+#	HOLDERS AND/OR OTHER PARTIES PROVIDE THE SOFTWARE "AS IS" WITHOUT
+#	WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING,
+#	BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+#	AND FITNESS FOR A PARTICULAR PURPOSE.  THE ENTIRE RISK AS TO THE
+#	QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH YOU.  SHOULD THE
+#	SOFTWARE PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL NECESSARY
+#	SERVICING, REPAIR OR CORRECTION.
+#	
+#	IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN
+#	WRITING WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY
+#	MODIFY AND/OR REDISTRIBUTE THE SOFTWARE AS PERMITTED ABOVE,
+#	BE LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL,
+#	INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR
+#	INABILITY TO USE THE SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS
+#	OF DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED
+#	BY YOU OR THIRD PARTIES OR A FAILURE OF THE LIBRARY TO OPERATE
+#	WITH ANY OTHER SOFTWARE), EVEN IF SUCH HOLDER OR OTHER PARTY
+#	HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+#
 # TESTED CONFIGURATIONS
 #
 #	BUILD_TARGET		FreetronicsEtherMega2560
@@ -37,29 +61,47 @@
 #	pristine		- remove deliverables and collateral
 #	documentation	- generate documentation using Doxygen
 #
-# USUAL DISCLAIMERS
+# COMPILE TIME OPTIONS
 #
-#	BECAUSE THE SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO
-#	WARRANTY FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE
-#	LAW.  EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT
-#	HOLDERS AND/OR OTHER PARTIES PROVIDE THE SOFTWARE "AS IS" WITHOUT
-#	WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING,
-#	BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-#	AND FITNESS FOR A PARTICULAR PURPOSE.  THE ENTIRE RISK AS TO THE
-#	QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH YOU.  SHOULD THE
-#	SOFTWARE PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL NECESSARY
-#	SERVICING, REPAIR OR CORRECTION.
-#	
-#	IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN
-#	WRITING WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY
-#	MODIFY AND/OR REDISTRIBUTE THE SOFTWARE AS PERMITTED ABOVE,
-#	BE LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL,
-#	INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR
-#	INABILITY TO USE THE SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS
-#	OF DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED
-#	BY YOU OR THIRD PARTIES OR A FAILURE OF THE LIBRARY TO OPERATE
-#	WITH ANY OTHER SOFTWARE), EVEN IF SUCH HOLDER OR OTHER PARTY
-#	HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+#	-DCOM_DIAG_AMIGO_PANIC_USES_ENABLE
+#
+#	This compiles amigo_panic() to use amigo_watchdog_enable() to restart
+#	the microcontroller. This may be enabled if and only if you are running
+#	a bootloader that correctly disables the hardware watchdog timer in its
+#	early run-time initialization. Using this feature otherwise will brick
+#	you board, requiring an AVR ISP hardware tool to recover. (This feature has
+#	been tested and verified to work correctly with a modified bootloader. A
+#	modified stk500v2 bootloader for the ATmega2560 microcontroller is included
+#	in this software distribution, but you'll need an AVR ISP programming tool
+#	to install it.)
+#
+#	-DCOM_DIAG_AMIGO_PANIC_USES_RESTART
+#
+#	This compiles amigo_panic() to use amigo_watchdog_restart() to restart
+#	the software on the microcontroller. This really isn't a good solution
+#	and seldom works correctly without some effort on the part of the
+#	application prior to calling it.
+#
+#	-DCOM_DIAG_AMIGO_UNEXPECTED_USES_DEFAULT
+#
+#	This compiles amigo_unexpected() to use a single interrupt service routine
+#	to handle all unexpected interrupts. This saves some flash space, but means
+#	you can never know through what vector you received the unexpected interrupt
+#	(and hence what device is misbehaving). The alternative is to create an
+#	interrupt service routine for each unused interrupt vector, which the code
+#	does automatically.
+#
+#	-DCOM_DIAG_AMIGO_USES_PREDEFINED_SSIZE_T
+#
+#	This causes "com/diag/amigo/types.h" not to define its own ssize_t type.
+#	Although ssize_t is normally defined on POSIX systems, the AVR libc and
+#	GNU header files do not define it, so normally Amigo does so.
+#
+#	-DCOM_DIAG_AMIGO_WATCHDOG_RESTART_USES_CALL
+#
+#	This compiles amigo_watchdog_restart() to use a function call to transfer
+#	control to the reset vector instead of just jumping to the vector address.
+#	There probably is little reason ever to prefer this to the default behavior.
 #
 # IMPORTANT SAFETY TIP
 #
@@ -95,7 +137,7 @@ PROJECT=amigo
 NAME=Amigo
 
 MAJOR=4
-MINOR=7
+MINOR=8
 FIX=0
 
 HTTP_URL=http://www.diag.com/navigation/downloads/$(NAME).html

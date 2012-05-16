@@ -26,18 +26,19 @@ CXXCAPI void amigo_event(PGM_P file, long line) {
 CXXCAPI void amigo_panic(PGM_P file, long line) {
 	com::diag::amigo::Uninterruptible uninterruptible;
 	log(PSTR("PANIC"), file, line);
-#if 0
+#if defined(COM_DIAG_AMIGO_PANIC_USES_ENABLE)
 	// ONLY ENABLE THIS MECHANISM IF YOU HAVE INSTALLED THE EXPERIMENTAL
 	// STK500V2 BOOTLOADER THAT DISABLES THE WATCHDOG TIMER. OTHERWISE YOUR
 	// MICROCONTROLLER WILL CONTINUIOUSLY RESET AND CAN ONLY BE RECOVERED WITH
-	// A HARDWARE PROGRAMMER. THIS HAS BEEN TESTED.
+	// A HARDWARE PROGRAMMER. THIS HAS BEEN TESTED WITH THE MODIFIED BOOTLOADER
+	// AND VERIFIED TO WORK.
 	// Attempt to get the watch dog timer to reset the system. This is different
 	// from merely jumping to the reset vector, which does not reset all of
 	// the hardware in the microcontroller.
 	com::diag::amigo::watchdog::enable();
 	// Eventually the watchdog timer will perform software reset of the target.
 #	warning You MUST be using a bootloader that disables the watchdog timer!
-#elif 0
+#elif  defined(COM_DIAG_AMIGO_PANIC_USES_RESTART)
 	// This just jumps to the reset vector. This is not a desirable mechanism.
 	// Unlike the watchdog reset, it does not reset any of the hardware
 	// including any of the I/O controllers. This leaves the system in a

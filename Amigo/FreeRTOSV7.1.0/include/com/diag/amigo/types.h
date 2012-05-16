@@ -14,10 +14,11 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#if 0
+#if defined(COM_DIAG_AMIGO_USES_PREDEFINED_SSIZE_T)
 	/*
 	 * Change 0 to 1 if ssize_t is already defined elsewhere. There is no
-	 * standard portable way the preprocessor can know this.
+	 * standard portable way the preprocessor can know this since it is
+	 * (likely) not a preprocessor symbol.
 	 */
 #elif !defined(___SIZEOF_SIZE_T__)
 	typedef unsigned int ssize_t;
