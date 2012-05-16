@@ -81,10 +81,13 @@
 #		Arduino			Mega ADK		ATmega2560
 #		Freetronics		EtherTen		ATmega328p
 #
-#	I have a variety of Arduino and compatible boards (two Arduino Unos,
-#	an Arduino Mega ADK, Freetronics EtherTen and EtherMega) but haven't had
-#	time to try all of them yet. I would expect the Uno and the EtherTen to
-#	be quite challenging because of their constrained program and data memory.
+#	The ATmega328p is so resource constrained that while I was able to get
+#	FreeRTOS running on it, I had to cut back the unit test suite to the bare
+#	minimum necessary just to insure that a task was actually running. I don't
+#	consider the 328p to be a practical target for any real work. You will
+#	spend all of your precious time trying to save one byte of SRAM while
+#	fiddling with the relative sizes of the heap, the stacks, and the data
+#	segment.
 #
 ################################################################################
 
@@ -92,7 +95,7 @@ PROJECT=amigo
 NAME=Amigo
 
 MAJOR=4
-MINOR=5
+MINOR=6
 FIX=0
 
 HTTP_URL=http://www.diag.com/navigation/downloads/$(NAME).html
@@ -103,9 +106,9 @@ SVN_URL=svn://graphite/$(PROJECT)/trunk/$(NAME)
 # PARAMETERS
 ################################################################################
 
-BUILD_TARGET=FreetronicsEtherTen
+#BUILD_TARGET=FreetronicsEtherTen
 #BUILD_TARGET=ArduinoMegaADK
-#BUILD_TARGET=FreetronicsEtherMega2560
+BUILD_TARGET=FreetronicsEtherMega2560
 BUILD_HOST=$(shell uname -s)
 BUILD_PLATFORM=UnitTest
 
