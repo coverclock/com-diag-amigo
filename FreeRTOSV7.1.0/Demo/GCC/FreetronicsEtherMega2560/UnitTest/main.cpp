@@ -412,18 +412,26 @@ void UnitTestTask::task() {
 		printf(PSTR("JTAG "));
 	}
 #endif
+#if defined(WDRF)
 	if ((resetreason & _BV(WDRF)) != 0) {
 		printf(PSTR("WDT "));
 	}
+#endif
+#if defined(BORF)
 	if ((resetreason & _BV(BORF)) != 0) {
 		printf(PSTR("brown out "));
 	}
+#endif
+#if defined(EXTRF)
 	if ((resetreason & _BV(EXTRF)) != 0) {
 		printf(PSTR("external "));
 	}
+#endif
+#if defined(PORF)
 	if ((resetreason & _BV(PORF)) != 0) {
 		printf(PSTR("power on "));
 	}
+#endif
 	PASSED();
 #endif
 

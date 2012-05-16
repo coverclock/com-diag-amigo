@@ -95,7 +95,7 @@ PROJECT=amigo
 NAME=Amigo
 
 MAJOR=4
-MINOR=6
+MINOR=7
 FIX=0
 
 HTTP_URL=http://www.diag.com/navigation/downloads/$(NAME).html
@@ -622,6 +622,40 @@ connect:
 
 %.siz:	%.elf
 	$(CROSS_COMPILE)$(SIZE) $(SIZEFLAGS) $< > $@
+
+################################################################################
+# BOOTLOADER
+################################################################################
+
+ifeq ($(CONTROLLER),atmega2560)
+
+# This builds a modified stk500v2 bootloader for the ATmega2560 that disables
+# the hardware watchdog timer very early in its run-time initialization. This
+# allows the Amigo watchdog enable feature to be safely used to restart the
+# system in a manner that resets the hardware and restarts the software. This
+# has been tested by enabling the use of amigo_watchdog_enable() in the
+# amigo_panic() function and using it to successfully and safely restart the
+# application. This new bootloader must be installed using some kind of AVR ISP
+# hardware programmer.
+
+PHONY+=experimental-bootloader experimental-flash
+
+EXPERIMENTAL_DIR=hardware/arduino/bootloaders
+
+EXPERIMENTAL_HEX=$(EXPERIMENTAL_DIR)/stk500v2/stk500boot_v2_mega2560.hex
+
+COLLATERAL+=$(EXPERIMENTAL_HEX)
+
+experimental-bootloader $(EXPERIMENTAL_HEX):
+	make -C $(EXPERIMENTAL_DIR)/stk500v2 mega2560
+	
+# This uses the AVRISP mkII to unlock the bootloader, initialize all fuses to
+# Arduino defaults, reflash the EXPERIMENTAL bootloader, and relock the bootloader.
+experimental-flash:	$(EXPERIMENTAL_HEX)
+	$(AVRDUDE) -C$(AVRDUDE_CONF) -p$(PART) -c$(ISP) -b$(BAUD) -Pusb -e -Ulock:w:0x3F:m -Uefuse:w:$(EFUSE):m -Uhfuse:w:$(HFUSE):m -Ulfuse:w:$(LFUSE):m
+	$(AVRDUDE) -C$(AVRDUDE_CONF) -p$(PART) -c$(ISP) -b$(BAUD) -Pusb -Uflash:w:$(EXPERIMENTAL_HEX):i -Ulock:w:0x0F:m
+	
+endif
 
 ################################################################################
 # STANDARD

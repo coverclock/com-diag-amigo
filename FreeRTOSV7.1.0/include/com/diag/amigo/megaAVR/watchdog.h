@@ -49,11 +49,14 @@ CXXCINLINE uint8_t amigo_watchdog_disable(void) {
 	// "main" in the boot loader. The AVR libc FAQ suggests this snippet which
 	// puts the code in one of the early init sections in the run-time.
 	//
+	// #include <avr/wdt.h>
 	// void wdt_init(void) __attribute__((naked)) __attribute__((section(".init3")));
-	// void wdt_init(void) { MCUSR = 0; wdt_disable(); return; }
+	// void wdt_init(void) { wdt_reset(); MCUSR = 0; wdt_disable(); return; }
 	//
 	// Note that that still has to be in the bootloader; putting it in the
-	// application is too late.
+	// application is too late. Also note that if it is placed in the
+	// bootloader, then the MCUSR value read by the application is useless
+	// because the bootloader has already cleared it.
 	wdt_reset();
 	uint8_t reason = MCUSR;
 	MCUSR = 0;
@@ -89,8 +92,11 @@ CXXCINLINE void amigo_watchdog_restart(void) {
  * Enable the hardware watch dog timer. If not periodically patted, the hardware
  * watch dog will reset the target. This is a good way to deliberately reset
  * the target. The underlying implementation currently sets the watch dog
- * timeout to about eight seconds which is the maximum. WILL BRICK YOUR BOARD
- * REQUIRING AN AVR ISP TO RECOVER.
+ * timeout to about eight seconds which is the maximum. IF YOU ARE NOT USING
+ * A BOOTLOADER THAT DISABLES THE WATCHDOG TIMER, THIS WILL BRICK YOUR BOARD
+ * BY SENDING IT INTO CONTINUOUS RESETS REQUIRING AN AVR ISP HARDWARE PROGRAMMER
+ * TO RECOVER. THE STANDARD ARDUINO BOOTLOADERS DO NOT DISABLE THE WATCHDOG
+ * TIMER.
  */
 CXXCINLINE void amigo_watchdog_enable(void) {
 	com::diag::amigo::Uninterruptible uninterruptible;
@@ -144,8 +150,11 @@ inline void restart() {
  * Enable the hardware watch dog timer. If not periodically patted, the hardware
  * watch dog will reset the target. This is a good way to deliberately reset
  * the target. The underlying implementation currently sets the watch dog
- * timeout to about eight seconds which is the maximum. WILL BRICK YOUR BOARD
- * REQUIRING AN AVR ISP TO RECOVER.
+ * timeout to about eight seconds which is the maximum. IF YOU ARE NOT USING
+ * A BOOTLOADER THAT DISABLES THE WATCHDOG TIMER, THIS WILL BRICK YOUR BOARD
+ * BY SENDING IT INTO CONTINUOUS RESETS REQUIRING AN AVR ISP HARDWARE PROGRAMMER
+ * TO RECOVER. THE STANDARD ARDUINO BOOTLOADERS DO NOT DISABLE THE WATCHDOG
+ * TIMER.
  */
 inline void enable() {
 	amigo_watchdog_enable();
