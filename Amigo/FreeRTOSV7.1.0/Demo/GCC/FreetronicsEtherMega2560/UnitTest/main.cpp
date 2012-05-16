@@ -1,6 +1,6 @@
 /**
  * @file
- * AMIGO UNIT TEST SUITE
+ * AMIGO UNIT TEST SUITE\n
  * Copyright 2012 Digital Aggregates Corporation, Colorado, USA\n
  * Licensed under the terms in README.h\n
  * Chip Overclock mailto:coverclock@diag.com\n
@@ -62,8 +62,8 @@ static uint8_t resetreason = 0;
  * PARAMETERS
  ******************************************************************************/
 
-static const char VINTAGE[] PROGMEM = "VINTAGE=" COM_DIAG_AMIGO_VINTAGE;
-
+static const char MARKER[] PROGMEM = { 'V', 'I', 'N', 'T', 'A', 'G', 'E', '=' };
+static const char VINTAGE[] PROGMEM = COM_DIAG_AMIGO_VINTAGE;
 static const char MACADDRESS[] PROGMEM = COM_DIAG_AMIGO_MACADDRESS;
 static const char GATEWAY[] PROGMEM = COM_DIAG_AMIGO_IPGATEWAY;
 static const char SUBNET[] PROGMEM = COM_DIAG_AMIGO_IPSUBNET;
@@ -102,6 +102,7 @@ static const char UNITTEST_TRACE[] PROGMEM = "TRACE at line %d; ";
 // This is very useful for determining if optional components have been linked
 // into the application, and doing something else if they have not.
 //										                           e.g. (from a UnitTest.map):
+extern void * __stack					__attribute__ ((weak)); // 000008ff W __stack
 extern void * __heap_end				__attribute__ ((weak)); // 00000000 W __heap_end
 extern void * __data_start				__attribute__ ((weak)); // 00800200 D __data_start
 extern void * __data_end				__attribute__ ((weak)); // 00800536 D __data_end
@@ -124,6 +125,7 @@ inline void * htonvp(void * vp) {
 // Undefined weak external references will print as NULL (zero).
 // Put in network byte order just to make dump more readable.
 static const void * const MAP[] = {
+	htonvp(&__stack),
 	htonvp(&__heap_end),
 	htonvp(&__data_start),
 	htonvp(&__data_end),
@@ -137,6 +139,7 @@ static const void * const MAP[] = {
 	htonvp(&__dtors_end),
 	htonvp(&__data_load_start),
 	htonvp(&__data_load_end),
+	htonvp(reinterpret_cast<void *>(RAMEND))
 };
 
 class Scope {
@@ -145,21 +148,22 @@ public:
 		com::diag::amigo::Console::instance()
 			.start()
 			.write_P(PSTR("Unit Test Console\r\n"))
-			.write_P(VINTAGE).write("\r\n")
-			.dump_P(&VINTAGE[sizeof("VINTAGE=") - 1], sizeof(VINTAGE) - sizeof("VINTAGE=")).write('\r').write('\n')
-			.write_P(PSTR("__heap_end=0x")).dump(&MAP[0], sizeof(MAP[0])).write('\r').write('\n')
-			.write_P(PSTR("__data_start=0x")).dump(&MAP[1], sizeof(MAP[1])).write('\r').write('\n')
-			.write_P(PSTR("__data_end=0x")).dump(&MAP[2], sizeof(MAP[2])).write('\r').write('\n')
-			.write_P(PSTR("__bss_start=0x")).dump(&MAP[3], sizeof(MAP[3])).write('\r').write('\n')
-			.write_P(PSTR("__bss_end=0x")).dump(&MAP[4], sizeof(MAP[4])).write('\r').write('\n')
-			.write_P(PSTR("__trampolines_start=0x")).dump(&MAP[5], sizeof(MAP[5])).write('\r').write('\n')
-			.write_P(PSTR("__trampolines_end=0x")).dump(&MAP[6], sizeof(MAP[6])).write('\r').write('\n')
-			.write_P(PSTR("__ctors_start=0x")).dump(&MAP[7], sizeof(MAP[7])).write('\r').write('\n')
-			.write_P(PSTR("__ctors_end=0x")).dump(&MAP[8], sizeof(MAP[8])).write('\r').write('\n')
-			.write_P(PSTR("__dtors_start=0x")).dump(&MAP[9], sizeof(MAP[9])).write('\r').write('\n')
-			.write_P(PSTR("__dtors_end=0x")).dump(&MAP[10], sizeof(MAP[10])).write('\r').write('\n')
-			.write_P(PSTR("__data_load_start=0x")).dump(&MAP[11], sizeof(MAP[11])).write('\r').write('\n')
-			.write_P(PSTR("__data_load_end=0x")).dump(&MAP[12], sizeof(MAP[12])).write('\r').write('\n')
+			.write_P(MARKER).write('=').dump_P(VINTAGE, sizeof(VINTAGE)).write('\r').write('\n')
+			.write_P(PSTR("__stack=0x")).dump(&MAP[0], sizeof(MAP[0])).write('\r').write('\n')
+			.write_P(PSTR("__heap_end=0x")).dump(&MAP[1], sizeof(MAP[1])).write('\r').write('\n')
+			.write_P(PSTR("__data_start=0x")).dump(&MAP[2], sizeof(MAP[2])).write('\r').write('\n')
+			.write_P(PSTR("__data_end=0x")).dump(&MAP[3], sizeof(MAP[3])).write('\r').write('\n')
+			.write_P(PSTR("__bss_start=0x")).dump(&MAP[4], sizeof(MAP[4])).write('\r').write('\n')
+			.write_P(PSTR("__bss_end=0x")).dump(&MAP[5], sizeof(MAP[5])).write('\r').write('\n')
+			.write_P(PSTR("__trampolines_start=0x")).dump(&MAP[6], sizeof(MAP[6])).write('\r').write('\n')
+			.write_P(PSTR("__trampolines_end=0x")).dump(&MAP[7], sizeof(MAP[7])).write('\r').write('\n')
+			.write_P(PSTR("__ctors_start=0x")).dump(&MAP[8], sizeof(MAP[8])).write('\r').write('\n')
+			.write_P(PSTR("__ctors_end=0x")).dump(&MAP[9], sizeof(MAP[9])).write('\r').write('\n')
+			.write_P(PSTR("__dtors_start=0x")).dump(&MAP[10], sizeof(MAP[10])).write('\r').write('\n')
+			.write_P(PSTR("__dtors_end=0x")).dump(&MAP[11], sizeof(MAP[11])).write('\r').write('\n')
+			.write_P(PSTR("__data_load_start=0x")).dump(&MAP[12], sizeof(MAP[12])).write('\r').write('\n')
+			.write_P(PSTR("__data_load_end=0x")).dump(&MAP[13], sizeof(MAP[13])).write('\r').write('\n')
+			.write_P(PSTR("RAMEND=0x")).dump(&MAP[14], sizeof(MAP[14])).write('\r').write('\n')
 			.write_P(PSTR("PASSED\r\n"))
 			.flush()
 			.stop();
@@ -173,6 +177,7 @@ public:
  * TIMER TEST FIXTURES
  ******************************************************************************/
 
+#if 1
 class OneShotTimer : public com::diag::amigo::OneShotTimer {
 public:
 	explicit OneShotTimer(com::diag::amigo::ticks_t duration) : com::diag::amigo::OneShotTimer(duration), now(0) {}
@@ -194,6 +199,7 @@ public:
 void PeriodicTimer::timer() {
 	++counter;
 }
+#endif
 
 /*******************************************************************************
  * WIZNET W5100 TEST FIXTURE
@@ -201,6 +207,7 @@ void PeriodicTimer::timer() {
 
 static com::diag::amigo::MutexSemaphore * mutexsemaphorep = 0;
 
+#if 1
 class W5100 {
 public:
 	explicit W5100(com::diag::amigo::MutexSemaphore & mymutex, com::diag::amigo::GPIO::Pin myss, com::diag::amigo::SPI & myspi)
@@ -245,11 +252,13 @@ private:
 	com::diag::amigo::GPIO gpio;
 	uint8_t mask;
 };
+#endif
 
 /*******************************************************************************
  * SOCKET TEST FIXTURE
  ******************************************************************************/
 
+#if 1
 class Socket : public com::diag::amigo::W5100::Socket {
 public:
 	explicit Socket(com::diag::amigo::W5100::W5100 & myw5100)
@@ -263,6 +272,7 @@ public:
 	port_t myallocate(socket_t sock, port_t port) { return allocate(sock, port); }
 	void mydeallocate(socket_t sock, port_t port) { deallocate(sock, port); }
 };
+#endif
 
 /*******************************************************************************
  * TAKER TEST FIXTURE (FOR TESTING BINARYSEMAPHORE)
@@ -270,6 +280,7 @@ public:
 
 static com::diag::amigo::BinarySemaphore * binarysemaphorep = 0;
 
+#if 1
 class TakerTask : public com::diag::amigo::Task {
 public:
 	explicit TakerTask(const char * name) : com::diag::amigo::Task(name), errors(0) {}
@@ -291,11 +302,13 @@ void TakerTask::task() {
 		yield();
 	}
 }
+#endif
 
 /*******************************************************************************
  * SOURCE TO SINK COPY (FOR TESTING SOURCE AND SINK)
  ******************************************************************************/
 
+#if 1
 static int source2sink(com::diag::amigo::Source & source, com::diag::amigo::Sink & sink) {
 	static const int CONTROL_D = 0x04;
 	char buffer[20];
@@ -342,11 +355,13 @@ static int source2sink(com::diag::amigo::Source & source, com::diag::amigo::Sink
 	sink.flush();
 	return 0;
 }
+#endif
 
 /*******************************************************************************
  * BRIGHTNESS CONTROL (FOR TESTING PWM)
  ******************************************************************************/
 
+#if 1
 static bool brightnesscontrol(com::diag::amigo::PWM::Pin pin, com::diag::amigo::ticks_t ticks) {
 	com::diag::amigo::PWM pwm(pin);
 	if (!pwm) {
@@ -371,6 +386,7 @@ static bool brightnesscontrol(com::diag::amigo::PWM::Pin pin, com::diag::amigo::
 	pwm.stop();
 	return true;
 }
+#endif
 
 /*******************************************************************************
  * UNIT TEST TASK
@@ -717,9 +733,9 @@ void UnitTestTask::task() {
 			break;
 		}
 		PASSED();
-		printf(PSTR("freeheap=%u\n"), freeheapafter);
 	} while (false);
 #endif
+	printf(PSTR("freeheap=%u\n"), heap());
 
 #if 1
 	UNITTEST("littleendian and byteorder");
@@ -2804,11 +2820,13 @@ int main() {
 	mutexsemaphorep = &mutexsemaphore;
 
 	do {
+#if 1
 		takertask.start();
-		unittesttask.start(700);
 		if (takertask != true) {
 			break;
 		}
+#endif
+		unittesttask.start(700);
 		if (unittesttask != true) {
 			break;
 		}

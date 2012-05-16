@@ -42,6 +42,13 @@ CXXCAPI void amigo_panic(PGM_P file, long line);
  */
 CXXCAPI void amigo_fatal(PGM_P file, long line);
 
+/**
+ * This function prints a warning to the console serial port using busy waiting
+ * regarding an unexpected interrupt.
+ * @param vector is an interrupt vector number.
+ */
+CXXCAPI void amigo_unexpected(long vector);
+
 #if defined(__cplusplus)
 
 namespace com {
@@ -82,6 +89,15 @@ inline void panic(PGM_P file, long line) {
  */
 inline void fatal(PGM_P file, long line) {
 	amigo_fatal(file, line);
+}
+
+/**
+ * This function prints a warning to the console serial port using busy waiting
+ * regarding an unexpected interrupt.
+ * @param vector is an interrupt vector number.
+ */
+inline void unexpected(long vector) {
+	amigo_unexpected(vector);
 }
 
 }

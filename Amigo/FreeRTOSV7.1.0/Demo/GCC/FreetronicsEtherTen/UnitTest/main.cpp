@@ -177,7 +177,7 @@ public:
  * TIMER TEST FIXTURES
  ******************************************************************************/
 
-#if 1
+#if 0
 class OneShotTimer : public com::diag::amigo::OneShotTimer {
 public:
 	explicit OneShotTimer(com::diag::amigo::ticks_t duration) : com::diag::amigo::OneShotTimer(duration), now(0) {}
@@ -207,7 +207,7 @@ void PeriodicTimer::timer() {
 
 static com::diag::amigo::MutexSemaphore * mutexsemaphorep = 0;
 
-#if 1
+#if 0
 class W5100 {
 public:
 	explicit W5100(com::diag::amigo::MutexSemaphore & mymutex, com::diag::amigo::GPIO::Pin myss, com::diag::amigo::SPI & myspi)
@@ -258,7 +258,7 @@ private:
  * SOCKET TEST FIXTURE
  ******************************************************************************/
 
-#if 1
+#if 0
 class Socket : public com::diag::amigo::W5100::Socket {
 public:
 	explicit Socket(com::diag::amigo::W5100::W5100 & myw5100)
@@ -280,7 +280,7 @@ public:
 
 static com::diag::amigo::BinarySemaphore * binarysemaphorep = 0;
 
-#if 1
+#if 0
 class TakerTask : public com::diag::amigo::Task {
 public:
 	explicit TakerTask(const char * name) : com::diag::amigo::Task(name), errors(0) {}
@@ -361,7 +361,7 @@ static int source2sink(com::diag::amigo::Source & source, com::diag::amigo::Sink
  * BRIGHTNESS CONTROL (FOR TESTING PWM)
  ******************************************************************************/
 
-#if 1
+#if 0
 static bool brightnesscontrol(com::diag::amigo::PWM::Pin pin, com::diag::amigo::ticks_t ticks) {
 	com::diag::amigo::PWM pwm(pin);
 	if (!pwm) {
@@ -405,7 +405,7 @@ void UnitTestTask::task() {
 
 	serialp->start();
 
-#if 1
+#if 0
 	UNITTEST("watchdog");
 #if defined(JTRF)
 	if ((resetreason & _BV(JTRF)) != 0) {
@@ -427,7 +427,7 @@ void UnitTestTask::task() {
 	PASSED();
 #endif
 
-#if 1
+#if 0
 	UNITTEST("Serial");
 	do {
 		if (!(*serialp)) {
@@ -445,7 +445,7 @@ void UnitTestTask::task() {
 	} while (false);
 #endif
 
-#if 1
+#if 0
 	UNITTEST("event");
 	com::diag::amigo::event(PSTR(__FILE__), __LINE__);
 	PASSED();
@@ -481,7 +481,7 @@ void UnitTestTask::task() {
 	}
 #endif
 
-#if 1
+#if 0
 	UNITTEST("Morse");
 	do {
 		com::diag::amigo::Morse telegraph;
@@ -490,7 +490,7 @@ void UnitTestTask::task() {
 	} while (false);
 #endif
 
-#if 1
+#if 0
 	UNITTESTLN("Sink");
 	do {
 		size_t written;
@@ -529,7 +529,7 @@ void UnitTestTask::task() {
 	} while (false);
 #endif
 
-#if 1
+#if 0
 	UNITTESTLN("sizeof");
 	do {
 		// The need to do this cast smells like a compiler bug to me, but I'd be
@@ -621,7 +621,7 @@ void UnitTestTask::task() {
 	} while (false);
 #endif
 
-#if 1
+#if 0
 	UNITTEST("Task");
 	do {
 		Task proxyidletask(idle());
@@ -678,7 +678,7 @@ void UnitTestTask::task() {
 	} while (false);
 #endif
 
-#if 1
+#if 0
 	UNITTEST("heap");
 	do {
 		size_t freeheapbefore = heap();
@@ -737,7 +737,7 @@ void UnitTestTask::task() {
 #endif
 	printf(PSTR("freeheap=%u\n"), heap());
 
-#if 1
+#if 0
 	UNITTEST("littleendian and byteorder");
 	// megaAVR is little-endian.
 	do {
@@ -857,7 +857,7 @@ void UnitTestTask::task() {
 	} while (false);
 #endif
 
-#if 1
+#if 0
 	UNITTEST("delay (low precision)");
 	do {
 		static const com::diag::amigo::ticks_t W1 = 200;
@@ -894,7 +894,7 @@ void UnitTestTask::task() {
 	} while (false);
 #endif
 
-#if 1
+#if 0
 	UNITTEST("busywait (high precision)");
 	// There is no way to test the high precision busywait in a software-only
 	// manner. If we leave interrupts enabled, tick processing by FreeRTOS adds
@@ -933,7 +933,7 @@ void UnitTestTask::task() {
 	PASSED();
 #endif
 
-#if 1
+#if 0
 	UNITTESTLN("Dump");
 	do {
 		static const uint8_t datamemory[] = { 0xde, 0xad, 0xbe, 0xef };
@@ -948,7 +948,7 @@ void UnitTestTask::task() {
 	} while (false);
 #endif
 
-#if 1
+#if 0
 	UNITTEST("Uninterruptible");
 	do {
 		{
@@ -999,7 +999,7 @@ void UnitTestTask::task() {
 	} while (false);
 #endif
 
-#if 1
+#if 0
 	UNITTEST("BinarySemaphore");
 	do {
 		// 0.5s should be enough for the takertask to initialize.
@@ -1064,7 +1064,7 @@ void UnitTestTask::task() {
 	} while (false);
 #endif
 
-#if 1
+#if 0
 	UNITTEST("CountingSemaphore");
 	do {
 		com::diag::amigo::CountingSemaphore countingsemaphore(2, 2);
@@ -1108,7 +1108,7 @@ void UnitTestTask::task() {
 	} while (false);
 #endif
 
-#if 1
+#if 0
 	UNITTEST("MutexSemaphore");
 	do {
 		com::diag::amigo::MutexSemaphore mutexsemaphore;
@@ -1144,7 +1144,7 @@ void UnitTestTask::task() {
 	} while (false);
 #endif
 
-#if 1
+#if 0
 	UNITTEST("CriticalSection");
 	do {
 		com::diag::amigo::MutexSemaphore mutexsemaphore;
@@ -1173,7 +1173,7 @@ void UnitTestTask::task() {
 	} while (false);
 #endif
 
-#if 1
+#if 0
 	UNITTEST("PeriodicTimer");
 	{
 		static const com::diag::amigo::ticks_t T1 = 100;
@@ -1216,7 +1216,7 @@ void UnitTestTask::task() {
 	}
 #endif
 
-#if 1
+#if 0
 	UNITTEST("OneShotTimer");
 	{
 		static const com::diag::amigo::ticks_t T2 = 200;
@@ -1315,7 +1315,7 @@ void UnitTestTask::task() {
 	}
 #endif
 
-#if 1
+#if 0
 	UNITTEST("GPIO");
 	// This is not a very good unit test. But I'm surprised about how much
 	// variance there is among megaAVRs in GPIO port nomenclature. For example,
@@ -1369,7 +1369,7 @@ void UnitTestTask::task() {
 	} while (false);
 #endif
 
-#if 1
+#if 0
 	UNITTEST("Digital I/O (requires text fixture on EtherMega)");
 	// This is a separate test because it requires a simple text fixture to be
 	// wired up on the board. It is specific to the EtherMega 2560 board.
@@ -1453,7 +1453,7 @@ void UnitTestTask::task() {
 	} while (false);
 #endif
 
-#if 1
+#if 0
 	UNITTEST("Toggle (requires text fixture on EtherMega)");
 	// This is a separate test because it requires the same fixture as the
 	// Digital I/O test above.
@@ -1497,7 +1497,7 @@ void UnitTestTask::task() {
 	} while (false);
 #endif
 
-#if 1
+#if 0
 	UNITTEST("PWM");
 	// This should work on either the 2560 (Arduino Mega and compatibles) or
 	// the 328p (Arduino Uno and compatibles) since both implement PWM on
@@ -1627,7 +1627,7 @@ void UnitTestTask::task() {
 	} while (false);
 #endif
 
-#if 1
+#if 0
 	// This is a separate test because it requires an operator to watch it,
 	// and is specific to the EtherMega 2560 board. It is designed
 	// not to conflict with the test fixture for the Digital I/O (GPIO) test.
@@ -1837,7 +1837,7 @@ void UnitTestTask::task() {
 	} while (false);
 #endif
 
-#if 1
+#if 0
 	UNITTEST("A2D (specific to Arduino Uno, Mega etc.)");
 	do {
 		com::diag::amigo::A2D a2d;
@@ -1909,7 +1909,7 @@ void UnitTestTask::task() {
 	} while (false);
 #endif
 
-#if 1
+#if 0
 	UNITTEST("Analog Input (requires test fixture on EtherMega)");
 	// This is a separate test because it requires a simple text fixture to be
 	// wired up on the board. It is specific to the EtherMega 2560 board.
@@ -2057,7 +2057,7 @@ void UnitTestTask::task() {
 	}
 #endif
 
-#if 1
+#if 0
 	UNITTEST("SPI (requires WIZnet W5100)");
 	// There seems to be an issue with reset on the W5100 ("WIZRST" on the
 	// schematics) on the Freetronics EtherMega. The W5100 looks like it should
@@ -2121,7 +2121,7 @@ void UnitTestTask::task() {
 	}
 #endif
 
-#if 1
+#if 0
 	UNITTEST("W5100 (requires WIZnet W5100)");
 	// Same caveats as above.
 	{
@@ -2151,7 +2151,7 @@ void UnitTestTask::task() {
 	}
 #endif
 
-#if 1
+#if 0
 	UNITTEST("IPV4Address");
 	do {
 		{
@@ -2254,7 +2254,7 @@ void UnitTestTask::task() {
 	} while (false);
 #endif
 
-#if 1
+#if 0
 	UNITTEST("MACAddress");
 	do {
 		{
@@ -2337,7 +2337,7 @@ void UnitTestTask::task() {
 	} while (false);
 #endif
 
-#if 1
+#if 0
 	UNITTEST("Socket (requires WIZnet W5100)");
 	{
 		com::diag::amigo::SPI spi;
@@ -2494,7 +2494,7 @@ void UnitTestTask::task() {
 	}
 #endif
 
-#if 1
+#if 0
 	UNITTEST("Socket client (requires internet connectivity)");
 	// On typical larger system I would test this against 127.0.0.1 to
 	// make sure I can talk to myself. But that implies a bunch more
@@ -2606,7 +2606,7 @@ void UnitTestTask::task() {
 	}
 #endif
 
-#if 1
+#if 0
 	UNITTESTLN("Socket server (requires remote '" SOCKET_SERVER_COMMAND "')");
 	{
 		com::diag::amigo::SPI spi;
@@ -2820,13 +2820,13 @@ int main() {
 	mutexsemaphorep = &mutexsemaphore;
 
 	do {
-#if 1
+#if 0
 		takertask.start();
 		if (takertask != true) {
 			break;
 		}
 #endif
-		unittesttask.start(700);
+		unittesttask.start(448);
 		if (unittesttask != true) {
 			break;
 		}

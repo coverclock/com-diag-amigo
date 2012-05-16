@@ -1,0 +1,26 @@
+Unit Test Console
+VINTAGE=4.5.0=342E352E3Unit Test Console
+VINTAGE=4.5.0=342E352E3000
+__stack=0x08FF
+__heap_end=0x0000
+__data_start=0x0100
+__data_end=0x0218
+__bss_start=0x0218
+__bss_end=0x0826
+__trampolines_start=0x02F4
+__trampolines_end=0x02F4
+__ctors_start=0x037E
+__ctors_end=0x0382
+__dtors_start=0x0382
+__dtors_end=0x0386
+__data_load_start=0x464C
+__data_load_end=0x4764
+RAMEND=0x08FF
+PASSED
+freeheap=59
+Unit Test errors=0 (so far)
+Unit Test Source (type <control d> to exit)
+England expects each man to do his duty.
+PASSED.
+Unit Test errors=0
+Type <control a><control \>y to exit Mac screen utility.

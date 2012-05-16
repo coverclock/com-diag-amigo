@@ -159,51 +159,6 @@ Console & Console::flush() {
 	return *this;
 }
 
-// Below are the functions that provide C-linkage access to Console for C
-// translation units.
-
-CXXCAPI void amigo_console_start() {
-	Console::instance().start();
-}
-
-CXXCAPI void amigo_console_stop() {
-	Console::instance().stop();
-}
-
-CXXCAPI void amigo_console_write_char(uint8_t ch) {
-	Console::instance().write(ch);
-}
-
-CXXCAPI void amigo_console_write_string(const char * string) {
-	Console::instance().write(string);
-}
-
-CXXCAPI void amigo_console_write_string_P(PGM_P string) {
-	Console::instance().write_P(string);
-}
-
-CXXCAPI void amigo_console_write_data(const void * data, size_t size) {
-	Console::instance().write(data, size);
-}
-
-CXXCAPI void amigo_console_write_data_P(PGM_VOID_P data, size_t size) {
-	Console::instance().write_P(data, size);
-
-}
-
-CXXCAPI void amigo_console_dump(const void * data, size_t size) {
-	Console::instance().dump(data, size);
-}
-
-CXXCAPI void amigo_console_dump_P(PGM_VOID_P data, size_t size) {
-	Console::instance().dump_P(data, size);
-
-}
-
-CXXCAPI void amigo_console_flush() {
-	Console::instance().flush();
-}
-
 }
 }
 }
