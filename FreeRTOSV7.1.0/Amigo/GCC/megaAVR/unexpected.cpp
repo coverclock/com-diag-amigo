@@ -16,7 +16,7 @@
 // me that. The down side is it generates a function for every vector that
 // isn't otherwise used by one of the device drivers.
 
-#if 0
+#if defined(COM_DIAG_AMIGO_UNEXPECTED_USES_DEFAULT)
 
 // Placing this in the low text section seems to be occasionally necessary.
 // Once in a while I'll get a link error about the linker not being able
