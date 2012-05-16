@@ -18,14 +18,20 @@
 #	BUILD_HOST			Darwin (a.k.a. Mac OS X 10.6.8)
 #	BUILD_PLATFORM		UnitTest
 #
-# TYPICAL TARGETS
+#	BUILD_TARGET		FreetronicsEtherTen
+#	BUILD_HOST			Darwin (a.k.a. Mac OS X 10.6.8)
+#	BUILD_PLATFORM		UnitTest with multitasking but extremely cut down
 #
-#	depend			- generate dependencies
-#	all				- generate artifacts and deliverables (default)
+# TYPICAL MAKE TARGETS
+#
 #	clean			- remove artifacts
-#	upload			- upload into target using Avrdude
+#	depend			- generate dependencies
+#	all				- generate artifacts and deliverables (this is the default)
+#	upload			- upload into target using tool chain avrdude utility
+#	screen			- connect to target serial port using Mac screen utility
+#	connect			- connect to target Ethernet port using Linux netcat utility
 #
-# ANCILLARY TARGETS
+# ANCILLARY MAKE TARGETS
 #
 #	full			- generate artifacts, deliverables, and collateral
 #	pristine		- remove deliverables and collateral
@@ -73,6 +79,7 @@
 #		VENDOR			BOARD			CONTROLLER
 #		Freetronics		EtherMega2560	ATmega2560
 #		Arduino			Mega ADK		ATmega2560
+#		Freetronics		EtherTen		ATmega328p
 #
 #	I have a variety of Arduino and compatible boards (two Arduino Unos,
 #	an Arduino Mega ADK, Freetronics EtherTen and EtherMega) but haven't had
@@ -96,9 +103,9 @@ SVN_URL=svn://graphite/$(PROJECT)/trunk/$(NAME)
 # PARAMETERS
 ################################################################################
 
-#BUILD_TARGET=FreetronicsEtherTen
+BUILD_TARGET=FreetronicsEtherTen
 #BUILD_TARGET=ArduinoMegaADK
-BUILD_TARGET=FreetronicsEtherMega2560
+#BUILD_TARGET=FreetronicsEtherMega2560
 BUILD_HOST=$(shell uname -s)
 BUILD_PLATFORM=UnitTest
 
@@ -285,6 +292,7 @@ AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/W5100/Socket.cpp
 AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/W5100/W5100.cpp
 
 # Amigo files
+AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/Console.cpp
 AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/Dump.cpp
 AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/fatal.cpp
 AMIGO_CXXFILES+=$(FREERTOS_DIR)/$(NAME)/$(TOOLCHAIN)/heap.cpp

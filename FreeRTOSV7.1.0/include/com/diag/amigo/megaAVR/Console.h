@@ -265,4 +265,12 @@ CXXCAPI void amigo_console_dump_P(PGM_VOID_P data, size_t size);
  */
 CXXCAPI void amigo_console_flush(void);
 
+/**
+ * This functions calls all of the other functions with the sole purpose of
+ * emitting a single character to the default serial port. It is used for
+ * very low level debugging, including of C code.
+ * @param ch is the character to emit.
+ */
+CXXCAPI void amigo_console_trace(char ch);
+
 #endif /* _COM_DIAG_AMIGO_MEGAAVR_CONSOLE_H_ */

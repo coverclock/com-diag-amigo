@@ -44,7 +44,7 @@ public:
 	 * which can differ from architecture to architecture. On the megaAVR a
 	 * stack cell is one byte.
 	 */
-	static const size_t DEPTH = 512;
+	static const size_t DEPTH = configMINIMAL_STACK_SIZE;
 
 	/**
 	 * This is the default priority for a Task. Tasks can have priorities from

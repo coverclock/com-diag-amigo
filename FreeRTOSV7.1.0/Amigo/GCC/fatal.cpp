@@ -50,3 +50,8 @@ CXXCAPI void amigo_fatal(PGM_P file, long line) {
 	// This is a hard infinite loop with interrupts disabled.
 	while (!0) {}
 }
+
+CXXCAPI void amigo_unexpected(long vector) {
+	com::diag::amigo::Uninterruptible uninterruptible;
+	log(PSTR("UNEXPECTED"), PSTR("vector"), vector);
+}
