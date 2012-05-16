@@ -84,7 +84,7 @@
 #	The ATmega328p is so resource constrained that while I was able to get
 #	FreeRTOS running on it, I had to cut back the unit test suite to the bare
 #	minimum necessary just to insure that a task was actually running. I don't
-#	consider the 328p to be a practical target for any real work. You will
+#	consider the 328p to be a practical target on which to use Amigo. You will
 #	spend all of your precious time trying to save one byte of SRAM while
 #	fiddling with the relative sizes of the heap, the stacks, and the data
 #	segment.
