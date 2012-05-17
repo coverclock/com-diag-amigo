@@ -60,6 +60,14 @@
 #	full			- generate artifacts, deliverables, and collateral
 #	pristine		- remove deliverables and collateral
 #	documentation	- generate documentation using Doxygen
+#	flash			- reload bootloader using AVR ISP
+#
+# EXPERIMENTAL MAKE TARGETS
+#
+#	experimental-bootloader	- build modified STK500V2 bootloader for ATmega2560
+#	experimental-flash		- load modified STK500V2 bootloader onto ATmega2560
+#	experimental-patch		- make patch file of STK500V2 bootloader changes
+#	experimental-apply		- apply patch file to unmodified STK500V2 bootloader
 #
 # COMPILE TIME OPTIONS
 #
@@ -87,7 +95,7 @@
 #	This compiles amigo_unexpected() to use a single interrupt service routine
 #	to handle all unexpected interrupts. This saves some flash space, but means
 #	you can never know through what vector you received the unexpected interrupt
-#	(and hence what device is misbehaving). The alternative is to create an
+#	(and hence what driver is misbehaving). The alternative is to create an
 #	interrupt service routine for each unused interrupt vector, which the code
 #	does automatically.
 #
@@ -137,7 +145,7 @@ PROJECT=amigo
 NAME=Amigo
 
 MAJOR=4
-MINOR=8
+MINOR=9
 FIX=0
 
 HTTP_URL=http://www.diag.com/navigation/downloads/$(NAME).html
@@ -666,7 +674,7 @@ connect:
 	$(CROSS_COMPILE)$(SIZE) $(SIZEFLAGS) $< > $@
 
 ################################################################################
-# BOOTLOADER
+# EXPERIMENTAL
 ################################################################################
 
 ifeq ($(CONTROLLER),atmega2560)
@@ -680,22 +688,31 @@ ifeq ($(CONTROLLER),atmega2560)
 # application. This new bootloader must be installed using some kind of AVR ISP
 # hardware programmer.
 
-PHONY+=experimental-bootloader experimental-flash
+PHONY+=experimental-bootloader experimental-clean experimental-flash experimental-patch experimental-apply
 
 EXPERIMENTAL_DIR=hardware/arduino/bootloaders
 
 EXPERIMENTAL_HEX=$(EXPERIMENTAL_DIR)/stk500v2/stk500boot_v2_mega2560.hex
+
+EXPERIMENTAL_PATCH=stk500boot_v2_mega2560.patch
 
 COLLATERAL+=$(EXPERIMENTAL_HEX)
 
 experimental-bootloader $(EXPERIMENTAL_HEX):
 	make -C $(EXPERIMENTAL_DIR)/stk500v2 mega2560
 	
-# This uses the AVRISP mkII to unlock the bootloader, initialize all fuses to
-# Arduino defaults, reflash the EXPERIMENTAL bootloader, and relock the bootloader.
+experimental-clean:
+	make -C $(EXPERIMENTAL_DIR)/stk500v2 clean
+	
 experimental-flash:	$(EXPERIMENTAL_HEX)
 	$(AVRDUDE) -C$(AVRDUDE_CONF) -p$(PART) -c$(ISP) -b$(BAUD) -Pusb -e -Ulock:w:0x3F:m -Uefuse:w:$(EFUSE):m -Uhfuse:w:$(HFUSE):m -Ulfuse:w:$(LFUSE):m
 	$(AVRDUDE) -C$(AVRDUDE_CONF) -p$(PART) -c$(ISP) -b$(BAUD) -Pusb -Uflash:w:$(EXPERIMENTAL_HEX):i -Ulock:w:0x0F:m
+	
+experimental-patch $(EXPERIMENTAL_PATCH):
+	diff -purN -x '.svn' -x '*.hex' $(BOOTLOADER_DIR)/stk500v2 $(EXPERIMENTAL_DIR)/stk500v2 > $(EXPERIMENTAL_PATCH) || true
+
+experimental-apply:
+	( cd $(BOOTLOADER_DIR)/stk500v2; patch -b -p9 ) < $(EXPERIMENTAL_PATCH)
 	
 endif
 
