@@ -145,7 +145,7 @@ PROJECT=amigo
 NAME=Amigo
 
 MAJOR=4
-MINOR=9
+MINOR=10
 FIX=0
 
 HTTP_URL=http://www.diag.com/navigation/downloads/$(NAME).html
@@ -396,11 +396,11 @@ LIBRARIES+=-lm
 
 OPT=s
 CARCH=-mmcu=$(CONTROLLER)
-CDIALECT=-std=gnu99 -fno-exceptions -ffunction-sections -fdata-sections -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums
-CXXDIALECT=-fno-exceptions -ffunction-sections -fdata-sections -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums -fno-implicit-templates
+DIALECT=-fno-exceptions -ffunction-sections -fdata-sections -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums
+CDIALECT=-std=gnu99 $(DIALECT)
+CXXDIALECT=-fno-rtti -fno-implicit-templates $(DIALECT)
 CDEBUG=-g
 CWARN=-Wall
-CTUNING=-fno-exceptions -ffunction-sections -fdata-sections -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums# -mrelax
 CPPFLAGS=$(CARCH) -DF_CPU=$(FREQUENCY) -DARDUINO=$(ARDUINO) $(INCLUDES)
 CFLAGS=$(CDIALECT) $(CDEBUG) -O$(OPT) $(CWARN) $(CEXTRA)
 CXXFLAGS=$(CXXDIALECT) $(CDEBUG) -O$(OPT) $(CWARN) $(CXXEXTRA)
