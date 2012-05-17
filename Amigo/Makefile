@@ -38,13 +38,13 @@
 #	BUILD_HOST			Linux (a.k.a. Ubuntu 10.04)
 #	BUILD_PLATFORM		UnitTest
 #
-#	BUILD_TARGET		ArduinoMegaADK with Ethernet Shield
+#	BUILD_TARGET		ArduinoMegaADK (with Ethernet Shield)
 #	BUILD_HOST			Darwin (a.k.a. Mac OS X 10.6.8)
 #	BUILD_PLATFORM		UnitTest
 #
 #	BUILD_TARGET		FreetronicsEtherTen
 #	BUILD_HOST			Darwin (a.k.a. Mac OS X 10.6.8)
-#	BUILD_PLATFORM		UnitTest with multitasking but extremely cut down
+#	BUILD_PLATFORM		UnitTest (with multitasking but extremely cut down)
 #
 # TYPICAL MAKE TARGETS
 #
