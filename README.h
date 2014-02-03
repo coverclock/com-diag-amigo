@@ -76,10 +76,10 @@
 
 	ABSTRACT
 
-	This file is part of the Digital Aggregates Corporation
-	Amigo package, which which represents noodlings with Arduino
-	hardware and software, the FreeRTOS software, Atmel AVR ATmega
-	microcontrollers, and Freetronics Arduino-compatible hardware.
+	This file is part of the Digital Aggregates Corporation Amigo package Amigo
+	represents noodlings with Arduino hardware and software, the FreeRTOS
+	software, Atmel AVR ATmega microcontrollers, and Freetronics
+	Arduino-compatible hardware.
 
 	Information regarding Amigo can be found here:
 
