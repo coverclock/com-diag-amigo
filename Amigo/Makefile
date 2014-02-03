@@ -146,7 +146,7 @@ NAME=Amigo
 
 MAJOR=4
 MINOR=10
-FIX=0
+FIX=1
 
 HTTP_URL=http://www.diag.com/navigation/downloads/$(NAME).html
 FTP_URL=ftp://www.diag.com/ftp/$(PROJECT)-$(MAJOR).$(MINOR).$(FIX).tgz
