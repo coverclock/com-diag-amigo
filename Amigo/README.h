@@ -66,12 +66,6 @@
 	Alternative licensing terms for the software specific to Amigo
 	may be available from the copyright holder.
 
-		Digital Aggregates Corporation
-		3440 Youngfield Street, #209
-		Wheat Ridge CO 80033 USA
-		http://www.diag.com
-		mailto:coverclock@diag.com
-
 ********************************************************************************
 
 	ABSTRACT
@@ -104,6 +98,15 @@
 	Information regarding Phillip Stevens' work on FreeRTOS can be found here:
 
 		http://feilipu.posterous.com/freertos-and-libraries-for-avr-atmega
+
+    Contact:
+
+        Chip Overclock
+        Digital Aggregates Corporation
+        3440 Youngfield Street, Suite 209
+        Wheat Ridge CO 80033 USA
+        http://www.diag.com
+        mailto:coverclock@diag.com
 
 *******************************************************************************/
 
