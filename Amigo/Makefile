@@ -151,6 +151,7 @@ FIX=1
 HTTP_URL=http://www.diag.com/navigation/downloads/$(NAME).html
 FTP_URL=ftp://www.diag.com/ftp/$(PROJECT)-$(MAJOR).$(MINOR).$(FIX).tgz
 SVN_URL=svn://graphite/$(PROJECT)/trunk/$(NAME)
+GIT_URL=https://github.com/coverclock/com-diag-$(PROJECT)
 
 ################################################################################
 # PARAMETERS
@@ -496,6 +497,20 @@ dist $(PROJECT)-$(MAJOR).$(MINOR).$(FIX).tgz:
 	svn export $(SVN_URL) $$TARDIR/$(PROJECT)-$(MAJOR).$(MINOR).$(FIX); \
 	tar -C $$TARDIR -cvzf - $(PROJECT)-$(MAJOR).$(MINOR).$(FIX) > $(PROJECT)-$(MAJOR).$(MINOR).$(FIX).tgz; \
 	rm -rf $$TARDIR
+
+PHONY+=commit dcommit push origin
+
+commit:
+	git commit .
+
+dcommit:
+	git svn dcommit
+
+push:
+	git push origin master
+
+origin:
+	git remote add origin $(GIT_URL)
 
 ################################################################################
 # DOCUMENTATION
