@@ -151,7 +151,7 @@ FIX=1
 HTTP_URL=http://www.diag.com/navigation/downloads/$(NAME).html
 FTP_URL=ftp://www.diag.com/ftp/$(PROJECT)-$(MAJOR).$(MINOR).$(FIX).tgz
 SVN_URL=svn://graphite/$(PROJECT)/trunk/$(NAME)
-GIT_URL=https://github.com/coverclock/com-diag-$(PROJECT)
+GIT_URL=https://github.com/coverclock/com-diag-$(PROJECT).git
 
 ################################################################################
 # PARAMETERS
