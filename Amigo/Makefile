@@ -142,15 +142,17 @@
 ################################################################################
 
 PROJECT=amigo
+TITLE=Amigo
 NAME=Amigo
 
 MAJOR=4
 MINOR=10
 FIX=1
 
-HTTP_URL=http://www.diag.com/navigation/downloads/$(NAME).html
+HTTP_URL=http://www.diag.com/navigation/downloads/$(TITLE).html
 FTP_URL=ftp://www.diag.com/ftp/$(PROJECT)-$(MAJOR).$(MINOR).$(FIX).tgz
-SVN_URL=svn://graphite/$(PROJECT)/trunk/$(NAME)
+SVN_REPO=svn://graphite/$(PROJECT)
+SVN_URL=$(SVN_REPO)/trunk/$(TITLE)
 GIT_URL=https://github.com/coverclock/com-diag-$(PROJECT).git
 
 ################################################################################
@@ -498,7 +500,7 @@ dist $(PROJECT)-$(MAJOR).$(MINOR).$(FIX).tgz:
 	tar -C $$TARDIR -cvzf - $(PROJECT)-$(MAJOR).$(MINOR).$(FIX) > $(PROJECT)-$(MAJOR).$(MINOR).$(FIX).tgz; \
 	rm -rf $$TARDIR
 
-PHONY+=commit dcommit push origin
+PHONY+=commit dcommit push init
 
 commit:
 	git commit .
@@ -509,7 +511,9 @@ dcommit:
 push:
 	git push origin master
 
-origin:
+init:
+	git svn clone -s $(SVN_REPO)
+	git svn show-ignore > .gitignore
 	git remote add origin $(GIT_URL)
 
 ################################################################################
